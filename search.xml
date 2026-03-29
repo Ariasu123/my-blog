@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Hello Blog</title>
+    <url>/my-blog/2026/03/28/hello-blog/</url>
+    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
+<p>这篇文章用于验证：</p>
+<ul>
+<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
+<li>文章详情页是否展示阅读时长和字数统计</li>
+<li>搜索索引是否正常生成</li>
+<li>GitHub Pages 项目路径下的资源是否正常加载</li>
+</ul>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>Hexo</tag>
+        <tag>GitHub Pages</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>关于</title>
+    <url>/my-blog/about/index.html</url>
+    <content><![CDATA[<p>你好，我是 Lenovo，一名正在把个人知识库、项目实践和技术写作逐步沉淀到公开博客里的开发者。</p>
+<p>这个站点会持续记录：</p>
+<ul>
+<li>Hexo &#x2F; GitHub Pages 搭建过程</li>
+<li>个人项目迭代与复盘</li>
+<li>日常技术学习笔记</li>
+<li>值得保留的方法论与经验</li>
+</ul>
+<p>如果你也在做个人博客、自动化写作流程或技术内容管理，欢迎后续通过 GitHub 找到我：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>项目</title>
+    <url>/my-blog/projects/index.html</url>
+    <content><![CDATA[<div class="project-grid">
+  <article class="project-card">
+    <h2>项目名称 01</h2>
+    <p>这里放项目简介，说明它解决了什么问题、面向谁，以及当前完成到了哪一步。</p>
+    <ul>
+      <li>技术栈：Hexo / Node.js / GitHub Pages</li>
+      <li>状态：进行中</li>
+      <li>链接：<a href="https://github.com/Ariasu123/my-blog" target="_blank" rel="noopener">仓库地址</a></li>
+    </ul>
+  </article>
+
+  <article class="project-card">
+    <h2>项目名称 02</h2>
+    <p>这里继续维护你的第二个项目。后续你只需要复制项目卡片并替换内容即可。</p>
+    <ul>
+      <li>技术栈：TypeScript / React / Tailwind</li>
+      <li>状态：规划中</li>
+      <li>链接：<a href="https://example.com" target="_blank" rel="noopener">在线演示</a></li>
+    </ul>
+  </article>
+</div>
+]]></content>
+  </entry>
+  <entry>
+    <title>分类</title>
+    <url>/my-blog/categories/index.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/my-blog/assets/css/custom.css</url>
+    <content><![CDATA[@font-face {
+  font-family: 'MapleMonoCN';
+  src: url('../fonts/MapleMono-NF-CN-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root {
+  --blog-accent: #2563eb;
+  --blog-accent-soft: #dbeafe;
+  --blog-border: #cbd5e1;
+  --blog-surface: #ffffff;
+  --blog-text: #1e293b;
+  --blog-muted: #64748b;
+}
+
+body {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 24%),
+    linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+}
+
+.index-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+}
+
+.index-card img,
+.index-img img {
+  border-radius: 18px;
+}
+
+.post-content code,
+.post-content pre,
+code,
+pre {
+  font-family: 'MapleMonoCN', 'Consolas', monospace;
+}
+
+.post-meta,
+.index-excerpt,
+.post-content {
+  color: var(--blog-text);
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.project-card {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 20px;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(239, 246, 255, 0.88));
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
+.project-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.project-card p,
+.project-card li {
+  color: var(--blog-muted);
+}
+
+.project-card ul {
+  padding-left: 1rem;
+  margin-bottom: 0;
+}
+
+.search-list-title,
+.project-card a,
+.post-content a {
+  color: var(--blog-accent);
+}
+]]></content>
+  </entry>
+  <entry>
+    <title>标签</title>
+    <url>/my-blog/tags/index.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
+</search>

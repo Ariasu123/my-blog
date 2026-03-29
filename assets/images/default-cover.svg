@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="coverTitle coverDesc">
+  <title id="coverTitle">Blog Cover</title>
+  <desc id="coverDesc">Default cover for blog posts.</desc>
+  <defs>
+    <linearGradient id="coverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="55%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#coverGradient)" rx="36" />
+  <circle cx="930" cy="120" r="110" fill="rgba(255,255,255,0.18)" />
+  <circle cx="1030" cy="520" r="180" fill="rgba(255,255,255,0.10)" />
+  <path d="M120 470C280 330 430 260 620 260C790 260 930 320 1080 420" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="22" stroke-linecap="round" />
+  <text x="110" y="260" fill="#f8fafc" font-size="72" font-family="'Segoe UI', sans-serif" font-weight="700">my-blog</text>
+  <text x="110" y="340" fill="#dbeafe" font-size="34" font-family="'Segoe UI', sans-serif">Content-first notes, projects, and technical writing</text>
+</svg>
