@@ -1,0 +1,29 @@
+{
+  "name": "my-blog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hexo blog for GitHub Pages project site deployment.",
+  "scripts": {
+    "cover:sync": "node scripts/sync-covers.js",
+    "server": "npm run cover:sync && hexo server",
+    "build": "npm run cover:sync && hexo clean && hexo generate"
+  },
+  "hexo": {
+    "version": "8.1.1"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "hexo": "^8.1.1",
+    "hexo-cli": "^4.3.2",
+    "hexo-generator-archive": "^2.0.0",
+    "hexo-generator-category": "^2.0.0",
+    "hexo-generator-index": "^4.0.0",
+    "hexo-generator-searchdb": "^1.5.0",
+    "hexo-generator-tag": "^2.0.0",
+    "hexo-renderer-ejs": "^2.0.0",
+    "hexo-renderer-marked": "^7.0.0",
+    "hexo-renderer-stylus": "^3.0.1",
+    "hexo-server": "^3.0.0",
+    "hexo-theme-fluid": "^1.9.9"
+  }
+}

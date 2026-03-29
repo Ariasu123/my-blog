@@ -1,0 +1,8 @@
+node_modules/
+public/
+.deploy*/
+.tmp-hexo-init/
+.claude/
+db.json
+.DS_Store
+npm-debug.log*

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="bannerTitle bannerDesc">
+  <title id="bannerTitle">Blog Banner</title>
+  <desc id="bannerDesc">Default page banner for the blog.</desc>
+  <defs>
+    <linearGradient id="bannerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617" />
+      <stop offset="45%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#67e8f9" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="720" fill="url(#bannerGradient)" />
+  <g fill="none" stroke="rgba(255,255,255,0.22)">
+    <path d="M0 460C160 380 260 350 400 350C560 350 650 410 820 410C980 410 1090 330 1230 330C1390 330 1510 420 1600 470" stroke-width="20" />
+    <path d="M0 560C150 520 250 500 360 500C520 500 640 560 820 560C960 560 1040 520 1180 520C1360 520 1490 580 1600 620" stroke-width="12" />
+  </g>
+  <text x="120" y="230" fill="#eff6ff" font-size="86" font-family="'Segoe UI', sans-serif" font-weight="700">my-blog</text>
+  <text x="120" y="310" fill="#dbeafe" font-size="34" font-family="'Segoe UI', sans-serif">Built with Hexo, Fluid, and GitHub Pages project-site deployment</text>
+</svg>
