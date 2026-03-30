@@ -1,0 +1,15 @@
+{
+  "name": "repo-a-sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Obsidian Repo A → Hexo Repo B sync template.",
+  "scripts": {
+    "sync": "node scripts/sync-to-repo-b.js",
+    "sync:dry-run": "node scripts/sync-to-repo-b.js --dry-run"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.2",
+    "gray-matter": "^4.0.3",
+    "minimist": "^1.2.8"
+  }
+}

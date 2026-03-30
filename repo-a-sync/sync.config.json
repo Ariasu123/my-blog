@@ -1,0 +1,15 @@
+{
+  "contentRoots": ["."],
+  "exclude": [
+    ".obsidian/**",
+    "Templates/**",
+    "node_modules/**",
+    ".git/**"
+  ],
+  "repoB": {
+    "postsDir": "source/_posts",
+    "assetsDir": "source/assets/obsidian",
+    "baseUrl": "/my-blog/",
+    "branch": "main"
+  }
+}
