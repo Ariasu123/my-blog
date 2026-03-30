@@ -30,5 +30,24 @@
   
   
   
+  <entry>
+    <title>LLM 推理加速与算子优化学习路线</title>
+    <link href="/my-blog/2026/03/09/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/"/>
+    <url>/my-blog/2026/03/09/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
+    
+    <content type="html"><![CDATA[<h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p><h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p><ul><li><p><strong>《大规模并行处理器编程实战 (PMPP)》</strong>： GPU 架构和并行计算。理解硬件是如何执行任务的（Warp 调度、内存合并访问等）。</p></li><li><p><strong>《CUDA 编程：基础与实践》 (樊哲勇)</strong>：相比 PMPP 更加注重代码实践和快速上手，适合作为进入 CUDA 世界的第一块敲门砖。</p></li><li><p><strong><a href="https://docs.nvidia.cn/cuda/cuda-c-programming-guide/index.html#cuda-enabled-gpus">NVIDIA CUDA C++ Programming Guide</a></strong>：官方文档，遇到具体 API 或进阶特性（如 PTX, Tensor Cores）时的权威字典。</p></li><li><p><strong><a href="https://leetgpu.com/">LeetGPU</a></strong>：实战刷题网站。巩固 Reduce、Scan、Matrix Multiplication 等基础算子的编写。</p></li></ul><h1 id="LLM-模型量化-Quantization"><a href="#LLM-模型量化-Quantization" class="headerlink" title="LLM 模型量化 (Quantization)"></a>LLM 模型量化 (Quantization)</h1><p>大模型推理通常是 Memory-bound（访存密集型）而非 Compute-bound（计算密集型）。量化是通过降低权重或激活值的精度，来大幅减少显存占用和访存带宽的核心技术。</p><ul><li><p><strong>GPTQ</strong>: <em>Weight-Only 权重量化的代表作</em>。重点解决了如何高效地将模型权重压缩到 4-bit 或 3-bit，同时保持极高的精度。</p></li><li><ul><li>论文：<a href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li></ul></li><li><p><strong>AWQ (Activation-aware Weight Quantization)</strong>: <em>端侧&#x2F;边缘计算友好的量化</em>。它发现并非所有权重都同等重要，通过观察激活值（Activation）的分布来保护那 1% 的显著权重（Salient Weights），量化效果极好且容易在硬件上实现。</p><ul><li>论文：<a href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li></ul></li><li><p><strong>SmoothQuant</strong>: <em>W8A8 (权重和激活同时量化) 的里程碑</em>。大模型在超过 6.7B 参数后，激活值会出现极端的异常值（Outliers），导致传统量化崩溃。SmoothQuant 通过数学平滑手段解决了这个问题，是企业级部署的标配。</p><ul><li>论文：<a href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li></ul></li></ul><h1 id="算法级加速：打破自回归瓶颈与推理框架"><a href="#算法级加速：打破自回归瓶颈与推理框架" class="headerlink" title="算法级加速：打破自回归瓶颈与推理框架"></a>算法级加速：打破自回归瓶颈与推理框架</h1><p><strong>MEDUSA</strong>: <em>推测解码（Speculative Decoding）的进化版</em>。传统的 LLM 一次只能吐出一个词，速度极慢。Medusa 通过在模型头部增加多个“解码头”，一次预测多个后续 Token，然后并行验证，大幅提升了生成速度，且不需要额外部署一个“小草稿模型”。</p><ul><li>论文&#x2F;项目：<a href="https://arxiv.org/abs/2401.10774">Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></li></ul><p><strong>TensorRT-LLM</strong>: 它将上述的量化技术（AWQ, SmoothQuant）、算子优化（FlashAttention）、以及系统级调度（In-flight Batching）全部融合在了一起。</p><ul><li>项目：<a href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>CPP/LLM/CUDA/GPU</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
   
 </search>
