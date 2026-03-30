@@ -1,13 +1,11 @@
 ---
-date: '2026-03-09 08:00:00'
+date: '2026-03-09 00:00:00'
 tags:
   - CPP/LLM/CUDA/GPU
 published: true
 title: LLM 推理加速与算子优化学习路线
 _sync_managed: repo-a
 _sync_source_path: 02AI infra/LLM 推理加速与算子优化学习路线.md
-index_img: /assets/images/default-cover.svg
-banner_img: /assets/images/default-banner.svg
 ---
 ## 学习规划
 
