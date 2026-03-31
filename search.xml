@@ -48,26 +48,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Hello Blog</title>
-    <url>/my-blog/2026/03/28/hello-blog/</url>
-    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
-<p>这篇文章用于验证：</p>
-<ul>
-<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
-<li>文章详情页是否展示阅读时长和字数统计</li>
-<li>搜索索引是否正常生成</li>
-<li>GitHub Pages 项目路径下的资源是否正常加载</li>
-</ul>
-]]></content>
-      <categories>
-        <category>博客搭建</category>
-      </categories>
-      <tags>
-        <tag>Hexo</tag>
-        <tag>GitHub Pages</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>手工敲代码到 AI 智能体流水线（Harness Engineering）</title>
     <url>/my-blog/2026/03/27/03Agent-Harness/</url>
     <content><![CDATA[<h1 id="聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线"><a href="#聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线" class="headerlink" title="聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线"></a>聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线</h1><p>前阵子，OpenAI 和 Anthropic 等顶尖 AI 实验室先后公布了他们的内部工程实践——<strong>让 AI 智能体（Agent）全自动写出了包含上百万行代码的真实产品，而人类一行代码都没写。</strong></p>
@@ -144,16 +124,37 @@
 ]]></content>
   </entry>
   <entry>
+    <title>Hello Blog</title>
+    <url>/my-blog/2026/03/28/hello-blog/</url>
+    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
+<p>这篇文章用于验证：</p>
+<ul>
+<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
+<li>文章详情页是否展示阅读时长和字数统计</li>
+<li>搜索索引是否正常生成</li>
+<li>GitHub Pages 项目路径下的资源是否正常加载</li>
+</ul>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>Hexo</tag>
+        <tag>GitHub Pages</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>关于</title>
     <url>/my-blog/about/index.html</url>
-    <content><![CDATA[<p>你好，我是Ariasu，一名正在把个人知识库、项目实践和技术写作逐步沉淀到公开博客里的开发者。</p>
-<p>这个站点会持续记录：</p>
+    <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
+<p>这里主要会记录：</p>
 <ul>
-<li>个人项目迭代与复盘</li>
-<li>日常技术学习笔记</li>
-<li>值得保留的方法论与经验</li>
+<li>AI Infra &#x2F; CUDA &#x2F; 推理优化方向的学习与复盘</li>
+<li>个人项目的设计、实现和迭代过程</li>
+<li>值得长期保留的方法论、工作流与工程经验</li>
 </ul>
-<p>欢迎后续通过 GitHub 找到我：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#x79;&#111;&#117;&#x72;&#45;&#101;&#109;&#97;&#105;&#x6c;&#x40;&#x65;&#x78;&#x61;&#x6d;&#112;&#x6c;&#101;&#x2e;&#x63;&#111;&#109;">your-email@example.com</a></p>
+<p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
 ]]></content>
   </entry>
   <entry>
@@ -276,6 +277,205 @@ pre {
 .project-card a,
 .post-content a {
   color: var(--blog-accent);
+}
+
+/* Homepage phase 2 */
+.homepage-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 4rem;
+  align-items: start;
+}
+
+.homepage-sidebar {
+  position: sticky;
+  top: 96px;
+}
+
+.homepage-profile-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.homepage-profile-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.homepage-profile-id {
+  margin-top: 0.35rem;
+}
+
+.homepage-profile-id,
+.homepage-profile-intro,
+.homepage-profile-email,
+.homepage-profile-status {
+  color: var(--blog-muted);
+}
+
+.homepage-profile-intro,
+.homepage-profile-email,
+.homepage-profile-status {
+  display: block;
+  margin-top: 0.9rem;
+  line-height: 1.8;
+}
+
+.homepage-profile-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-left: 0;
+  list-style: none;
+  margin: 1rem 0 0;
+}
+
+.homepage-profile-skills li {
+  color: var(--blog-accent);
+  font-size: 0.92rem;
+}
+
+.homepage-profile-skills li::before {
+  content: '#';
+  margin-right: 0.15rem;
+}
+
+.homepage-profile-icons {
+  display: flex;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  font-size: 1.05rem;
+}
+
+.homepage-main {
+  min-width: 0;
+}
+
+.homepage-intro {
+  margin-bottom: 2rem;
+}
+
+.homepage-hero-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  color: var(--blog-accent);
+}
+
+.homepage-intro h2 {
+  margin: 0.65rem 0 0.85rem;
+  font-size: clamp(2.2rem, 4vw, 4.5rem);
+  line-height: 1.08;
+  color: #0f172a;
+}
+
+.homepage-intro p {
+  max-width: 760px;
+  margin-bottom: 0;
+  color: var(--blog-muted);
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+.homepage-post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.homepage-post-item {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.homepage-post-cover img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 24px;
+  display: block;
+}
+
+.homepage-post-title {
+  margin: 0 0 0.8rem;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1.2;
+}
+
+.homepage-post-title a {
+  color: #0f172a;
+}
+
+.homepage-post-excerpt,
+.homepage-post-excerpt:hover {
+  color: var(--blog-text);
+  text-decoration: none;
+}
+
+.homepage-post-excerpt div {
+  line-height: 1.9;
+}
+
+.homepage-post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 1rem;
+}
+
+#board {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border: none;
+}
+
+.container.nopadding-x-md {
+  max-width: min(1720px, calc(100vw - 48px));
+}
+
+#board .container {
+  max-width: 100%;
+}
+
+#board .container .row > .col-12.col-md-10.m-auto {
+  max-width: 100%;
+  flex: 0 0 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+@media (max-width: 991.98px) {
+  .container.nopadding-x-md {
+    max-width: calc(100vw - 32px);
+  }
+
+  .homepage-shell {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .homepage-sidebar {
+    position: static;
+  }
+
+  .homepage-intro h2 {
+    font-size: 2.4rem;
+  }
+
+  .homepage-post-item {
+    grid-template-columns: 1fr;
+  }
+
+  .homepage-post-cover img {
+    max-width: 220px;
+  }
 }
 ]]></content>
   </entry>
