@@ -1,0 +1,87 @@
+<%
+if (theme.index.slogan.enable) {
+  page.subtitle = theme.index.slogan.text || config.subtitle || ''
+}
+page.banner_img = theme.index.banner_img
+page.banner_img_height = theme.index.banner_img_height
+page.banner_mask_alpha = theme.index.banner_mask_alpha
+const profile = theme.homepage_profile || {}
+%>
+
+<h1 style="display: none"><%= config.title %></h1>
+<section class="homepage-shell">
+  <aside class="homepage-sidebar">
+    <img class="homepage-profile-avatar" src="<%= url_for(theme.about.avatar) %>" alt="<%= profile.title || theme.about.name %>">
+    <div class="homepage-profile-name"><%= profile.title || theme.about.name %></div>
+    <div class="homepage-profile-id"><%= profile.id || '' %></div>
+    <p class="homepage-profile-intro"><%= profile.intro || theme.about.intro || '' %></p>
+    <a class="homepage-profile-email" href="mailto:<%= profile.email || '' %>"><%= profile.email || '' %></a>
+    <ul class="homepage-profile-skills">
+      <% (profile.skills || []).forEach(function(skill) { %>
+        <li><%= skill %></li>
+      <% }) %>
+    </ul>
+    <div class="homepage-profile-status"><%= profile.status || '' %></div>
+    <div class="homepage-profile-icons">
+      <% (theme.about.icons || []).forEach(function(icon) { %>
+        <a href="<%= url_for(icon.link) %>" target="_blank" rel="noopener" aria-label="<%= icon.tip || '' %>">
+          <i class="<%= icon.class %>" aria-hidden="true"></i>
+        </a>
+      <% }) %>
+    </div>
+  </aside>
+
+  <div class="homepage-main">
+    <header class="homepage-intro">
+      <div class="homepage-hero-label">WELCOME</div>
+      <h2><%= profile.hero_title || '' %></h2>
+      <p><%= profile.hero_text || '' %></p>
+    </header>
+
+    <section class="homepage-post-list">
+      <% page.posts.each(function (post) { %>
+        <% var post_url = url_for(post.path), index_img = post.index_img || theme.post.default_index_img %>
+        <article class="homepage-post-item">
+          <% if (index_img) { %>
+            <a class="homepage-post-cover" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
+              <img src="<%= url_for(index_img) %>" alt="<%= post.title %>">
+            </a>
+          <% } %>
+          <div class="homepage-post-body">
+            <h2 class="homepage-post-title">
+              <a href="<%= post_url %>" target="<%- theme.index.post_url_target %>"><%= post.title %></a>
+            </h2>
+            <% var excerpt = post.description || post.excerpt || (theme.index.auto_excerpt.enable && !post.encrypt && post.content) %>
+            <a class="homepage-post-excerpt" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
+              <div><%- strip_html(excerpt).substring(0, 200).trim().replace(/\n/g, ' ') %></div>
+            </a>
+            <div class="homepage-post-meta post-metas">
+              <% if (theme.index.post_meta.date) { %>
+                <div class="post-meta mr-3">
+                  <i class="iconfont icon-date"></i>
+                  <time datetime="<%= full_date(post.date, 'YYYY-MM-DD HH:mm') %>" pubdate><%- date(post.date, config.date_format) %></time>
+                </div>
+              <% } %>
+              <% if (theme.index.post_meta.category && post.categories.length > 0) { %>
+                <div class="post-meta mr-3 d-flex align-items-center">
+                  <i class="iconfont icon-category"></i>
+                  <%- partial('_partials/category-chains', { categories: post.categories, limit: 1 }) %>
+                </div>
+              <% } %>
+              <% if (theme.index.post_meta.tag && post.tags.length > 0) { %>
+                <div class="post-meta">
+                  <i class="iconfont icon-tags"></i>
+                  <% post.tags.each(function(tag){ %>
+                    <a href="<%= url_for(tag.path) %>">#<%- tag.name %></a>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </section>
+
+    <%- partial('_partials/paginator') %>
+  </div>
+</section>

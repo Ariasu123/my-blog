@@ -1,5 +1,5 @@
 navbar:
-  blog_title: my-blog
+  blog_title: Ariasu Blog
   ground_glass:
     enable: true
     px: 6
@@ -16,8 +16,7 @@ index:
   banner_img_height: 72
   banner_mask_alpha: 0.25
   slogan:
-    enable: true
-    text: 记录技术、项目与思考
+    enable: false
   auto_excerpt:
     enable: true
   post_meta:
@@ -27,9 +26,9 @@ index:
 
 post:
   banner_img: /assets/images/default-banner.svg
+  default_index_img: /assets/images/default-cover.svg
   banner_img_height: 65
   banner_mask_alpha: 0.25
-  default_index_img: /assets/images/default-cover.svg
   meta:
     date:
       enable: true
@@ -52,10 +51,35 @@ about:
   banner_img: /assets/images/default-banner.svg
   banner_img_height: 55
   avatar: /assets/images/avatar.svg
-  name: Lenovo
-  intro: 记录技术、项目与个人实践
+  name: Ariasu
+  intro: AI Infra / 系统优化 / 知识沉淀
   icons:
     - { class: "iconfont icon-github-fill", link: "https://github.com/Ariasu123", tip: "GitHub" }
+    - { class: "iconfont icon-mail-fill", link: "mailto:your-email@example.com", tip: "Email" }
+
+homepage_profile:
+  title: Ariasu
+  id: "@Ariasu123"
+  intro: 记录 AI Infra、项目实践与持续迭代中的技术思考。
+  email: your-email@example.com
+  skills:
+    - CUDA
+    - LLM Inference
+    - Hexo
+    - Systems
+  status: 正在完善个人博客与知识发布工作流
+  hero_title: 把知识库、项目与写作连接起来
+  hero_text: 这里会持续发布学习路线、项目复盘与工程实践笔记。
+
+category:
+  banner_img: /assets/images/categories-banner.svg
+  banner_img_height: 60
+  banner_mask_alpha: 0.2
+
+tag:
+  banner_img: /assets/images/tags-banner.svg
+  banner_img_height: 80
+  banner_mask_alpha: 0.2
 
 page:
   banner_img: /assets/images/default-banner.svg
