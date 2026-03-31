@@ -10,7 +10,7 @@ const profile = theme.homepage_profile || {}
 
 <h1 style="display: none"><%= config.title %></h1>
 <section class="homepage-shell">
-  <aside class="homepage-profile-card">
+  <aside class="homepage-sidebar">
     <img class="homepage-profile-avatar" src="<%= url_for(theme.about.avatar) %>" alt="<%= profile.title || theme.about.name %>">
     <div class="homepage-profile-name"><%= profile.title || theme.about.name %></div>
     <div class="homepage-profile-id"><%= profile.id || '' %></div>
@@ -32,60 +32,55 @@ const profile = theme.homepage_profile || {}
   </aside>
 
   <div class="homepage-main">
-    <section class="homepage-hero">
-      <div class="homepage-hero-copy">
-        <div class="homepage-hero-label">WELCOME</div>
-        <h2><%= profile.hero_title || '' %></h2>
-        <p><%= profile.hero_text || '' %></p>
-      </div>
-      <div class="homepage-hero-media">
-        <img src="<%= url_for(profile.hero_image || theme.index.banner_img) %>" alt="home hero">
-      </div>
-    </section>
+    <header class="homepage-intro">
+      <div class="homepage-hero-label">WELCOME</div>
+      <h2><%= profile.hero_title || '' %></h2>
+      <p><%= profile.hero_text || '' %></p>
+    </header>
 
-    <% page.posts.each(function (post) { %>
-      <div class="row mx-auto index-card">
+    <section class="homepage-post-list">
+      <% page.posts.each(function (post) { %>
         <% var post_url = url_for(post.path), index_img = post.index_img || theme.post.default_index_img %>
-        <% if (index_img) { %>
-          <div class="col-12 col-md-4 m-auto index-img">
-            <a href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
+        <article class="homepage-post-item">
+          <% if (index_img) { %>
+            <a class="homepage-post-cover" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
               <img src="<%= url_for(index_img) %>" alt="<%= post.title %>">
             </a>
-          </div>
-        <% } %>
-        <article class="col-12 col-md-<%= index_img ? '8' : '12' %> mx-auto index-info">
-          <h2 class="index-header">
-            <a href="<%= post_url %>" target="<%- theme.index.post_url_target %>"><%= post.title %></a>
-          </h2>
-          <% var excerpt = post.description || post.excerpt || (theme.index.auto_excerpt.enable && !post.encrypt && post.content) %>
-          <a class="index-excerpt <%= index_img ? '' : 'index-excerpt__noimg' %>" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
-            <div><%- strip_html(excerpt).substring(0, 200).trim().replace(/\n/g, ' ') %></div>
-          </a>
-          <div class="index-btm post-metas">
-            <% if (theme.index.post_meta.date) { %>
-              <div class="post-meta mr-3">
-                <i class="iconfont icon-date"></i>
-                <time datetime="<%= full_date(post.date, 'YYYY-MM-DD HH:mm') %>" pubdate><%- date(post.date, config.date_format) %></time>
-              </div>
-            <% } %>
-            <% if (theme.index.post_meta.category && post.categories.length > 0) { %>
-              <div class="post-meta mr-3 d-flex align-items-center">
-                <i class="iconfont icon-category"></i>
-                <%- partial('_partials/category-chains', { categories: post.categories, limit: 1 }) %>
-              </div>
-            <% } %>
-            <% if (theme.index.post_meta.tag && post.tags.length > 0) { %>
-              <div class="post-meta">
-                <i class="iconfont icon-tags"></i>
-                <% post.tags.each(function(tag){ %>
-                  <a href="<%= url_for(tag.path) %>">#<%- tag.name %></a>
-                <% }) %>
-              </div>
-            <% } %>
+          <% } %>
+          <div class="homepage-post-body">
+            <h2 class="homepage-post-title">
+              <a href="<%= post_url %>" target="<%- theme.index.post_url_target %>"><%= post.title %></a>
+            </h2>
+            <% var excerpt = post.description || post.excerpt || (theme.index.auto_excerpt.enable && !post.encrypt && post.content) %>
+            <a class="homepage-post-excerpt" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
+              <div><%- strip_html(excerpt).substring(0, 200).trim().replace(/\n/g, ' ') %></div>
+            </a>
+            <div class="homepage-post-meta post-metas">
+              <% if (theme.index.post_meta.date) { %>
+                <div class="post-meta mr-3">
+                  <i class="iconfont icon-date"></i>
+                  <time datetime="<%= full_date(post.date, 'YYYY-MM-DD HH:mm') %>" pubdate><%- date(post.date, config.date_format) %></time>
+                </div>
+              <% } %>
+              <% if (theme.index.post_meta.category && post.categories.length > 0) { %>
+                <div class="post-meta mr-3 d-flex align-items-center">
+                  <i class="iconfont icon-category"></i>
+                  <%- partial('_partials/category-chains', { categories: post.categories, limit: 1 }) %>
+                </div>
+              <% } %>
+              <% if (theme.index.post_meta.tag && post.tags.length > 0) { %>
+                <div class="post-meta">
+                  <i class="iconfont icon-tags"></i>
+                  <% post.tags.each(function(tag){ %>
+                    <a href="<%= url_for(tag.path) %>">#<%- tag.name %></a>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
           </div>
         </article>
-      </div>
-    <% }) %>
+      <% }) %>
+    </section>
 
     <%- partial('_partials/paginator') %>
   </div>

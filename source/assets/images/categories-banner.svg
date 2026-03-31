@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 480" role="img" aria-label="Categories banner">
+  <rect width="1600" height="480" fill="#dbeafe" />
+  <path d="M0 340C240 260 420 440 720 360C1020 280 1180 120 1600 220V480H0Z" fill="#93c5fd" />
+  <text x="96" y="250" font-size="72" font-family="Arial, sans-serif" fill="#0f172a">Categories</text>
+</svg>

@@ -68,11 +68,18 @@ homepage_profile:
     - Hexo
     - Systems
   status: 正在完善个人博客与知识发布工作流
-  hero_image: /assets/images/home-hero.svg
   hero_title: 把知识库、项目与写作连接起来
   hero_text: 这里会持续发布学习路线、项目复盘与工程实践笔记。
-  category_banner: /assets/images/categories-banner.svg
-  tag_banner: /assets/images/tags-banner.svg
+
+category:
+  banner_img: /assets/images/categories-banner.svg
+  banner_img_height: 60
+  banner_mask_alpha: 0.2
+
+tag:
+  banner_img: /assets/images/tags-banner.svg
+  banner_img_height: 80
+  banner_mask_alpha: 0.2
 
 page:
   banner_img: /assets/images/default-banner.svg
