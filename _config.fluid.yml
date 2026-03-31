@@ -25,7 +25,7 @@ index:
     tag: true
 
 post:
-  banner_img: /assets/images/default-banner.svg
+  banner_img: /assets/images/my-banner.jpg
   default_index_img: /assets/images/default-cover.svg
   banner_img_height: 65
   banner_mask_alpha: 0.25
@@ -50,26 +50,28 @@ about:
   enable: true
   banner_img: /assets/images/default-banner.svg
   banner_img_height: 55
-  avatar: /assets/images/avatar.svg
+  avatar: /assets/images/my-avatar.jpg
   name: Ariasu
   intro: AI Infra / 系统优化 / 知识沉淀
   icons:
     - { class: "iconfont icon-github-fill", link: "https://github.com/Ariasu123", tip: "GitHub" }
-    - { class: "iconfont icon-mail-fill", link: "mailto:your-email@example.com", tip: "Email" }
+    - { class: "iconfont icon-mail-fill", link: "mailto:ariasu_jtle@163.com", tip: "Email" }
 
 homepage_profile:
   title: Ariasu
   id: "@Ariasu123"
-  intro: 记录 AI Infra、项目实践与持续迭代中的技术思考。
-  email: your-email@example.com
+  intro: 华中科技大学在读研一 ｜ 专注 AI Infra 与 Agent开发
+  location: Wuhan, China
+  email: ariasu_jtle@163.com
+  github: https://github.com/Ariasu123 # 强烈建议加上
   skills:
-    - CUDA
-    - LLM Inference
-    - Hexo
-    - Systems
-  status: 正在完善个人博客与知识发布工作流
-  hero_title: 把知识库、项目与写作连接起来
-  hero_text: 这里会持续发布学习路线、项目复盘与工程实践笔记。
+    - CUDA & 高性能计算
+    - LLM 微调与推理部署
+    - PyTorch / C++
+    - Vibe Coding 
+  status: 🚀 记录项目实践与持续迭代中的技术思考
+  hero_title: "探索计算与智能的边界 "
+  hero_text: "欢迎来到我的技术空间！这里会持续发布我的系统学习路线、项目复盘。希望这些工程实践笔记能为你带来启发。"
 
 category:
   banner_img: /assets/images/categories-banner.svg
