@@ -3,6 +3,7 @@ public/
 .deploy*/
 .tmp-hexo-init/
 .claude/
+.worktrees/
 db.json
 .DS_Store
 npm-debug.log*
