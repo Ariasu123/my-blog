@@ -7,8 +7,6 @@ title: LLM 推理加速与算子优化学习路线
 categories: infra
 _sync_managed: repo-a
 _sync_source_path: 02AI infra/LLM 推理加速与算子优化学习路线.md
-index_img: /assets/images/default-cover.svg
-banner_img: /assets/images/default-banner.svg
 ---
 ## 学习规划
 
