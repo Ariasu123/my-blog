@@ -2,7 +2,7 @@
 <search>
   <entry>
     <title>LLM 推理加速与算子优化学习路线</title>
-    <url>/my-blog/2026/03/08/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
+    <url>/my-blog/2026/03/14/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
     <content><![CDATA[<h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p>
 <h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p>
 <ul>
@@ -174,7 +174,7 @@
   </entry>
   <entry>
     <title>Claude Code 使用心得</title>
-    <url>/my-blog/2026/03/08/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/</url>
+    <url>/my-blog/2026/03/19/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/</url>
     <content><![CDATA[<h1 id="Claude-Code-使用心得：常用命令、技巧与速查版"><a href="#Claude-Code-使用心得：常用命令、技巧与速查版" class="headerlink" title="Claude Code 使用心得：常用命令、技巧与速查版"></a>Claude Code 使用心得：常用命令、技巧与速查版</h1><p>如果你刚开始接触 Claude Code，最容易卡住的往往不是不会写 Prompt，而是不知道哪些入口最值得先记、长会话该怎么收束、什么时候该先规划再执行。</p>
 <p>这篇笔记把我自己高频使用的命令、快捷键、插件和学习方向，整理成一篇博客：<br>前半部分讲思路，后半部分给速查。</p>
 <blockquote>
@@ -506,14 +506,9 @@
 <li>个人项目的设计、实现和迭代过程</li>
 <li>值得长期保留的方法论、工作流与工程经验</li>
 </ul>
-<p>你也可以通过邮箱联系我：<a href="mailto:&#x61;&#x72;&#x69;&#x61;&#115;&#x75;&#x5f;&#106;&#116;&#x6c;&#101;&#64;&#49;&#54;&#51;&#x2e;&#x63;&#x6f;&#x6d;">ariasu_jtle@163.com</a></p>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#x61;&#114;&#x69;&#x61;&#115;&#x75;&#x5f;&#106;&#116;&#x6c;&#x65;&#x40;&#x31;&#x36;&#x33;&#x2e;&#x63;&#111;&#109;">ariasu_jtle@163.com</a></p>
 <p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
 ]]></content>
-  </entry>
-  <entry>
-    <title>标签</title>
-    <url>/my-blog/tags/index.html</url>
-    <content><![CDATA[]]></content>
   </entry>
   <entry>
     <title>项目</title>
@@ -544,6 +539,11 @@
   <entry>
     <title>分类</title>
     <url>/my-blog/categories/index.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>标签</title>
+    <url>/my-blog/tags/index.html</url>
     <content><![CDATA[]]></content>
   </entry>
 </search>
