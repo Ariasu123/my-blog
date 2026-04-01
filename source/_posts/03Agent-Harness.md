@@ -4,8 +4,6 @@ published: true
 title: 手工敲代码到 AI 智能体流水线（Harness Engineering）
 _sync_managed: repo-a
 _sync_source_path: 03Agent/Harness.md
-index_img: /assets/images/default-cover.svg
-banner_img: /assets/images/default-banner.svg
 ---
 # 聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线
 
