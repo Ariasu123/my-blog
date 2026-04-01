@@ -10,6 +10,8 @@ title: Claude Code实用生态工具
 categories: vibe coding
 _sync_managed: repo-a
 _sync_source_path: 03Agent/AI 辅助编程生态工具(Claude Code 篇).md
+index_img: /assets/images/default-cover.svg
+banner_img: /assets/images/default-banner.svg
 ---
 # 🛠️ AI 辅助编程生态工具完全指南
 
