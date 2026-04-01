@@ -51,102 +51,6 @@
       </tags>
   </entry>
   <entry>
-    <title>手工敲代码到 AI 智能体流水线（Harness Engineering）</title>
-    <url>/my-blog/2026/03/27/03Agent-Harness/</url>
-    <content><![CDATA[<h1 id="聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线"><a href="#聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线" class="headerlink" title="聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线"></a>聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线</h1><p>前阵子，OpenAI 和 Anthropic 等顶尖 AI 实验室先后公布了他们的内部工程实践——<strong>让 AI 智能体（Agent）全自动写出了包含上百万行代码的真实产品，而人类一行代码都没写。</strong></p>
-<p>很多开发者看完后都有一个疑问：AI 经常会胡说八道（幻觉），写个百来行代码还能凑合，它是怎么做到自主完成几万、几十万行代码的复杂工程，并且不出 Bug 的？</p>
-<p>答案就隐藏在现代软件工程的几个核心概念里。今天，我们就来扒一扒软件开发的进化史，看看我们是如何一步步从“小作坊”走向“全自动化流水线”，并最终构建出让 AI 打工的“智能体工厂”的。</p>
-<p>本文会带你通俗易懂地搞懂四个高频技术词汇：<strong>PRD Driven、Spec Driven、CI&#x2F;CD Pipeline</strong>，以及在 AI 时代被赋予了全新魔力的 <strong>Harness</strong>。</p>
-<hr>
-<h2 id="时代一：图纸与契约（人类协同的艺术）"><a href="#时代一：图纸与契约（人类协同的艺术）" class="headerlink" title="时代一：图纸与契约（人类协同的艺术）"></a>时代一：图纸与契约（人类协同的艺术）</h2><p>在写下第一行代码之前，团队必须有一个明确的“行动指南”。否则前端造了个轮船，后端造了个飞机，最后根本拼不到一起。为了解决这个问题，业界演化出了两种驱动模式：</p>
-<h3 id="1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”"><a href="#1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”" class="headerlink" title="1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”"></a>1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”</h3><ul>
-<li><p><strong>这是什么</strong>：产品经理（PM）写出一份详尽的文档（PRD），规定好页面的长相、按钮点击后的反应、以及背后的业务逻辑。这在团队里是唯一的“圣旨”（Single Source of Truth）。</p>
-</li>
-<li><p><strong>通俗理解</strong>：这就好比你要盖一栋大楼，PRD 就是<strong>建筑效果图和商业计划书</strong>。它关心的是“这栋楼有几层、大堂是什么风格、面向哪些客户”。</p>
-</li>
-<li><p><strong>现实痛点</strong>：这种模式非常业务导向，但如果 PM 的文档写得含糊其辞，或者天天改需求，下游的程序员和测试人员就会痛不欲生。</p>
-</li>
-</ul>
-<h3 id="2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”"><a href="#2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”" class="headerlink" title="2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”"></a>2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”</h3><ul>
-<li><p><strong>这是什么</strong>：随着系统越来越复杂，尤其是前后端分离架构的普及，光有 PRD 不够了。架构师或后端开发会在写代码前，先定义好纯技术层面的“API 接口文档”（也就是 Spec）。</p>
-</li>
-<li><p><strong>通俗理解</strong>：Spec 就像是大楼的<strong>水电施工图纸</strong>。它严格规定了水管的口径、电线的电压。前端看着这份图纸去画页面，后端看着图纸去写数据库。</p>
-</li>
-<li><p><strong>它的魔法</strong>：契约一旦定好，大家就可以兵分两路、并行施工。最后对接时，只要大家都遵守了契约，系统就像插头插进插座一样，一次点亮。</p>
-</li>
-</ul>
-<hr>
-<h2 id="时代二：自动化的魔法（CI-CD-Pipeline）"><a href="#时代二：自动化的魔法（CI-CD-Pipeline）" class="headerlink" title="时代二：自动化的魔法（CI&#x2F;CD Pipeline）"></a>时代二：自动化的魔法（CI&#x2F;CD Pipeline）</h2><p>需求明确了，图纸画好了，程序员们开始疯狂敲代码。但在过去，大家各写各的，月底统一合并代码时，经常引发史诗级的“代码冲突灾难”。</p>
-<p>为了解决这个问题，工程师们发明了 <strong>CI&#x2F;CD Pipeline（持续集成&#x2F;持续交付流水线）</strong>。</p>
-<p>你可以把它想象成工厂里的<strong>全自动化产品传送带</strong>：</p>
-<ul>
-<li><p><strong>CI（持续集成）</strong>：强制要求程序员“小步快跑”，每天把写好的代码提交好几次。一旦提交，流水线就会<strong>自动</strong>拉取代码，<strong>自动</strong>运行几千个测试用例。哪怕你只写错了一个标点符号，传送带会立刻亮起红灯并报警（Fail Fast）。</p>
-</li>
-<li><p><strong>CD（持续部署）</strong>：当代码完美通过了所有的自动化测试，传送带会<strong>自动</strong>把这段代码打包，毫无人工干预地发布到生产环境。</p>
-</li>
-</ul>
-<p>有了 CI&#x2F;CD，软件的发布从过去“半个月一次的心惊胆战”，变成了现在“一天发布几十次的习以为常”。它是现代软件工厂的基石。</p>
-<hr>
-<h2 id="时代三：给-AI-建一座打工工厂（Agent-Harness）"><a href="#时代三：给-AI-建一座打工工厂（Agent-Harness）" class="headerlink" title="时代三：给 AI 建一座打工工厂（Agent Harness）"></a>时代三：给 AI 建一座打工工厂（Agent Harness）</h2><p>现在，深水区来了。</p>
-<p>CI&#x2F;CD 自动化了“测试和发布”，但<strong>代码依然是人类一行行敲出来的</strong>。到了 2025 年之后，大模型（LLM）爆发，我们希望 AI 能直接帮我们把代码写了。</p>
-<p>但如果你直接在对话框里让 AI 写个电商网站，它写到一半就会忘记前面的设定，或者因为代码太长而彻底崩溃。<strong>AI 需要一个极度受限、充满护栏的工作环境。</strong></p>
-<p>这就是 <strong>Harness（脚手架&#x2F;运行框架）</strong> 在 AI 时代迎来的终极进化。</p>
-<p>在过去，Harness 只是一个“测试底座”（给一小段代码提供模拟的测试环境）。但在**智能体优先（Agent-first）**的今天，<strong>Harness 变成了一座专门为 AI 打造的虚拟工厂</strong>。人类不再写业务代码，人类的工作变成了设计和维护这个 Harness。</p>
-<p>结合 Anthropic 和 OpenAI 最近披露的工程实践，一个现代的 Agent Harness 长这样：</p>
-<ol>
-<li><p><strong>分工明确的多智能体车间</strong></p>
-<p> Harness 里不是只有一个 AI，而是有分工的。</p>
-<ul>
-<li><p><strong>Planner（产品经理 AI）</strong>：负责把人类的一句话需求，扩写成详细的 PRD。</p>
-</li>
-<li><p><strong>Generator（牛马程序员 AI）</strong>：负责老老实实写代码。</p>
-</li>
-<li><p><strong>Evaluator（魔鬼测试员 AI）</strong>：因为 AI 往往会“盲目自信”地觉得自己的代码写得很好，所以 Harness 引入了 Evaluator。它会像真实用户一样去点击跑起来的网页，一旦发现 Bug 或是界面丑陋，就会无情地打回重做。</p>
-</li>
-</ul>
-</li>
-<li><p><strong>给 AI 戴上“紧箍咒”（硬性约束）</strong></p>
-<p> 人类面对百万行代码会头晕，AI 也会。在 Harness 中，工程师会写死一套极其严格的自动化检查工具（Linter）。一旦 AI 乱写架构、跨层调用，Harness 就会立刻报错，并在报错信息中告诉 AI：“你违规了，请按照规定重写。”</p>
-</li>
-<li><p><strong>专为 AI 打造的“盲文”（可读性环境）</strong></p>
-<p> 人类的代码库是给人类看的，里面充满了黑话和默认潜规则。Harness 会把整个环境变得对 AI 极其友好。系统报错的日志、性能监控的图表、甚至浏览器的界面，全都会通过 Harness 转换成 AI 能直接读懂的格式，让它具备<strong>自我定位问题、自我修复</strong>的能力。</p>
-</li>
-</ol>
-<hr>
-<h2 id="结语：程序员要失业了吗？"><a href="#结语：程序员要失业了吗？" class="headerlink" title="结语：程序员要失业了吗？"></a>结语：程序员要失业了吗？</h2><p>看懂了这些，你就会明白未来软件工程的走向：</p>
-<ul>
-<li><p><strong>PRD 与 Spec</strong> 依然是灵魂，但可能以后是由人类口述，AI 来撰写。</p>
-</li>
-<li><p><strong>CI&#x2F;CD</strong> 是不可或缺的基础设施。</p>
-</li>
-<li><p>而 <strong>Harness</strong> 将成为各家科技公司最核心的壁垒。</p>
-</li>
-</ul>
-<p>以后，初级程序员确实不再需要去手写那些重复的“增删改查”代码了。但这并不意味着我们不需要工程师了。</p>
-<p><strong>未来的软件工程师，不再是流水线上的“打螺丝工人”，而是成为了设计这条 AI 流水线的“厂长”。</strong> 我们需要去定义架构、调优 Harness 框架、设计反馈回路，让 AI 智能体在这个框架内不知疲倦地为我们创造价值。</p>
-]]></content>
-  </entry>
-  <entry>
-    <title>Hello Blog</title>
-    <url>/my-blog/2026/02/28/hello-blog/</url>
-    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
-<p>这篇文章用于验证：</p>
-<ul>
-<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
-<li>文章详情页是否展示阅读时长和字数统计</li>
-<li>搜索索引是否正常生成</li>
-<li>GitHub Pages 项目路径下的资源是否正常加载</li>
-</ul>
-]]></content>
-      <categories>
-        <category>博客搭建</category>
-      </categories>
-      <tags>
-        <tag>Hexo</tag>
-        <tag>GitHub Pages</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Claude Code实用生态工具</title>
     <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
     <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
@@ -269,6 +173,330 @@
       </tags>
   </entry>
   <entry>
+    <title>Claude Code 使用心得</title>
+    <url>/my-blog/2026/03/08/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<h1 id="Claude-Code-使用心得：常用命令、技巧与速查版"><a href="#Claude-Code-使用心得：常用命令、技巧与速查版" class="headerlink" title="Claude Code 使用心得：常用命令、技巧与速查版"></a>Claude Code 使用心得：常用命令、技巧与速查版</h1><p>如果你刚开始接触 Claude Code，最容易卡住的往往不是不会写 Prompt，而是不知道哪些入口最值得先记、长会话该怎么收束、什么时候该先规划再执行。</p>
+<p>这篇笔记把我自己高频使用的命令、快捷键、插件和学习方向，整理成一篇博客：<br>前半部分讲思路，后半部分给速查。</p>
+<blockquote>
+<p>[!summary]<br>如果你只想先记住最常用的 6 个入口：</p>
+<ul>
+<li><code>/compact</code>：压缩上下文，适合长对话</li>
+<li><code>/clear</code>：清空当前会话</li>
+<li><code>/resume</code>：续接历史任务</li>
+<li><code>/plan</code>：先让 Claude 出方案</li>
+<li><code>/agent</code> &#x2F; <code>/agents</code>：调用子智能体并行处理</li>
+<li><code>/doctor</code>：排查环境和依赖问题</li>
+</ul>
+</blockquote>
+<h2 id="为什么值得把-Claude-Code-用顺手"><a href="#为什么值得把-Claude-Code-用顺手" class="headerlink" title="为什么值得把 Claude Code 用顺手"></a>为什么值得把 Claude Code 用顺手</h2><p>和普通聊天式 AI 相比，Claude Code 更像是终端里的 AI 搭子：它不是只负责回答问题，而是能直接参与到“读代码、改代码、跑命令、排查问题”的完整流程里。</p>
+<p>真正拉开效率差距的，通常不是模型本身，而是你会不会用好下面这几类能力：</p>
+<ul>
+<li>会话管理：避免上下文越来越乱</li>
+<li>计划模式：先想清楚，再改代码</li>
+<li>子智能体：把任务拆开并行处理</li>
+<li>Skills &#x2F; 插件：把高频动作工具化</li>
+</ul>
+<h2 id="快捷键速查"><a href="#快捷键速查" class="headerlink" title="快捷键速查"></a>快捷键速查</h2><table>
+<thead>
+<tr>
+<th>快捷键</th>
+<th>用途</th>
+<th>什么时候最有用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl + B</code></td>
+<td>将任务转到后台运行</td>
+<td>命令较慢，不想阻塞当前会话时</td>
+</tr>
+<tr>
+<td><code>Ctrl + J</code></td>
+<td>换行但不提交</td>
+<td>写长 Prompt、分段列需求时</td>
+</tr>
+<tr>
+<td><code>Esc Esc</code></td>
+<td>回滚输入，连按两次删除整行对话框内容</td>
+<td>输入写乱时快速清空</td>
+</tr>
+<tr>
+<td><code>Shift + Tab</code></td>
+<td>在普通模式、自动同意模式、计划模式之间切换</td>
+<td>需要在“先规划”和“直接执行”之间切换时</td>
+</tr>
+</tbody></table>
+<h2 id="常用命令，我会这样记"><a href="#常用命令，我会这样记" class="headerlink" title="常用命令，我会这样记"></a>常用命令，我会这样记</h2><h3 id="1-会话与上下文管理"><a href="#1-会话与上下文管理" class="headerlink" title="1. 会话与上下文管理"></a>1. 会话与上下文管理</h3><p>这组命令解决的是：对话聊久了，Claude 开始发散、回复越来越长，甚至偏离重点。</p>
+<ul>
+<li><code>/compact</code>：压缩对话历史，保留重点，适合长任务中途整理上下文</li>
+<li><code>/clear</code>：直接清空当前会话，适合彻底切换主题</li>
+<li><code>/rewind</code>：回到之前的检查点，适合“这一步走歪了，想撤回”</li>
+<li><code>/resume</code>：恢复历史会话，适合接着昨天没做完的任务继续</li>
+</ul>
+<blockquote>
+<p>[!tip]<br>如果你感觉 Claude 开始“话变多、重点变少、速度变慢”，先试一次 <code>/compact</code>，通常比你手动重述背景更省事。</p>
+</blockquote>
+<h3 id="2-项目与环境配置"><a href="#2-项目与环境配置" class="headerlink" title="2. 项目与环境配置"></a>2. 项目与环境配置</h3><p>这组命令更像是把工作台先搭好。</p>
+<ul>
+<li><code>/init</code>：在当前目录初始化项目，并生成 <code>CLAUDE.md</code>，适合沉淀项目级规范</li>
+<li><code>/config</code>：打开配置面板，快速调整全局设置</li>
+<li><code>/mcp</code>：管理 MCP 服务，让 Claude 连接更多外部工具和上下文</li>
+<li><code>/allowed-tools</code>：管理工具权限，减少重复确认</li>
+</ul>
+<h3 id="3-任务规划与并行处理"><a href="#3-任务规划与并行处理" class="headerlink" title="3. 任务规划与并行处理"></a>3. 任务规划与并行处理</h3><p>这是 Claude Code 最容易被低估的一块，也是最能提升效率的一块。</p>
+<ul>
+<li><code>/plan</code>：先输出完整思路和改动步骤，再决定是否执行</li>
+<li><code>/agent</code> &#x2F; <code>/agents</code>：把子任务分给 subagent 并行处理</li>
+<li><code>/tasks</code>：查看后台任务状态，管理长时间运行的工作</li>
+</ul>
+<blockquote>
+<p>[!note]<br>我自己的习惯是：需求不清、改动面大、涉及多个文件时，先 <code>/plan</code>；任务能拆分时，再交给 <code>/agent</code> 或 <code>/agents</code> 去并行跑。</p>
+</blockquote>
+<h3 id="4-状态与诊断"><a href="#4-状态与诊断" class="headerlink" title="4. 状态与诊断"></a>4. 状态与诊断</h3><p>这组命令适合处理“我怀疑不是我写错了，而是环境有问题”的场景。</p>
+<ul>
+<li><code>/cost</code> 或 <code>/cos</code>：查看当前 Session 的成本与耗时</li>
+<li><code>/usage</code>：查看 API 总体额度使用情况和限流状态</li>
+<li><code>/doctor</code>：检查当前终端环境、依赖和安装状态</li>
+</ul>
+<h2 id="插件与-Skills，哪些值得先上手"><a href="#插件与-Skills，哪些值得先上手" class="headerlink" title="插件与 Skills，哪些值得先上手"></a>插件与 Skills，哪些值得先上手</h2><h3 id="Skills"><a href="#Skills" class="headerlink" title="Skills"></a>Skills</h3><p>我当前重点关注的是这几类技能：</p>
+<ul>
+<li><code>openspec</code>：适合 OpenAPI 规范和接口文档类工作流</li>
+<li><code>helloagent</code>：适合理解 Agent &#x2F; Sub-agent 的基本思路</li>
+<li><code>skill-seeker</code>：适合搜索、生成和整理技能文档</li>
+<li><code>autogen</code>：偏多智能体方向</li>
+</ul>
+<p>其中 <code>helloagent</code> 可以参考：</p>
+<ul>
+<li><a href="https://github.com/jjyaoao/HelloAgents">GitHub - jjyaoao&#x2F;HelloAgents</a></li>
+<li><a href="https://github.com/hellowind777/helloagents/tree/main">GitHub - hellowind777&#x2F;helloagents</a></li>
+</ul>
+<h3 id="我在用的插件记录"><a href="#我在用的插件记录" class="headerlink" title="我在用的插件记录"></a>我在用的插件记录</h3><h4 id="context7"><a href="#context7" class="headerlink" title="context7"></a><code>context7</code></h4><ul>
+<li>跟 Claude Code 对话时，可以在 Prompt 结尾补一句：<code>use context7</code></li>
+<li>适合需要补充上下文、文档或知识参考的场景</li>
+</ul>
+<h4 id="document-skills"><a href="#document-skills" class="headerlink" title="document skills"></a><code>document skills</code></h4><ul>
+<li>可以隐式触发，也可以显式点名触发</li>
+</ul>
+<p>例如：</p>
+<ul>
+<li>隐式触发：帮我把 <code>report.pdf</code> 里的表格提取成 CSV</li>
+<li>显式触发：请使用 PDF skill 帮我把 <code>report.pdf</code> 里的表格提取成 CSV</li>
+<li>显式触发：用 docx 技能帮我创建一个标准的商业合同模板</li>
+</ul>
+<h3 id="Claude-Code-配置"><a href="#Claude-Code-配置" class="headerlink" title="Claude Code 配置"></a>Claude Code 配置</h3><p>我目前有记录的配置偏好：</p>
+<ul>
+<li><code>statusline</code><ul>
+<li><code>nerd_font</code> 字体</li>
+<li><code>cometix</code> 主题</li>
+</ul>
+</li>
+</ul>
+<h2 id="一套够用的上手流程"><a href="#一套够用的上手流程" class="headerlink" title="一套够用的上手流程"></a>一套够用的上手流程</h2><p>如果你不想一次记太多，可以先记住下面这条工作流：</p>
+<ol>
+<li>用 <code>/init</code> 给项目建立规则</li>
+<li>长对话中用 <code>/compact</code> 收束上下文</li>
+<li>遇到复杂需求先 <code>/plan</code></li>
+<li>能拆开的任务交给 <code>/agent</code> &#x2F; <code>/agents</code></li>
+<li>环境不对劲时先跑 <code>/doctor</code></li>
+</ol>
+<blockquote>
+<p>[!success]<br>对大多数日常开发场景来说，<code>/init → /plan → /agent(s) → /compact</code> 这条链路已经足够高频、足够实用。</p>
+</blockquote>
+<h2 id="延伸学习方向"><a href="#延伸学习方向" class="headerlink" title="延伸学习方向"></a>延伸学习方向</h2><p>如果你准备继续往下深挖，我建议优先看下面这些方向。</p>
+<h3 id="Skills-方向"><a href="#Skills-方向" class="headerlink" title="Skills 方向"></a>Skills 方向</h3><ul>
+<li><code>openspec</code><ul>
+<li><a href="https://www.aivi.fyi//llms/introduce-OpenSpec">博客教学</a></li>
+<li><a href="https://www.youtube.com/watch?v=ANjiJQQIBo0">YouTube 教学</a></li>
+<li><a href="https://linux.do/t/topic/1445627">L 站 openspec 实战</a></li>
+<li><a href="https://linux.do/t/topic/1701121">OPSX 任务拆分</a></li>
+</ul>
+</li>
+<li><code>skill-seeker</code><ul>
+<li><a href="https://www.aivi.fyi/aiagents/introduce-Skill-Seeker">博客教学</a></li>
+<li><a href="https://www.youtube.com/watch?v=K6-sR__mA3s&t=9s">YouTube 教学</a></li>
+</ul>
+</li>
+<li><code>Trellis</code><ul>
+<li><a href="https://linux.do/t/topic/1539636">L 站讨论</a></li>
+<li><a href="https://github.com/mindfold-ai/Trellis">GitHub - mindfold-ai&#x2F;Trellis</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="多智能体方向"><a href="#多智能体方向" class="headerlink" title="多智能体方向"></a>多智能体方向</h3><ul>
+<li><a href="https://github.com/datawhalechina/hello-agents">GitHub - datawhalechina&#x2F;hello-agents</a></li>
+<li><code>autogen</code></li>
+</ul>
+<h2 id="速查版"><a href="#速查版" class="headerlink" title="速查版"></a>速查版</h2><p>如果你只是临时回来翻一下命令，直接看这一节就够了。</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>首选命令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>对话太长，想保留重点继续聊</td>
+<td><code>/compact</code></td>
+</tr>
+<tr>
+<td>想彻底切到新话题</td>
+<td><code>/clear</code></td>
+</tr>
+<tr>
+<td>想恢复之前没做完的任务</td>
+<td><code>/resume</code></td>
+</tr>
+<tr>
+<td>动手前先看实现方案</td>
+<td><code>/plan</code></td>
+</tr>
+<tr>
+<td>想把任务并行拆开处理</td>
+<td><code>/agent</code> &#x2F; <code>/agents</code></td>
+</tr>
+<tr>
+<td>查看后台任务列表</td>
+<td><code>/tasks</code></td>
+</tr>
+<tr>
+<td>初始化当前项目规范</td>
+<td><code>/init</code></td>
+</tr>
+<tr>
+<td>管理工具权限</td>
+<td><code>/allowed-tools</code></td>
+</tr>
+<tr>
+<td>管理 MCP 服务</td>
+<td><code>/mcp</code></td>
+</tr>
+<tr>
+<td>管理插件 &#x2F; Skills</td>
+<td><code>/plugins</code></td>
+</tr>
+<tr>
+<td>查看本次会话成本</td>
+<td><code>/cost</code></td>
+</tr>
+<tr>
+<td>查看额度与限流</td>
+<td><code>/usage</code></td>
+</tr>
+<tr>
+<td>排查环境问题</td>
+<td><code>/doctor</code></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>[!abstract]<br>一句话总结：<br>Claude Code 真正好用的地方，不只是“能回答”，而是它能在正确的时机帮你<strong>压缩上下文、先做规划、并行处理任务、接入更多工具</strong>。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+      <tags>
+        <tag>ClaudeCode</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>手工敲代码到 AI 智能体流水线（Harness Engineering）</title>
+    <url>/my-blog/2026/03/27/03Agent-Harness/</url>
+    <content><![CDATA[<h1 id="聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线"><a href="#聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线" class="headerlink" title="聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线"></a>聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线</h1><p>前阵子，OpenAI 和 Anthropic 等顶尖 AI 实验室先后公布了他们的内部工程实践——<strong>让 AI 智能体（Agent）全自动写出了包含上百万行代码的真实产品，而人类一行代码都没写。</strong></p>
+<p>很多开发者看完后都有一个疑问：AI 经常会胡说八道（幻觉），写个百来行代码还能凑合，它是怎么做到自主完成几万、几十万行代码的复杂工程，并且不出 Bug 的？</p>
+<p>答案就隐藏在现代软件工程的几个核心概念里。今天，我们就来扒一扒软件开发的进化史，看看我们是如何一步步从“小作坊”走向“全自动化流水线”，并最终构建出让 AI 打工的“智能体工厂”的。</p>
+<p>本文会带你通俗易懂地搞懂四个高频技术词汇：<strong>PRD Driven、Spec Driven、CI&#x2F;CD Pipeline</strong>，以及在 AI 时代被赋予了全新魔力的 <strong>Harness</strong>。</p>
+<hr>
+<h2 id="时代一：图纸与契约（人类协同的艺术）"><a href="#时代一：图纸与契约（人类协同的艺术）" class="headerlink" title="时代一：图纸与契约（人类协同的艺术）"></a>时代一：图纸与契约（人类协同的艺术）</h2><p>在写下第一行代码之前，团队必须有一个明确的“行动指南”。否则前端造了个轮船，后端造了个飞机，最后根本拼不到一起。为了解决这个问题，业界演化出了两种驱动模式：</p>
+<h3 id="1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”"><a href="#1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”" class="headerlink" title="1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”"></a>1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”</h3><ul>
+<li><p><strong>这是什么</strong>：产品经理（PM）写出一份详尽的文档（PRD），规定好页面的长相、按钮点击后的反应、以及背后的业务逻辑。这在团队里是唯一的“圣旨”（Single Source of Truth）。</p>
+</li>
+<li><p><strong>通俗理解</strong>：这就好比你要盖一栋大楼，PRD 就是<strong>建筑效果图和商业计划书</strong>。它关心的是“这栋楼有几层、大堂是什么风格、面向哪些客户”。</p>
+</li>
+<li><p><strong>现实痛点</strong>：这种模式非常业务导向，但如果 PM 的文档写得含糊其辞，或者天天改需求，下游的程序员和测试人员就会痛不欲生。</p>
+</li>
+</ul>
+<h3 id="2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”"><a href="#2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”" class="headerlink" title="2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”"></a>2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”</h3><ul>
+<li><p><strong>这是什么</strong>：随着系统越来越复杂，尤其是前后端分离架构的普及，光有 PRD 不够了。架构师或后端开发会在写代码前，先定义好纯技术层面的“API 接口文档”（也就是 Spec）。</p>
+</li>
+<li><p><strong>通俗理解</strong>：Spec 就像是大楼的<strong>水电施工图纸</strong>。它严格规定了水管的口径、电线的电压。前端看着这份图纸去画页面，后端看着图纸去写数据库。</p>
+</li>
+<li><p><strong>它的魔法</strong>：契约一旦定好，大家就可以兵分两路、并行施工。最后对接时，只要大家都遵守了契约，系统就像插头插进插座一样，一次点亮。</p>
+</li>
+</ul>
+<hr>
+<h2 id="时代二：自动化的魔法（CI-CD-Pipeline）"><a href="#时代二：自动化的魔法（CI-CD-Pipeline）" class="headerlink" title="时代二：自动化的魔法（CI&#x2F;CD Pipeline）"></a>时代二：自动化的魔法（CI&#x2F;CD Pipeline）</h2><p>需求明确了，图纸画好了，程序员们开始疯狂敲代码。但在过去，大家各写各的，月底统一合并代码时，经常引发史诗级的“代码冲突灾难”。</p>
+<p>为了解决这个问题，工程师们发明了 <strong>CI&#x2F;CD Pipeline（持续集成&#x2F;持续交付流水线）</strong>。</p>
+<p>你可以把它想象成工厂里的<strong>全自动化产品传送带</strong>：</p>
+<ul>
+<li><p><strong>CI（持续集成）</strong>：强制要求程序员“小步快跑”，每天把写好的代码提交好几次。一旦提交，流水线就会<strong>自动</strong>拉取代码，<strong>自动</strong>运行几千个测试用例。哪怕你只写错了一个标点符号，传送带会立刻亮起红灯并报警（Fail Fast）。</p>
+</li>
+<li><p><strong>CD（持续部署）</strong>：当代码完美通过了所有的自动化测试，传送带会<strong>自动</strong>把这段代码打包，毫无人工干预地发布到生产环境。</p>
+</li>
+</ul>
+<p>有了 CI&#x2F;CD，软件的发布从过去“半个月一次的心惊胆战”，变成了现在“一天发布几十次的习以为常”。它是现代软件工厂的基石。</p>
+<hr>
+<h2 id="时代三：给-AI-建一座打工工厂（Agent-Harness）"><a href="#时代三：给-AI-建一座打工工厂（Agent-Harness）" class="headerlink" title="时代三：给 AI 建一座打工工厂（Agent Harness）"></a>时代三：给 AI 建一座打工工厂（Agent Harness）</h2><p>现在，深水区来了。</p>
+<p>CI&#x2F;CD 自动化了“测试和发布”，但<strong>代码依然是人类一行行敲出来的</strong>。到了 2025 年之后，大模型（LLM）爆发，我们希望 AI 能直接帮我们把代码写了。</p>
+<p>但如果你直接在对话框里让 AI 写个电商网站，它写到一半就会忘记前面的设定，或者因为代码太长而彻底崩溃。<strong>AI 需要一个极度受限、充满护栏的工作环境。</strong></p>
+<p>这就是 <strong>Harness（脚手架&#x2F;运行框架）</strong> 在 AI 时代迎来的终极进化。</p>
+<p>在过去，Harness 只是一个“测试底座”（给一小段代码提供模拟的测试环境）。但在**智能体优先（Agent-first）**的今天，<strong>Harness 变成了一座专门为 AI 打造的虚拟工厂</strong>。人类不再写业务代码，人类的工作变成了设计和维护这个 Harness。</p>
+<p>结合 Anthropic 和 OpenAI 最近披露的工程实践，一个现代的 Agent Harness 长这样：</p>
+<ol>
+<li><p><strong>分工明确的多智能体车间</strong></p>
+<p> Harness 里不是只有一个 AI，而是有分工的。</p>
+<ul>
+<li><p><strong>Planner（产品经理 AI）</strong>：负责把人类的一句话需求，扩写成详细的 PRD。</p>
+</li>
+<li><p><strong>Generator（牛马程序员 AI）</strong>：负责老老实实写代码。</p>
+</li>
+<li><p><strong>Evaluator（魔鬼测试员 AI）</strong>：因为 AI 往往会“盲目自信”地觉得自己的代码写得很好，所以 Harness 引入了 Evaluator。它会像真实用户一样去点击跑起来的网页，一旦发现 Bug 或是界面丑陋，就会无情地打回重做。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>给 AI 戴上“紧箍咒”（硬性约束）</strong></p>
+<p> 人类面对百万行代码会头晕，AI 也会。在 Harness 中，工程师会写死一套极其严格的自动化检查工具（Linter）。一旦 AI 乱写架构、跨层调用，Harness 就会立刻报错，并在报错信息中告诉 AI：“你违规了，请按照规定重写。”</p>
+</li>
+<li><p><strong>专为 AI 打造的“盲文”（可读性环境）</strong></p>
+<p> 人类的代码库是给人类看的，里面充满了黑话和默认潜规则。Harness 会把整个环境变得对 AI 极其友好。系统报错的日志、性能监控的图表、甚至浏览器的界面，全都会通过 Harness 转换成 AI 能直接读懂的格式，让它具备<strong>自我定位问题、自我修复</strong>的能力。</p>
+</li>
+</ol>
+<hr>
+<h2 id="结语：程序员要失业了吗？"><a href="#结语：程序员要失业了吗？" class="headerlink" title="结语：程序员要失业了吗？"></a>结语：程序员要失业了吗？</h2><p>看懂了这些，你就会明白未来软件工程的走向：</p>
+<ul>
+<li><p><strong>PRD 与 Spec</strong> 依然是灵魂，但可能以后是由人类口述，AI 来撰写。</p>
+</li>
+<li><p><strong>CI&#x2F;CD</strong> 是不可或缺的基础设施。</p>
+</li>
+<li><p>而 <strong>Harness</strong> 将成为各家科技公司最核心的壁垒。</p>
+</li>
+</ul>
+<p>以后，初级程序员确实不再需要去手写那些重复的“增删改查”代码了。但这并不意味着我们不需要工程师了。</p>
+<p><strong>未来的软件工程师，不再是流水线上的“打螺丝工人”，而是成为了设计这条 AI 流水线的“厂长”。</strong> 我们需要去定义架构、调优 Harness 框架、设计反馈回路，让 AI 智能体在这个框架内不知疲倦地为我们创造价值。</p>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Hello Blog</title>
+    <url>/my-blog/2026/02/28/hello-blog/</url>
+    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
+<p>这篇文章用于验证：</p>
+<ul>
+<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
+<li>文章详情页是否展示阅读时长和字数统计</li>
+<li>搜索索引是否正常生成</li>
+<li>GitHub Pages 项目路径下的资源是否正常加载</li>
+</ul>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>Hexo</tag>
+        <tag>GitHub Pages</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>关于</title>
     <url>/my-blog/about/index.html</url>
     <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
@@ -278,18 +506,13 @@
 <li>个人项目的设计、实现和迭代过程</li>
 <li>值得长期保留的方法论、工作流与工程经验</li>
 </ul>
-<p>你也可以通过邮箱联系我：<a href="mailto:&#97;&#x72;&#105;&#97;&#x73;&#x75;&#95;&#x6a;&#x74;&#108;&#101;&#x40;&#x31;&#x36;&#x33;&#46;&#99;&#x6f;&#x6d;">ariasu_jtle@163.com</a></p>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#x61;&#x72;&#x69;&#x61;&#115;&#x75;&#x5f;&#106;&#116;&#x6c;&#101;&#64;&#49;&#54;&#51;&#x2e;&#x63;&#x6f;&#x6d;">ariasu_jtle@163.com</a></p>
 <p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
 ]]></content>
   </entry>
   <entry>
     <title>标签</title>
     <url>/my-blog/tags/index.html</url>
-    <content><![CDATA[]]></content>
-  </entry>
-  <entry>
-    <title>分类</title>
-    <url>/my-blog/categories/index.html</url>
     <content><![CDATA[]]></content>
   </entry>
   <entry>
@@ -317,5 +540,10 @@
   </article>
 </div>
 ]]></content>
+  </entry>
+  <entry>
+    <title>分类</title>
+    <url>/my-blog/categories/index.html</url>
+    <content><![CDATA[]]></content>
   </entry>
 </search>
