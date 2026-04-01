@@ -25,7 +25,7 @@ index:
     tag: true
 
 post:
-  banner_img: /assets/images/my-banner.jpg
+  banner_img: /assets/images/about-banner.jpg
   default_index_img: /assets/images/default-cover.svg
   banner_img_height: 65
   banner_mask_alpha: 0.25
@@ -48,7 +48,7 @@ post:
 
 about:
   enable: true
-  banner_img: /assets/images/default-banner.svg
+  banner_img: /assets/images/about-banner.svg
   banner_img_height: 55
   avatar: /assets/images/my-avatar.jpg
   name: Ariasu
