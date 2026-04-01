@@ -1,7 +1,7 @@
 ---
 title: 项目
 layout: page
-banner_img: /assets/images/default-banner.svg
+banner_img: /assets/images/about-banner.svg
 banner_mask_alpha: 0.2
 ---
 
