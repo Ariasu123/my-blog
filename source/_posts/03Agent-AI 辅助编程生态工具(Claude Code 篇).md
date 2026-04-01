@@ -48,8 +48,7 @@ _sync_source_path: 03Agent/AI 辅助编程生态工具(Claude Code 篇).md
 * **[cch (claude-code-hub)](https://github.com/ding113/claude-code-hub)**
     * **核心用处**：**团队级流量网关**。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。
     * **适合谁**：需要统一管理几十个开发者的企业或小团队。
-    * **管理员令牌**：s62q4TcKx2v8JHDPNzgrNEWtvB5h7woU
-    * http://localhost:23000
+
 
 | 工具对比 | CPA | CRS | CCH |
 | :--- | :--- | :--- | :--- |
