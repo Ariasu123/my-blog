@@ -43,6 +43,9 @@
 <li>项目：<a href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li>
 </ul>
 ]]></content>
+      <categories>
+        <category>infra</category>
+      </categories>
       <tags>
         <tag>CPP/LLM/CUDA/GPU</tag>
       </tags>
@@ -142,6 +145,20 @@
         <tag>Hexo</tag>
         <tag>GitHub Pages</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>关于</title>
+    <url>/my-blog/about/index.html</url>
+    <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
+<p>这里主要会记录：</p>
+<ul>
+<li>AI Infra &#x2F; CUDA &#x2F; 推理优化方向的学习与复盘</li>
+<li>个人项目的设计、实现和迭代过程</li>
+<li>值得长期保留的方法论、工作流与工程经验</li>
+</ul>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#121;&#111;&#x75;&#x72;&#x2d;&#x65;&#x6d;&#97;&#105;&#108;&#x40;&#101;&#120;&#x61;&#x6d;&#112;&#108;&#x65;&#x2e;&#x63;&#111;&#109;">your-email@example.com</a></p>
+<p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
+]]></content>
   </entry>
   <entry>
     <title>分类</title>
@@ -463,20 +480,6 @@ pre {
     max-width: 220px;
   }
 }
-]]></content>
-  </entry>
-  <entry>
-    <title>关于</title>
-    <url>/my-blog/about/index.html</url>
-    <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
-<p>这里主要会记录：</p>
-<ul>
-<li>AI Infra &#x2F; CUDA &#x2F; 推理优化方向的学习与复盘</li>
-<li>个人项目的设计、实现和迭代过程</li>
-<li>值得长期保留的方法论、工作流与工程经验</li>
-</ul>
-<p>你也可以通过邮箱联系我：<a href="mailto:&#x79;&#111;&#117;&#114;&#45;&#x65;&#109;&#97;&#x69;&#108;&#x40;&#101;&#x78;&#97;&#109;&#x70;&#108;&#101;&#x2e;&#x63;&#x6f;&#109;">your-email@example.com</a></p>
-<p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
 ]]></content>
   </entry>
 </search>
