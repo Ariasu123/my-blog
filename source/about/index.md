@@ -11,6 +11,6 @@ layout: about
 - 个人项目的设计、实现和迭代过程
 - 值得长期保留的方法论、工作流与工程经验
 
-你也可以通过邮箱联系我：<your-email@example.com>
+你也可以通过邮箱联系我：<ariasu_jtle@163.com>
 
 GitHub：<https://github.com/Ariasu123>
