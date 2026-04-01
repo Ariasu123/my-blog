@@ -5,13 +5,36 @@
 const fs = require('fs');
 const path = require('path');
 
-hexo.extend.filter.register('before_generate', function() {
-  const customIndexPath = path.join(hexo.base_dir, 'layout', 'index.ejs');
+const TOP_LEVEL_VIEWS = ['index.ejs', 'tags.ejs'];
 
-  if (!fs.existsSync(customIndexPath)) {
-    return;
+function getSynchronizedProjectViews() {
+  const layoutDir = path.join(hexo.base_dir, 'layout');
+
+  if (!fs.existsSync(layoutDir)) {
+    return [];
   }
 
-  const template = fs.readFileSync(customIndexPath, 'utf8');
-  hexo.theme.setView('index.ejs', template);
+  return TOP_LEVEL_VIEWS.map((name) => {
+    const filePath = path.join(layoutDir, name);
+
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
+
+    if (!hexo.theme.getView(name)) {
+      return null;
+    }
+
+    return {
+      name,
+      filePath
+    };
+  }).filter(Boolean);
+}
+
+hexo.extend.filter.register('before_generate', function() {
+  getSynchronizedProjectViews().forEach(({ name, filePath }) => {
+    const template = fs.readFileSync(filePath, 'utf8');
+    hexo.theme.setView(name, template);
+  });
 });

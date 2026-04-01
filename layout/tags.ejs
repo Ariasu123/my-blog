@@ -1,0 +1,24 @@
+<%
+page.layout = 'tags'
+page.title = theme.tag.title || __('tag.title')
+page.subtitle = theme.tag.subtitle || __('tag.subtitle')
+page.banner_img = theme.tag.banner_img
+page.banner_img_height = theme.tag.banner_img_height
+page.banner_mask_alpha = theme.tag.banner_mask_alpha
+
+const cards = build_tag_cards(site.tags)
+%>
+
+<div class="tags-page">
+  <% if (cards.length > 0) { %>
+    <div class="tags-card-grid" role="list">
+      <% cards.forEach(function(card) { %>
+        <a class="tags-card-item" href="<%= card.path %>" style="<%= card.style %>" role="listitem">
+          <span class="tags-card-name"><%= card.name %></span>
+        </a>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="note note-info">暂无标签</div>
+  <% } %>
+</div>
