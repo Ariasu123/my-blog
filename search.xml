@@ -51,6 +51,394 @@
       </tags>
   </entry>
   <entry>
+    <title>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</title>
+    <url>/my-blog/2026/04/12/02AI%20infra-%E4%BB%8E%20vLLM%20%E5%92%8C%20SGLang%20%E5%85%A5%E9%97%A8%EF%BC%8C%E5%88%B0%20AI%20Infra%20%E6%B1%82%E8%81%8C%E8%90%BD%E5%9C%B0/</url>
+    <content><![CDATA[<h1 id="从-vLLM-和-SGLang-入门，到-AI-Infra-求职落地"><a href="#从-vLLM-和-SGLang-入门，到-AI-Infra-求职落地" class="headerlink" title="从 vLLM 和 SGLang 入门，到 AI Infra 求职落地"></a>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</h1><p>这两年，大模型工程岗位正在发生一个很明显的变化：</p>
+<p><strong>企业不再只需要“会调 API 的应用工程师”，而是越来越需要“会做推理系统的工程师”。</strong></p>
+<p>以前很多人做 AI 应用开发，只要能把模型接进产品、把接口跑通、把业务链路串起来，就已经算掌握了相当大的一块能力。但随着模型服务越来越深入生产环境，企业真正开始为下面这些问题付钱：</p>
+<ul>
+<li>吞吐能不能上去</li>
+<li>时延能不能压下来</li>
+<li>显存能不能扛住</li>
+<li>服务能不能稳定跑</li>
+<li>成本能不能控住</li>
+<li>高并发、长上下文、复杂生成场景下会不会出问题</li>
+</ul>
+<p>这也是为什么 <code>vLLM</code>、<code>SGLang</code>、<code>TGI</code>、<code>TensorRT-LLM</code> 这类项目越来越受关注。</p>
+<p>但如果你想从应用层转到 AI Infra，有一个判断一定要尽早建立起来：</p>
+<blockquote>
+<p><code>vLLM</code> 和 <code>SGLang</code> 不是学习终点，它们只是你进入 AI Infra 世界的入口。</p>
+</blockquote>
+<p>真正决定你能不能走到求职落地那一步的，不是“你有没有把框架跑起来”，而是你有没有围绕它们建立起 <strong>推理系统理解、实验能力、排障能力和工程表达能力</strong>。</p>
+<p>这篇文章想回答的，就是这个问题：</p>
+<p><strong>如果你想从应用层转到 AI Infra，应该怎么学 <code>vLLM</code> 和 <code>SGLang</code>，最后才能变成真正的求职竞争力？</strong></p>
+<h2 id="先说结论：目标别定成“会部署框架”"><a href="#先说结论：目标别定成“会部署框架”" class="headerlink" title="先说结论：目标别定成“会部署框架”"></a>先说结论：目标别定成“会部署框架”</h2><p>如果你的目标是转向 <code>AI Infra / LLM Serving / Inference Engineering</code>，这条路线是成立的，而且在国内市场有真实岗位需求。</p>
+<p>但很多人一开始就把目标定偏了。他们会觉得：</p>
+<ul>
+<li>把 <code>vLLM</code> 跑起来</li>
+<li>把 <code>SGLang</code> 启起来</li>
+<li>调通一个 OpenAI-compatible API</li>
+</ul>
+<p>这样就算入门 infra 了。</p>
+<p>这其实只摸到了门把手。</p>
+<p>企业真正要的，不是“会起一个推理服务的人”，而是能把大模型推理系统 <strong>跑稳、跑快、跑大规模</strong> 的人。也就是说，框架只是切入口，真正有价值的是你围绕框架形成的系统能力。</p>
+<h2 id="企业真正看重的，是你能不能理解系统"><a href="#企业真正看重的，是你能不能理解系统" class="headerlink" title="企业真正看重的，是你能不能理解系统"></a>企业真正看重的，是你能不能理解系统</h2><p>如果把这个方向的能力压缩来看，其实就三层。</p>
+<h3 id="第一层：会跑服务"><a href="#第一层：会跑服务" class="headerlink" title="第一层：会跑服务"></a>第一层：会跑服务</h3><p>会启动 <code>vLLM</code> &#x2F; <code>SGLang</code>、会配参数、会调接口，这当然是入门，但也只是入门。</p>
+<p>它只能说明你接触过框架，不能说明你真正理解系统。</p>
+<h3 id="第二层：能理解系统、做实验、看指标"><a href="#第二层：能理解系统、做实验、看指标" class="headerlink" title="第二层：能理解系统、做实验、看指标"></a>第二层：能理解系统、做实验、看指标</h3><p>这才是求职的最低有效门槛，也是大多数转岗者最应该先达到的层级。</p>
+<p>你至少要能讲清：</p>
+<ul>
+<li><code>Prefill</code> 和 <code>Decode</code> 的区别</li>
+<li>KV Cache 为什么关键</li>
+<li>吞吐、时延、显存为什么互相拉扯</li>
+<li>长上下文为什么会改变系统行为</li>
+<li>连续批处理 &#x2F; 动态批处理在解决什么问题</li>
+</ul>
+<p>同时你还要能：</p>
+<ul>
+<li>设计一次压测</li>
+<li>采集关键指标</li>
+<li>对结果做解释</li>
+<li>判断问题大概出在哪一层</li>
+</ul>
+<p>如果这一层做不到，面试时通常会非常被动。</p>
+<h3 id="第三层：能改框架、能排障、能做优化"><a href="#第三层：能改框架、能排障、能做优化" class="headerlink" title="第三层：能改框架、能排障、能做优化"></a>第三层：能改框架、能排障、能做优化</h3><p>这一层开始真正拉开差距。</p>
+<p>你应该能看懂关键调用链，能在请求链路上增加日志或 metrics，能修改一个小的调度、缓存或观测逻辑，也能分析 OOM、P99 抖动、吞吐下降这类问题。</p>
+<p>这还不一定意味着你已经是底层性能专家，但至少说明你已经不再停留在“会用框架”的阶段。</p>
+<blockquote>
+<p>[!important]<br>对大多数从应用层转 infra 的人来说，最现实的目标不是一开始就做 CUDA &#x2F; Kernel 优化，而是先稳定进入“第二层”，再逐步逼近“第三层”。</p>
+</blockquote>
+<h2 id="如何快速入门：先完成一个最小闭环"><a href="#如何快速入门：先完成一个最小闭环" class="headerlink" title="如何快速入门：先完成一个最小闭环"></a>如何快速入门：先完成一个最小闭环</h2><p>很多人一上来就想同时看 <code>vLLM</code>、<code>SGLang</code>、<code>TGI</code>、<code>TensorRT-LLM</code>，顺便再补 K8s、CUDA、Triton。这样看起来很努力，但结果通常是很快失去主线。</p>
+<p>更好的入门方式，是先完成一个最小闭环：</p>
+<blockquote>
+<p><strong>跑起来一次 -&gt; 看懂一点原理 -&gt; 做一轮最小实验 -&gt; 写下一页总结</strong></p>
+</blockquote>
+<p>这比你连续收藏十篇教程更有效。</p>
+<h3 id="第-1-步：先把最小服务跑起来"><a href="#第-1-步：先把最小服务跑起来" class="headerlink" title="第 1 步：先把最小服务跑起来"></a>第 1 步：先把最小服务跑起来</h3><p>刚开始不要追求理解全部细节，先让自己获得一个基本手感：</p>
+<ul>
+<li>能启动一个 <code>vLLM</code> 服务</li>
+<li>能发起一次 API 请求</li>
+<li>能看到输入、输出、日志和资源占用</li>
+<li>能知道服务失败时大概去哪里看错误</li>
+</ul>
+<p>这一步的目标不是“证明你会 infra”，而是先把抽象概念落到一个可运行的东西上。</p>
+<h3 id="第-2-步：马上回头补推理系统基础"><a href="#第-2-步：马上回头补推理系统基础" class="headerlink" title="第 2 步：马上回头补推理系统基础"></a>第 2 步：马上回头补推理系统基础</h3><p>跑通之后，不要停留在“能用了”。</p>
+<p>你要立刻回头问几个问题：</p>
+<ul>
+<li>请求从哪里进来？</li>
+<li>为什么第一次生成前会有 <code>Prefill</code>？</li>
+<li>为什么后面是 token-by-token 的 <code>Decode</code>？</li>
+<li>KV Cache 到底缓存了什么？</li>
+<li>为什么上下文变长之后，显存和时延都会变敏感？</li>
+</ul>
+<p>这一步会让你从“调用者视角”切到“系统视角”。</p>
+<h3 id="第-3-步：做第一次小实验"><a href="#第-3-步：做第一次小实验" class="headerlink" title="第 3 步：做第一次小实验"></a>第 3 步：做第一次小实验</h3><p>不要等全部学完再做实验。最早的实验可以非常简单。</p>
+<p>比如只改三个变量：</p>
+<ul>
+<li>输入长度</li>
+<li>输出长度</li>
+<li>并发数量</li>
+</ul>
+<p>然后观察：</p>
+<ul>
+<li>请求变慢了吗？</li>
+<li>首 token 变慢了吗？</li>
+<li>输出阶段变慢了吗？</li>
+<li>显存变化明显吗？</li>
+<li>日志里有没有调度或 batch 相关信息？</li>
+</ul>
+<p>哪怕实验很粗糙，也比单纯看文档更能建立直觉。</p>
+<h3 id="第-4-步：写一页入门总结"><a href="#第-4-步：写一页入门总结" class="headerlink" title="第 4 步：写一页入门总结"></a>第 4 步：写一页入门总结</h3><p>快速入门最后一定要写总结，否则很容易“跑过但没沉淀”。</p>
+<p>这一页只需要回答 4 个问题：</p>
+<ol>
+<li>我跑通了什么？</li>
+<li>我理解了哪几个核心概念？</li>
+<li>我做了哪几个变量实验？</li>
+<li>我下一步最该看哪一段源码或文档？</li>
+</ol>
+<p>做到这一步，你才算真正进入这个方向，而不是只是跑了一个 demo。</p>
+<h3 id="一个-7-天快速入门节奏"><a href="#一个-7-天快速入门节奏" class="headerlink" title="一个 7 天快速入门节奏"></a>一个 7 天快速入门节奏</h3><p>如果你想给自己一个明确起点，可以按下面这个节奏走：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>目标</th>
+<th>产出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Day 1</td>
+<td>跑通最小 <code>vLLM</code> 服务</td>
+<td>一条成功请求 + 启动记录</td>
+</tr>
+<tr>
+<td>Day 2</td>
+<td>理解请求从 API 到生成的粗链路</td>
+<td>一张请求流程草图</td>
+</tr>
+<tr>
+<td>Day 3</td>
+<td>补 <code>Prefill</code> &#x2F; <code>Decode</code> &#x2F; KV Cache</td>
+<td>一页概念笔记</td>
+</tr>
+<tr>
+<td>Day 4</td>
+<td>改输入长度和输出长度做实验</td>
+<td>一组简单对比数据</td>
+</tr>
+<tr>
+<td>Day 5</td>
+<td>改并发数观察吞吐和时延</td>
+<td>一组并发实验记录</td>
+</tr>
+<tr>
+<td>Day 6</td>
+<td>看一段 scheduler 或 cache 相关代码</td>
+<td>一段源码阅读笔记</td>
+</tr>
+<tr>
+<td>Day 7</td>
+<td>汇总“我跑通了什么、理解了什么、下一步看什么”</td>
+<td>一页入门总结</td>
+</tr>
+</tbody></table>
+<p>这 7 天不追求完整，只追求建立第一轮闭环。完成之后，再进入系统学习会顺很多。</p>
+<h2 id="学习路线：不要铺太宽，要按-4-个阶段推进"><a href="#学习路线：不要铺太宽，要按-4-个阶段推进" class="headerlink" title="学习路线：不要铺太宽，要按 4 个阶段推进"></a>学习路线：不要铺太宽，要按 4 个阶段推进</h2><p>如果你不是在做专项研究，而是想把这条路线真正走到求职落地，我更建议把它理解成 4 个阶段，而不是一堆并列知识点。</p>
+<h3 id="第-1-阶段：建立推理系统脑图"><a href="#第-1-阶段：建立推理系统脑图" class="headerlink" title="第 1 阶段：建立推理系统脑图"></a>第 1 阶段：建立推理系统脑图</h3><p>这一阶段的目标不是写很多代码，而是先把问题空间看清。</p>
+<p>你需要回答的核心问题只有几个：</p>
+<ul>
+<li>一次请求是怎么进入系统并变成 token 流的？</li>
+<li>为什么 <code>Prefill</code> 和 <code>Decode</code> 的资源特征不一样？</li>
+<li>为什么 KV Cache 会直接影响吞吐、显存和时延？</li>
+<li>为什么长上下文、多轮对话、复杂生成会让系统行为变化很大？</li>
+</ul>
+<p>这一阶段最好的产出不是“我看了多少页源码”，而是：</p>
+<ul>
+<li>一篇自己的推理系统基础笔记</li>
+<li>一张请求生命周期图</li>
+<li>一个最小 benchmark 脚手架</li>
+</ul>
+<p>只要你能画出一条请求从进入服务到生成 token 的路径，你再看框架源码时就不会完全迷路。</p>
+<h3 id="第-2-阶段：围绕-vLLM-建立第一套系统理解"><a href="#第-2-阶段：围绕-vLLM-建立第一套系统理解" class="headerlink" title="第 2 阶段：围绕 vLLM 建立第一套系统理解"></a>第 2 阶段：围绕 vLLM 建立第一套系统理解</h3><p>我建议先以 <code>vLLM</code> 为主框架。</p>
+<p>不是因为它一定“最好”，而是因为它足够主流，也足够适合作为理解现代 LLM serving 的第一站。</p>
+<p>这一阶段你应该围绕 <code>vLLM</code> 做四件事：</p>
+<ul>
+<li>跑通服务</li>
+<li>跟请求路径</li>
+<li>看 scheduler 和 cache 相关代码</li>
+<li>做小规模实验</li>
+</ul>
+<p>注意，这里的重点不是把所有源码都啃完，而是建立“系统视角”：</p>
+<ul>
+<li>请求怎么被组织</li>
+<li>batch 怎么被调度</li>
+<li>cache 怎么被管理</li>
+<li>不同负载为什么会打出不同结果</li>
+</ul>
+<p>只要你开始能用这些问题看 <code>vLLM</code>，你就已经不是在“学一个工具”，而是在学一套推理系统。</p>
+<h3 id="第-3-阶段：把-SGLang-学成“对照组”"><a href="#第-3-阶段：把-SGLang-学成“对照组”" class="headerlink" title="第 3 阶段：把 SGLang 学成“对照组”"></a>第 3 阶段：把 SGLang 学成“对照组”</h3><p>很多人学第二个框架时，会重复第一遍的学习方式，结果是又学了一套命令，却没有形成判断力。</p>
+<p>更好的方式是：把 <code>SGLang</code> 当成对照组。</p>
+<p>你学习它，不是为了多背一套 API，而是为了比较：</p>
+<ul>
+<li>它和 <code>vLLM</code> 的设计思路哪里不一样</li>
+<li>它为什么在某些复杂生成场景更自然</li>
+<li>它适合什么负载，<code>vLLM</code> 又适合什么负载</li>
+</ul>
+<p>一旦你带着“比较”和“选型”的视角去学，<code>SGLang</code> 才会真正变成你的面试资产。</p>
+<p>最值得做的不是泛泛看文档，而是做一份小对比：</p>
+<ul>
+<li>同一个模型</li>
+<li>同一组请求</li>
+<li>同样记录吞吐、时延、显存和调试体验</li>
+<li>最后写出“什么时候选谁”的判断</li>
+</ul>
+<h3 id="第-4-阶段：把框架能力补成-Infra-能力"><a href="#第-4-阶段：把框架能力补成-Infra-能力" class="headerlink" title="第 4 阶段：把框架能力补成 Infra 能力"></a>第 4 阶段：把框架能力补成 Infra 能力</h3><p>这一阶段是很多人最容易忽略，但企业最看重的一步。</p>
+<p>因为到了求职现场，面试官要确认的不是“你会不会看框架”，而是：</p>
+<ul>
+<li>你能不能把服务真正跑起来</li>
+<li>你能不能容器化、观测、压测</li>
+<li>你能不能定位问题</li>
+<li>你能不能解释为什么这个问题会发生</li>
+</ul>
+<p>所以你必须把这些能力补上：</p>
+<ul>
+<li>Linux 基础命令和排障思路</li>
+<li>Docker 镜像与容器运行</li>
+<li>基础 K8s 概念</li>
+<li>日志、指标、监控体系</li>
+<li>GPU 监控</li>
+<li>profiling 工具</li>
+</ul>
+<p>这一阶段最好的产出，是一个带日志、指标和压测记录的最小 serving 系统。</p>
+<p>只有走到这里，你的能力才会从“框架学习者”变成“infra 候选人”。</p>
+<h2 id="最后要沉淀成什么"><a href="#最后要沉淀成什么" class="headerlink" title="最后要沉淀成什么"></a>最后要沉淀成什么</h2><p>如果你想让这条学习路线最终服务于求职，不要只留下阅读记录。</p>
+<p>最少要沉淀两类东西。</p>
+<h3 id="第一类：实验报告"><a href="#第一类：实验报告" class="headerlink" title="第一类：实验报告"></a>第一类：实验报告</h3><p>比如：</p>
+<ul>
+<li><code>vLLM</code> 在不同上下文长度下的表现</li>
+<li><code>vLLM</code> 和 <code>SGLang</code> 在相同请求下的差异</li>
+<li>并发变化对 TTFT &#x2F; TPOT &#x2F; 显存的影响</li>
+</ul>
+<p>实验报告的重点不是数据多漂亮，而是你能解释：</p>
+<ul>
+<li>为什么这样设计实验</li>
+<li>看了哪些指标</li>
+<li>结果说明什么</li>
+<li>下一步应该怎么优化或验证</li>
+</ul>
+<h3 id="第二类：最小-serving-项目"><a href="#第二类：最小-serving-项目" class="headerlink" title="第二类：最小 serving 项目"></a>第二类：最小 serving 项目</h3><p>这个项目不需要很大，但要完整。</p>
+<p>至少包含：</p>
+<ul>
+<li>服务启动</li>
+<li>API 调用</li>
+<li>Docker 化</li>
+<li>基础日志</li>
+<li>基础指标</li>
+<li>一次压测记录</li>
+<li>一次问题分析</li>
+</ul>
+<p>这比“我学过 vLLM &#x2F; SGLang”有说服力得多。</p>
+<h2 id="最后的判断"><a href="#最后的判断" class="headerlink" title="最后的判断"></a>最后的判断</h2><p>如果你是为了找工作进入 infra，最稳的路线不是“赶紧把几个框架都跑起来”，而是：</p>
+<blockquote>
+<p><strong>先用 <code>vLLM</code> 跑通最小闭环，再补推理系统基础，然后围绕 <code>vLLM</code> 建立系统理解，用 <code>SGLang</code> 做对照，最后补齐 Linux &#x2F; Docker &#x2F; 观测 &#x2F; profiling，并把过程沉淀成实验报告和 serving 项目。</strong></p>
+</blockquote>
+<p>从这个角度看，<code>vLLM</code> 和 <code>SGLang</code> 不是学习终点，而是你进入 AI Infra 世界最好的两扇门。</p>
+]]></content>
+      <categories>
+        <category>AI Infra</category>
+      </categories>
+      <tags>
+        <tag>AIInfra</tag>
+        <tag>vLLM</tag>
+        <tag>SGLang</tag>
+        <tag>LLMServing</tag>
+        <tag>求职</tag>
+        <tag>博客</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude Code实用生态工具</title>
+    <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
+    <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
+<p><strong>💡 写在前面的话：</strong><br>最近 AI 编程圈子（尤其是基于命令行的 CLI 工具）涌现了大量的开源项目。由于各大 AI 模型的 API 官方计费昂贵，且跨模型协作繁琐，开发者们“魔改”出了一个庞大的外围生态。</p>
+</blockquote>
+<hr>
+<h2 id="一、-核心底座"><a href="#一、-核心底座" class="headerlink" title="一、 核心底座"></a>一、 核心底座</h2><p>这部分是整个生态的基础，你不需要去配置它们，但需要知道它们是什么。</p>
+<ul>
+<li><p><strong>cc (Claude Code)</strong></p>
+<ul>
+<li>Anthropic 官方推出的基于命令行的 AI 编码助手。</li>
+</ul>
+</li>
+<li><p><strong>lsp (Language Server Protocol)</strong></p>
+<ul>
+<li><strong>是什么</strong>：语言服务器协议。</li>
+<li><strong>小白理解</strong>：编辑器（如 VS Code）和 AI 沟通的“标准普通话”，有了它，AI 才能看懂你的代码结构和上下文。</li>
+</ul>
+</li>
+<li><p><strong>ace (Augment Context Engine)</strong></p>
+<ul>
+<li>增强上下文引擎。</li>
+<li><strong>1. 实时语义索引 (Semantic Understanding)</strong> 它不是简单的关键字搜索，而是对你的整个代码库进行“向量化语义分析”。它能看懂文件之间的关系，知道“如果你修改了这个前端接口，后端哪个微服务也需要同步修改”。</li>
+</ul>
+<ul>
+<li><p><strong>2. 包含历史记忆 (Context Lineage)</strong> 这是它非常强大的一个点。ACE 不仅检索当前的代码，还会检索 Git 的 <strong>Commit 历史记录</strong>。当 AI 在修改一段祖传代码时，ACE 会告诉 AI：“两年前某人写这行代码是为了修复一个什么特殊的 Bug，你千万别瞎改。” 这极大地保留了团队的“部落知识”。</p>
+</li>
+<li><p><strong>3. 精准浓缩，只喂干货</strong> 当你在 Claude Code 里提问时，ACE 会在毫秒级内检索出最相关的几十行代码和背景信息，打包、浓缩后精准地喂给模型。这让大模型能以极低的 Token 消耗，给出极其准确的回答。</p>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="二、-代理与中转"><a href="#二、-代理与中转" class="headerlink" title="二、 代理与中转"></a>二、 代理与中转</h2><p>官方的 AI API 太贵了？这三个工具帮你把账单打下来。</p>
+<ul>
+<li><strong><a href="https://github.com/router-for-me/CLIProxyAPI">cpa (CLIProxyAPI)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>白嫖转换器</strong>。把你平时免费用的“网页版”AI（如 Gemini 2.5 Pro 免费版），伪装成标准的 API 给代码工具用。</li>
+<li><strong>适合谁</strong>：想零成本用顶级大模型的个人玩家。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/Wei-Shaw/claude-relay-service">crs (claude-relay-service)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>拼车记账管家</strong>。你和几个朋友凑钱买了一个昂贵的官方 API，它能把这个 API 切分成多个子账号，精确记录每个人花了多少钱。</li>
+<li><strong>适合谁</strong>：几个人合租 API 的“拼车党”。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/ding113/claude-code-hub">cch (claude-code-hub)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>团队级流量网关</strong>。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。</li>
+<li><strong>适合谁</strong>：需要统一管理几十个开发者的企业或小团队。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="left">工具对比</th>
+<th align="left">CPA</th>
+<th align="left">CRS</th>
+<th align="left">CCH</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>主打功能</strong></td>
+<td align="left">网页免费转 API</td>
+<td align="left">额度切分与账单 AA</td>
+<td align="left">高并发负载均衡与管理</td>
+</tr>
+<tr>
+<td align="left"><strong>目标用户</strong></td>
+<td align="left">个人白嫖党</td>
+<td align="left">几人合租小圈子</td>
+<td align="left">开发团队&#x2F;企业</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、-客户端与体验增强"><a href="#三、-客户端与体验增强" class="headerlink" title="三、 客户端与体验增强"></a>三、 客户端与体验增强</h2><p>觉得黑乎乎的命令行太难用？这些工具给你加上仪表盘和界面。</p>
+<ul>
+<li><strong><a href="https://github.com/musistudio/claude-code-router">ccr (claude-code-router)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>单机版智能路由</strong>。接管原生的 Claude Code，遇到简单的任务自动切给便宜模型（如 DeepSeek），遇到难的再切给原版 Claude，极致省钱。</li>
+<li>CCR使用流程</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/CooperJiang/coding-tool">cc-tool (coding-tool)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>本地数据大屏</strong>。它在你电脑本地跑一个网页后台，实时监控你发了多少请求、耗了多少 Token、精确估算花了多少美分，并在后台默默保活你的代理。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/farion1231/cc-switch">ccs (cc-switch)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>CLI 工具的桌面级聚合宿主。</strong> 通过图形化界面封装底层命令行进程，提供环境变量管理、多模型状态监控和统一的交互入口，实现 AI 辅助编程工作流的可视化降维。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="四、-多模型协作与工作流"><a href="#四、-多模型协作与工作流" class="headerlink" title="四、 多模型协作与工作流"></a>四、 多模型协作与工作流</h2><p>如何让不同的 AI 打配合，或者让 AI 自动完成繁琐的 Git 流程？</p>
+<ul>
+<li><strong><a href="https://github.com/bfly123/claude_code_bridge">ccb (claude_code_bridge)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>AI 联合会议室</strong>。让 Claude、Gemini 等多个模型在同一个项目里无缝切换，且<strong>共享上下文记忆</strong>。Gemini 读完的长代码，Claude 直接接着改，不用重复发代码浪费钱。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/fengshao1227/ccg-workflow">ccg (ccg-workflow)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>17+ 一键自动化命令</strong>。不需要每次都打字对 AI 提要求，它内置了 <code>/review</code>（代码审查）、一键写 Git 提交等自动化指令，把聊天变成了标准化的工作流。</li>
+</ul>
+</li>
+<li><em>(注：还有另一个也叫 <strong>CCG (Coder-Codex-Gemini)</strong> 的概念，它是一个宏观的多模型协作双环境框架，强调几种特定模型的联合打法。)</em></li>
+</ul>
+<hr>
+<h2 id="🎯-总结建议：小白该从哪里下手？"><a href="#🎯-总结建议：小白该从哪里下手？" class="headerlink" title="🎯 总结建议：小白该从哪里下手？"></a>🎯 总结建议：小白该从哪里下手？</h2><p>如果你是一个刚刚接触 AI 辅助编程的新手，建议按照以下路线打怪升级：</p>
+<ol>
+<li><strong>第一步（先用起来）</strong>：先搞定 <strong>CPA</strong>，把免费额度接入你的开发环境，实现“Token 自由”。</li>
+<li><strong>第二步（体验升级）</strong>：安装 <strong>cc-tool</strong>，在本地看着可视化面板，清楚知道自己的调用情况。</li>
+<li><strong>第三步（进阶高玩）</strong>：尝试配置 <strong>ccr</strong> 或 <strong>ccb</strong>，体验让不同大模型在你电脑里无缝协作的快感。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>ClaudeCode</tag>
+        <tag>工具指南</tag>
+        <tag>效率</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Claude Code 使用心得</title>
     <url>/my-blog/2026/03/19/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/</url>
     <content><![CDATA[<h1 id="Claude-Code-使用心得：常用命令、技巧与速查版"><a href="#Claude-Code-使用心得：常用命令、技巧与速查版" class="headerlink" title="Claude Code 使用心得：常用命令、技巧与速查版"></a>Claude Code 使用心得：常用命令、技巧与速查版</h1><p>如果你刚开始接触 Claude Code，最容易卡住的往往不是不会写 Prompt，而是不知道哪些入口最值得先记、长会话该怎么收束、什么时候该先规划再执行。</p>
@@ -355,394 +743,6 @@
       </categories>
   </entry>
   <entry>
-    <title>Claude Code实用生态工具</title>
-    <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
-    <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
-<p><strong>💡 写在前面的话：</strong><br>最近 AI 编程圈子（尤其是基于命令行的 CLI 工具）涌现了大量的开源项目。由于各大 AI 模型的 API 官方计费昂贵，且跨模型协作繁琐，开发者们“魔改”出了一个庞大的外围生态。</p>
-</blockquote>
-<hr>
-<h2 id="一、-核心底座"><a href="#一、-核心底座" class="headerlink" title="一、 核心底座"></a>一、 核心底座</h2><p>这部分是整个生态的基础，你不需要去配置它们，但需要知道它们是什么。</p>
-<ul>
-<li><p><strong>cc (Claude Code)</strong></p>
-<ul>
-<li>Anthropic 官方推出的基于命令行的 AI 编码助手。</li>
-</ul>
-</li>
-<li><p><strong>lsp (Language Server Protocol)</strong></p>
-<ul>
-<li><strong>是什么</strong>：语言服务器协议。</li>
-<li><strong>小白理解</strong>：编辑器（如 VS Code）和 AI 沟通的“标准普通话”，有了它，AI 才能看懂你的代码结构和上下文。</li>
-</ul>
-</li>
-<li><p><strong>ace (Augment Context Engine)</strong></p>
-<ul>
-<li>增强上下文引擎。</li>
-<li><strong>1. 实时语义索引 (Semantic Understanding)</strong> 它不是简单的关键字搜索，而是对你的整个代码库进行“向量化语义分析”。它能看懂文件之间的关系，知道“如果你修改了这个前端接口，后端哪个微服务也需要同步修改”。</li>
-</ul>
-<ul>
-<li><p><strong>2. 包含历史记忆 (Context Lineage)</strong> 这是它非常强大的一个点。ACE 不仅检索当前的代码，还会检索 Git 的 <strong>Commit 历史记录</strong>。当 AI 在修改一段祖传代码时，ACE 会告诉 AI：“两年前某人写这行代码是为了修复一个什么特殊的 Bug，你千万别瞎改。” 这极大地保留了团队的“部落知识”。</p>
-</li>
-<li><p><strong>3. 精准浓缩，只喂干货</strong> 当你在 Claude Code 里提问时，ACE 会在毫秒级内检索出最相关的几十行代码和背景信息，打包、浓缩后精准地喂给模型。这让大模型能以极低的 Token 消耗，给出极其准确的回答。</p>
-</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="二、-代理与中转"><a href="#二、-代理与中转" class="headerlink" title="二、 代理与中转"></a>二、 代理与中转</h2><p>官方的 AI API 太贵了？这三个工具帮你把账单打下来。</p>
-<ul>
-<li><strong><a href="https://github.com/router-for-me/CLIProxyAPI">cpa (CLIProxyAPI)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>白嫖转换器</strong>。把你平时免费用的“网页版”AI（如 Gemini 2.5 Pro 免费版），伪装成标准的 API 给代码工具用。</li>
-<li><strong>适合谁</strong>：想零成本用顶级大模型的个人玩家。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/Wei-Shaw/claude-relay-service">crs (claude-relay-service)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>拼车记账管家</strong>。你和几个朋友凑钱买了一个昂贵的官方 API，它能把这个 API 切分成多个子账号，精确记录每个人花了多少钱。</li>
-<li><strong>适合谁</strong>：几个人合租 API 的“拼车党”。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/ding113/claude-code-hub">cch (claude-code-hub)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>团队级流量网关</strong>。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。</li>
-<li><strong>适合谁</strong>：需要统一管理几十个开发者的企业或小团队。</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th align="left">工具对比</th>
-<th align="left">CPA</th>
-<th align="left">CRS</th>
-<th align="left">CCH</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left"><strong>主打功能</strong></td>
-<td align="left">网页免费转 API</td>
-<td align="left">额度切分与账单 AA</td>
-<td align="left">高并发负载均衡与管理</td>
-</tr>
-<tr>
-<td align="left"><strong>目标用户</strong></td>
-<td align="left">个人白嫖党</td>
-<td align="left">几人合租小圈子</td>
-<td align="left">开发团队&#x2F;企业</td>
-</tr>
-</tbody></table>
-<hr>
-<h2 id="三、-客户端与体验增强"><a href="#三、-客户端与体验增强" class="headerlink" title="三、 客户端与体验增强"></a>三、 客户端与体验增强</h2><p>觉得黑乎乎的命令行太难用？这些工具给你加上仪表盘和界面。</p>
-<ul>
-<li><strong><a href="https://github.com/musistudio/claude-code-router">ccr (claude-code-router)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>单机版智能路由</strong>。接管原生的 Claude Code，遇到简单的任务自动切给便宜模型（如 DeepSeek），遇到难的再切给原版 Claude，极致省钱。</li>
-<li>CCR使用流程</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/CooperJiang/coding-tool">cc-tool (coding-tool)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>本地数据大屏</strong>。它在你电脑本地跑一个网页后台，实时监控你发了多少请求、耗了多少 Token、精确估算花了多少美分，并在后台默默保活你的代理。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/farion1231/cc-switch">ccs (cc-switch)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>CLI 工具的桌面级聚合宿主。</strong> 通过图形化界面封装底层命令行进程，提供环境变量管理、多模型状态监控和统一的交互入口，实现 AI 辅助编程工作流的可视化降维。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="四、-多模型协作与工作流"><a href="#四、-多模型协作与工作流" class="headerlink" title="四、 多模型协作与工作流"></a>四、 多模型协作与工作流</h2><p>如何让不同的 AI 打配合，或者让 AI 自动完成繁琐的 Git 流程？</p>
-<ul>
-<li><strong><a href="https://github.com/bfly123/claude_code_bridge">ccb (claude_code_bridge)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>AI 联合会议室</strong>。让 Claude、Gemini 等多个模型在同一个项目里无缝切换，且<strong>共享上下文记忆</strong>。Gemini 读完的长代码，Claude 直接接着改，不用重复发代码浪费钱。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/fengshao1227/ccg-workflow">ccg (ccg-workflow)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>17+ 一键自动化命令</strong>。不需要每次都打字对 AI 提要求，它内置了 <code>/review</code>（代码审查）、一键写 Git 提交等自动化指令，把聊天变成了标准化的工作流。</li>
-</ul>
-</li>
-<li><em>(注：还有另一个也叫 <strong>CCG (Coder-Codex-Gemini)</strong> 的概念，它是一个宏观的多模型协作双环境框架，强调几种特定模型的联合打法。)</em></li>
-</ul>
-<hr>
-<h2 id="🎯-总结建议：小白该从哪里下手？"><a href="#🎯-总结建议：小白该从哪里下手？" class="headerlink" title="🎯 总结建议：小白该从哪里下手？"></a>🎯 总结建议：小白该从哪里下手？</h2><p>如果你是一个刚刚接触 AI 辅助编程的新手，建议按照以下路线打怪升级：</p>
-<ol>
-<li><strong>第一步（先用起来）</strong>：先搞定 <strong>CPA</strong>，把免费额度接入你的开发环境，实现“Token 自由”。</li>
-<li><strong>第二步（体验升级）</strong>：安装 <strong>cc-tool</strong>，在本地看着可视化面板，清楚知道自己的调用情况。</li>
-<li><strong>第三步（进阶高玩）</strong>：尝试配置 <strong>ccr</strong> 或 <strong>ccb</strong>，体验让不同大模型在你电脑里无缝协作的快感。</li>
-</ol>
-]]></content>
-      <categories>
-        <category>vibe coding</category>
-      </categories>
-      <tags>
-        <tag>ClaudeCode</tag>
-        <tag>AI编程</tag>
-        <tag>工具指南</tag>
-        <tag>效率</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</title>
-    <url>/my-blog/2026/04/12/02AI%20infra-%E4%BB%8E%20vLLM%20%E5%92%8C%20SGLang%20%E5%85%A5%E9%97%A8%EF%BC%8C%E5%88%B0%20AI%20Infra%20%E6%B1%82%E8%81%8C%E8%90%BD%E5%9C%B0/</url>
-    <content><![CDATA[<h1 id="从-vLLM-和-SGLang-入门，到-AI-Infra-求职落地"><a href="#从-vLLM-和-SGLang-入门，到-AI-Infra-求职落地" class="headerlink" title="从 vLLM 和 SGLang 入门，到 AI Infra 求职落地"></a>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</h1><p>这两年，大模型工程岗位正在发生一个很明显的变化：</p>
-<p><strong>企业不再只需要“会调 API 的应用工程师”，而是越来越需要“会做推理系统的工程师”。</strong></p>
-<p>以前很多人做 AI 应用开发，只要能把模型接进产品、把接口跑通、把业务链路串起来，就已经算掌握了相当大的一块能力。但随着模型服务越来越深入生产环境，企业真正开始为下面这些问题付钱：</p>
-<ul>
-<li>吞吐能不能上去</li>
-<li>时延能不能压下来</li>
-<li>显存能不能扛住</li>
-<li>服务能不能稳定跑</li>
-<li>成本能不能控住</li>
-<li>高并发、长上下文、复杂生成场景下会不会出问题</li>
-</ul>
-<p>这也是为什么 <code>vLLM</code>、<code>SGLang</code>、<code>TGI</code>、<code>TensorRT-LLM</code> 这类项目越来越受关注。</p>
-<p>但如果你想从应用层转到 AI Infra，有一个判断一定要尽早建立起来：</p>
-<blockquote>
-<p><code>vLLM</code> 和 <code>SGLang</code> 不是学习终点，它们只是你进入 AI Infra 世界的入口。</p>
-</blockquote>
-<p>真正决定你能不能走到求职落地那一步的，不是“你有没有把框架跑起来”，而是你有没有围绕它们建立起 <strong>推理系统理解、实验能力、排障能力和工程表达能力</strong>。</p>
-<p>这篇文章想回答的，就是这个问题：</p>
-<p><strong>如果你想从应用层转到 AI Infra，应该怎么学 <code>vLLM</code> 和 <code>SGLang</code>，最后才能变成真正的求职竞争力？</strong></p>
-<h2 id="先说结论：目标别定成“会部署框架”"><a href="#先说结论：目标别定成“会部署框架”" class="headerlink" title="先说结论：目标别定成“会部署框架”"></a>先说结论：目标别定成“会部署框架”</h2><p>如果你的目标是转向 <code>AI Infra / LLM Serving / Inference Engineering</code>，这条路线是成立的，而且在国内市场有真实岗位需求。</p>
-<p>但很多人一开始就把目标定偏了。他们会觉得：</p>
-<ul>
-<li>把 <code>vLLM</code> 跑起来</li>
-<li>把 <code>SGLang</code> 启起来</li>
-<li>调通一个 OpenAI-compatible API</li>
-</ul>
-<p>这样就算入门 infra 了。</p>
-<p>这其实只摸到了门把手。</p>
-<p>企业真正要的，不是“会起一个推理服务的人”，而是能把大模型推理系统 <strong>跑稳、跑快、跑大规模</strong> 的人。也就是说，框架只是切入口，真正有价值的是你围绕框架形成的系统能力。</p>
-<h2 id="企业真正看重的，是你能不能理解系统"><a href="#企业真正看重的，是你能不能理解系统" class="headerlink" title="企业真正看重的，是你能不能理解系统"></a>企业真正看重的，是你能不能理解系统</h2><p>如果把这个方向的能力压缩来看，其实就三层。</p>
-<h3 id="第一层：会跑服务"><a href="#第一层：会跑服务" class="headerlink" title="第一层：会跑服务"></a>第一层：会跑服务</h3><p>会启动 <code>vLLM</code> &#x2F; <code>SGLang</code>、会配参数、会调接口，这当然是入门，但也只是入门。</p>
-<p>它只能说明你接触过框架，不能说明你真正理解系统。</p>
-<h3 id="第二层：能理解系统、做实验、看指标"><a href="#第二层：能理解系统、做实验、看指标" class="headerlink" title="第二层：能理解系统、做实验、看指标"></a>第二层：能理解系统、做实验、看指标</h3><p>这才是求职的最低有效门槛，也是大多数转岗者最应该先达到的层级。</p>
-<p>你至少要能讲清：</p>
-<ul>
-<li><code>Prefill</code> 和 <code>Decode</code> 的区别</li>
-<li>KV Cache 为什么关键</li>
-<li>吞吐、时延、显存为什么互相拉扯</li>
-<li>长上下文为什么会改变系统行为</li>
-<li>连续批处理 &#x2F; 动态批处理在解决什么问题</li>
-</ul>
-<p>同时你还要能：</p>
-<ul>
-<li>设计一次压测</li>
-<li>采集关键指标</li>
-<li>对结果做解释</li>
-<li>判断问题大概出在哪一层</li>
-</ul>
-<p>如果这一层做不到，面试时通常会非常被动。</p>
-<h3 id="第三层：能改框架、能排障、能做优化"><a href="#第三层：能改框架、能排障、能做优化" class="headerlink" title="第三层：能改框架、能排障、能做优化"></a>第三层：能改框架、能排障、能做优化</h3><p>这一层开始真正拉开差距。</p>
-<p>你应该能看懂关键调用链，能在请求链路上增加日志或 metrics，能修改一个小的调度、缓存或观测逻辑，也能分析 OOM、P99 抖动、吞吐下降这类问题。</p>
-<p>这还不一定意味着你已经是底层性能专家，但至少说明你已经不再停留在“会用框架”的阶段。</p>
-<blockquote>
-<p>[!important]<br>对大多数从应用层转 infra 的人来说，最现实的目标不是一开始就做 CUDA &#x2F; Kernel 优化，而是先稳定进入“第二层”，再逐步逼近“第三层”。</p>
-</blockquote>
-<h2 id="如何快速入门：先完成一个最小闭环"><a href="#如何快速入门：先完成一个最小闭环" class="headerlink" title="如何快速入门：先完成一个最小闭环"></a>如何快速入门：先完成一个最小闭环</h2><p>很多人一上来就想同时看 <code>vLLM</code>、<code>SGLang</code>、<code>TGI</code>、<code>TensorRT-LLM</code>，顺便再补 K8s、CUDA、Triton。这样看起来很努力，但结果通常是很快失去主线。</p>
-<p>更好的入门方式，是先完成一个最小闭环：</p>
-<blockquote>
-<p><strong>跑起来一次 -&gt; 看懂一点原理 -&gt; 做一轮最小实验 -&gt; 写下一页总结</strong></p>
-</blockquote>
-<p>这比你连续收藏十篇教程更有效。</p>
-<h3 id="第-1-步：先把最小服务跑起来"><a href="#第-1-步：先把最小服务跑起来" class="headerlink" title="第 1 步：先把最小服务跑起来"></a>第 1 步：先把最小服务跑起来</h3><p>刚开始不要追求理解全部细节，先让自己获得一个基本手感：</p>
-<ul>
-<li>能启动一个 <code>vLLM</code> 服务</li>
-<li>能发起一次 API 请求</li>
-<li>能看到输入、输出、日志和资源占用</li>
-<li>能知道服务失败时大概去哪里看错误</li>
-</ul>
-<p>这一步的目标不是“证明你会 infra”，而是先把抽象概念落到一个可运行的东西上。</p>
-<h3 id="第-2-步：马上回头补推理系统基础"><a href="#第-2-步：马上回头补推理系统基础" class="headerlink" title="第 2 步：马上回头补推理系统基础"></a>第 2 步：马上回头补推理系统基础</h3><p>跑通之后，不要停留在“能用了”。</p>
-<p>你要立刻回头问几个问题：</p>
-<ul>
-<li>请求从哪里进来？</li>
-<li>为什么第一次生成前会有 <code>Prefill</code>？</li>
-<li>为什么后面是 token-by-token 的 <code>Decode</code>？</li>
-<li>KV Cache 到底缓存了什么？</li>
-<li>为什么上下文变长之后，显存和时延都会变敏感？</li>
-</ul>
-<p>这一步会让你从“调用者视角”切到“系统视角”。</p>
-<h3 id="第-3-步：做第一次小实验"><a href="#第-3-步：做第一次小实验" class="headerlink" title="第 3 步：做第一次小实验"></a>第 3 步：做第一次小实验</h3><p>不要等全部学完再做实验。最早的实验可以非常简单。</p>
-<p>比如只改三个变量：</p>
-<ul>
-<li>输入长度</li>
-<li>输出长度</li>
-<li>并发数量</li>
-</ul>
-<p>然后观察：</p>
-<ul>
-<li>请求变慢了吗？</li>
-<li>首 token 变慢了吗？</li>
-<li>输出阶段变慢了吗？</li>
-<li>显存变化明显吗？</li>
-<li>日志里有没有调度或 batch 相关信息？</li>
-</ul>
-<p>哪怕实验很粗糙，也比单纯看文档更能建立直觉。</p>
-<h3 id="第-4-步：写一页入门总结"><a href="#第-4-步：写一页入门总结" class="headerlink" title="第 4 步：写一页入门总结"></a>第 4 步：写一页入门总结</h3><p>快速入门最后一定要写总结，否则很容易“跑过但没沉淀”。</p>
-<p>这一页只需要回答 4 个问题：</p>
-<ol>
-<li>我跑通了什么？</li>
-<li>我理解了哪几个核心概念？</li>
-<li>我做了哪几个变量实验？</li>
-<li>我下一步最该看哪一段源码或文档？</li>
-</ol>
-<p>做到这一步，你才算真正进入这个方向，而不是只是跑了一个 demo。</p>
-<h3 id="一个-7-天快速入门节奏"><a href="#一个-7-天快速入门节奏" class="headerlink" title="一个 7 天快速入门节奏"></a>一个 7 天快速入门节奏</h3><p>如果你想给自己一个明确起点，可以按下面这个节奏走：</p>
-<table>
-<thead>
-<tr>
-<th>时间</th>
-<th>目标</th>
-<th>产出</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Day 1</td>
-<td>跑通最小 <code>vLLM</code> 服务</td>
-<td>一条成功请求 + 启动记录</td>
-</tr>
-<tr>
-<td>Day 2</td>
-<td>理解请求从 API 到生成的粗链路</td>
-<td>一张请求流程草图</td>
-</tr>
-<tr>
-<td>Day 3</td>
-<td>补 <code>Prefill</code> &#x2F; <code>Decode</code> &#x2F; KV Cache</td>
-<td>一页概念笔记</td>
-</tr>
-<tr>
-<td>Day 4</td>
-<td>改输入长度和输出长度做实验</td>
-<td>一组简单对比数据</td>
-</tr>
-<tr>
-<td>Day 5</td>
-<td>改并发数观察吞吐和时延</td>
-<td>一组并发实验记录</td>
-</tr>
-<tr>
-<td>Day 6</td>
-<td>看一段 scheduler 或 cache 相关代码</td>
-<td>一段源码阅读笔记</td>
-</tr>
-<tr>
-<td>Day 7</td>
-<td>汇总“我跑通了什么、理解了什么、下一步看什么”</td>
-<td>一页入门总结</td>
-</tr>
-</tbody></table>
-<p>这 7 天不追求完整，只追求建立第一轮闭环。完成之后，再进入系统学习会顺很多。</p>
-<h2 id="学习路线：不要铺太宽，要按-4-个阶段推进"><a href="#学习路线：不要铺太宽，要按-4-个阶段推进" class="headerlink" title="学习路线：不要铺太宽，要按 4 个阶段推进"></a>学习路线：不要铺太宽，要按 4 个阶段推进</h2><p>如果你不是在做专项研究，而是想把这条路线真正走到求职落地，我更建议把它理解成 4 个阶段，而不是一堆并列知识点。</p>
-<h3 id="第-1-阶段：建立推理系统脑图"><a href="#第-1-阶段：建立推理系统脑图" class="headerlink" title="第 1 阶段：建立推理系统脑图"></a>第 1 阶段：建立推理系统脑图</h3><p>这一阶段的目标不是写很多代码，而是先把问题空间看清。</p>
-<p>你需要回答的核心问题只有几个：</p>
-<ul>
-<li>一次请求是怎么进入系统并变成 token 流的？</li>
-<li>为什么 <code>Prefill</code> 和 <code>Decode</code> 的资源特征不一样？</li>
-<li>为什么 KV Cache 会直接影响吞吐、显存和时延？</li>
-<li>为什么长上下文、多轮对话、复杂生成会让系统行为变化很大？</li>
-</ul>
-<p>这一阶段最好的产出不是“我看了多少页源码”，而是：</p>
-<ul>
-<li>一篇自己的推理系统基础笔记</li>
-<li>一张请求生命周期图</li>
-<li>一个最小 benchmark 脚手架</li>
-</ul>
-<p>只要你能画出一条请求从进入服务到生成 token 的路径，你再看框架源码时就不会完全迷路。</p>
-<h3 id="第-2-阶段：围绕-vLLM-建立第一套系统理解"><a href="#第-2-阶段：围绕-vLLM-建立第一套系统理解" class="headerlink" title="第 2 阶段：围绕 vLLM 建立第一套系统理解"></a>第 2 阶段：围绕 vLLM 建立第一套系统理解</h3><p>我建议先以 <code>vLLM</code> 为主框架。</p>
-<p>不是因为它一定“最好”，而是因为它足够主流，也足够适合作为理解现代 LLM serving 的第一站。</p>
-<p>这一阶段你应该围绕 <code>vLLM</code> 做四件事：</p>
-<ul>
-<li>跑通服务</li>
-<li>跟请求路径</li>
-<li>看 scheduler 和 cache 相关代码</li>
-<li>做小规模实验</li>
-</ul>
-<p>注意，这里的重点不是把所有源码都啃完，而是建立“系统视角”：</p>
-<ul>
-<li>请求怎么被组织</li>
-<li>batch 怎么被调度</li>
-<li>cache 怎么被管理</li>
-<li>不同负载为什么会打出不同结果</li>
-</ul>
-<p>只要你开始能用这些问题看 <code>vLLM</code>，你就已经不是在“学一个工具”，而是在学一套推理系统。</p>
-<h3 id="第-3-阶段：把-SGLang-学成“对照组”"><a href="#第-3-阶段：把-SGLang-学成“对照组”" class="headerlink" title="第 3 阶段：把 SGLang 学成“对照组”"></a>第 3 阶段：把 SGLang 学成“对照组”</h3><p>很多人学第二个框架时，会重复第一遍的学习方式，结果是又学了一套命令，却没有形成判断力。</p>
-<p>更好的方式是：把 <code>SGLang</code> 当成对照组。</p>
-<p>你学习它，不是为了多背一套 API，而是为了比较：</p>
-<ul>
-<li>它和 <code>vLLM</code> 的设计思路哪里不一样</li>
-<li>它为什么在某些复杂生成场景更自然</li>
-<li>它适合什么负载，<code>vLLM</code> 又适合什么负载</li>
-</ul>
-<p>一旦你带着“比较”和“选型”的视角去学，<code>SGLang</code> 才会真正变成你的面试资产。</p>
-<p>最值得做的不是泛泛看文档，而是做一份小对比：</p>
-<ul>
-<li>同一个模型</li>
-<li>同一组请求</li>
-<li>同样记录吞吐、时延、显存和调试体验</li>
-<li>最后写出“什么时候选谁”的判断</li>
-</ul>
-<h3 id="第-4-阶段：把框架能力补成-Infra-能力"><a href="#第-4-阶段：把框架能力补成-Infra-能力" class="headerlink" title="第 4 阶段：把框架能力补成 Infra 能力"></a>第 4 阶段：把框架能力补成 Infra 能力</h3><p>这一阶段是很多人最容易忽略，但企业最看重的一步。</p>
-<p>因为到了求职现场，面试官要确认的不是“你会不会看框架”，而是：</p>
-<ul>
-<li>你能不能把服务真正跑起来</li>
-<li>你能不能容器化、观测、压测</li>
-<li>你能不能定位问题</li>
-<li>你能不能解释为什么这个问题会发生</li>
-</ul>
-<p>所以你必须把这些能力补上：</p>
-<ul>
-<li>Linux 基础命令和排障思路</li>
-<li>Docker 镜像与容器运行</li>
-<li>基础 K8s 概念</li>
-<li>日志、指标、监控体系</li>
-<li>GPU 监控</li>
-<li>profiling 工具</li>
-</ul>
-<p>这一阶段最好的产出，是一个带日志、指标和压测记录的最小 serving 系统。</p>
-<p>只有走到这里，你的能力才会从“框架学习者”变成“infra 候选人”。</p>
-<h2 id="最后要沉淀成什么"><a href="#最后要沉淀成什么" class="headerlink" title="最后要沉淀成什么"></a>最后要沉淀成什么</h2><p>如果你想让这条学习路线最终服务于求职，不要只留下阅读记录。</p>
-<p>最少要沉淀两类东西。</p>
-<h3 id="第一类：实验报告"><a href="#第一类：实验报告" class="headerlink" title="第一类：实验报告"></a>第一类：实验报告</h3><p>比如：</p>
-<ul>
-<li><code>vLLM</code> 在不同上下文长度下的表现</li>
-<li><code>vLLM</code> 和 <code>SGLang</code> 在相同请求下的差异</li>
-<li>并发变化对 TTFT &#x2F; TPOT &#x2F; 显存的影响</li>
-</ul>
-<p>实验报告的重点不是数据多漂亮，而是你能解释：</p>
-<ul>
-<li>为什么这样设计实验</li>
-<li>看了哪些指标</li>
-<li>结果说明什么</li>
-<li>下一步应该怎么优化或验证</li>
-</ul>
-<h3 id="第二类：最小-serving-项目"><a href="#第二类：最小-serving-项目" class="headerlink" title="第二类：最小 serving 项目"></a>第二类：最小 serving 项目</h3><p>这个项目不需要很大，但要完整。</p>
-<p>至少包含：</p>
-<ul>
-<li>服务启动</li>
-<li>API 调用</li>
-<li>Docker 化</li>
-<li>基础日志</li>
-<li>基础指标</li>
-<li>一次压测记录</li>
-<li>一次问题分析</li>
-</ul>
-<p>这比“我学过 vLLM &#x2F; SGLang”有说服力得多。</p>
-<h2 id="最后的判断"><a href="#最后的判断" class="headerlink" title="最后的判断"></a>最后的判断</h2><p>如果你是为了找工作进入 infra，最稳的路线不是“赶紧把几个框架都跑起来”，而是：</p>
-<blockquote>
-<p><strong>先用 <code>vLLM</code> 跑通最小闭环，再补推理系统基础，然后围绕 <code>vLLM</code> 建立系统理解，用 <code>SGLang</code> 做对照，最后补齐 Linux &#x2F; Docker &#x2F; 观测 &#x2F; profiling，并把过程沉淀成实验报告和 serving 项目。</strong></p>
-</blockquote>
-<p>从这个角度看，<code>vLLM</code> 和 <code>SGLang</code> 不是学习终点，而是你进入 AI Infra 世界最好的两扇门。</p>
-]]></content>
-      <categories>
-        <category>AI Infra</category>
-      </categories>
-      <tags>
-        <tag>AIInfra</tag>
-        <tag>vLLM</tag>
-        <tag>SGLang</tag>
-        <tag>LLMServing</tag>
-        <tag>求职</tag>
-        <tag>博客</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>从 OpenSpec、Superpowers 到 TRELLIS：AI 编码工作流的工程化演进</title>
     <url>/my-blog/2026/04/01/03Agent-%E4%BB%8E%20OpenSpec%E3%80%81Superpowers%20%E5%88%B0%20TRELLIS%20%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%BC%94%E8%BF%9B/</url>
     <content><![CDATA[<p>在 AI 编码助手越来越强的今天，<strong>“让模型写出代码”已经不是最难的问题，真正难的是让它在复杂项目里持续、稳定、低成本地写对代码。</strong></p>
@@ -936,6 +936,185 @@
       </tags>
   </entry>
   <entry>
+    <title>AI 辅助文献精读调研</title>
+    <url>/my-blog/2026/04/06/05%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86-%E6%96%87%E7%8C%AE%E7%B2%BE%E8%AF%BB%E8%B0%83%E7%A0%94/</url>
+    <content><![CDATA[<h1 id="AI-辅助文献精读调研"><a href="#AI-辅助文献精读调研" class="headerlink" title="AI 辅助文献精读调研"></a>AI 辅助文献精读调研</h1><blockquote>
+<p>[!summary]<br>AI 辅助文献精读，核心不是“替你读完”，而是帮你完成 5 件事：</p>
+<ul>
+<li>快速筛选</li>
+<li>辅助理解</li>
+<li>结构化提炼</li>
+<li>多篇比较</li>
+<li>笔记沉淀</li>
+</ul>
+<p>最实用的组合通常是：<br><strong>找文献工具 + 单篇精读工具 + 多篇对比工具 + Zotero + 笔记系统</strong></p>
+</blockquote>
+<h2 id="一、工具速览"><a href="#一、工具速览" class="headerlink" title="一、工具速览"></a>一、工具速览</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐工具</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>找相关文献</td>
+<td>ResearchRabbit &#x2F; Connected Papers &#x2F; Elicit</td>
+<td>建立文献地图、扩展种子论文、初筛</td>
+</tr>
+<tr>
+<td>单篇精读</td>
+<td>SciSpace &#x2F; Explainpaper &#x2F; ChatPDF</td>
+<td>解释难句、理解方法、定位信息</td>
+</tr>
+<tr>
+<td>多篇比较</td>
+<td>NotebookLM &#x2F; Elicit</td>
+<td>做对比、分组、归纳争议点</td>
+</tr>
+<tr>
+<td>判断论文可信度</td>
+<td>scite</td>
+<td>看后续研究是支持、质疑还是仅提及</td>
+</tr>
+<tr>
+<td>长期沉淀</td>
+<td>Zotero + PDF Translate + Better BibTeX</td>
+<td>管理 PDF、翻译、引用、回收笔记</td>
+</tr>
+</tbody></table>
+<h2 id="二、怎么选工具"><a href="#二、怎么选工具" class="headerlink" title="二、怎么选工具"></a>二、怎么选工具</h2><h3 id="1-找文献-建立地图"><a href="#1-找文献-建立地图" class="headerlink" title="1. 找文献 &#x2F; 建立地图"></a>1. 找文献 &#x2F; 建立地图</h3><ul>
+<li><strong>ResearchRabbit</strong>：适合看引用关系和研究脉络</li>
+<li><strong>Connected Papers</strong>：适合从种子论文快速扩展</li>
+<li><strong>Elicit</strong>：适合问题驱动检索和初步表格整理</li>
+</ul>
+<h3 id="2-单篇精读-看不懂就问"><a href="#2-单篇精读-看不懂就问" class="headerlink" title="2. 单篇精读 &#x2F; 看不懂就问"></a>2. 单篇精读 &#x2F; 看不懂就问</h3><ul>
+<li><strong>SciSpace</strong>：最适合“边读边问”</li>
+<li><strong>Explainpaper</strong>：适合逐句解释</li>
+<li><strong>ChatPDF &#x2F; Humata</strong>：适合快速问答和定位内容</li>
+<li><strong>Scholarcy</strong>：适合批量初读和论文卡片，不适合替代精读</li>
+</ul>
+<h3 id="3-多篇比较-写综述"><a href="#3-多篇比较-写综述" class="headerlink" title="3. 多篇比较 &#x2F; 写综述"></a>3. 多篇比较 &#x2F; 写综述</h3><ul>
+<li><strong>NotebookLM</strong>：适合把多篇论文放在一起比较</li>
+<li><strong>Elicit</strong>：适合抽取研究问题、方法、结论并做表格</li>
+</ul>
+<h3 id="4-判断靠不靠谱"><a href="#4-判断靠不靠谱" class="headerlink" title="4. 判断靠不靠谱"></a>4. 判断靠不靠谱</h3><ul>
+<li><strong>scite</strong>：非常关键，能把“读懂”升级成“会评价”</li>
+</ul>
+<h3 id="5-长期管理"><a href="#5-长期管理" class="headerlink" title="5. 长期管理"></a>5. 长期管理</h3><ul>
+<li><strong>Zotero</strong>：文献工作流底座</li>
+<li><strong>PDF Translate</strong>：中英对照阅读更高效</li>
+<li><strong>Better BibTeX</strong>：写作和引用管理更顺</li>
+</ul>
+<blockquote>
+<p>[!important]<br>所有 AI 精读结果，最后最好都回收到 Zotero 或 Obsidian &#x2F; Notion。<br>否则后面很难复用。</p>
+</blockquote>
+<h2 id="三、最实用的-3-套工作流"><a href="#三、最实用的-3-套工作流" class="headerlink" title="三、最实用的 3 套工作流"></a>三、最实用的 3 套工作流</h2><h3 id="方案-A：入门型"><a href="#方案-A：入门型" class="headerlink" title="方案 A：入门型"></a>方案 A：入门型</h3><p><strong>适合</strong>：刚开始读论文，英文阅读有压力</p>
+<p><strong>组合</strong></p>
+<ul>
+<li>Connected Papers &#x2F; ResearchRabbit</li>
+<li>SciSpace &#x2F; Explainpaper</li>
+<li>Zotero + PDF Translate</li>
+<li>Obsidian &#x2F; Notion</li>
+</ul>
+<p><strong>流程</strong></p>
+<ol>
+<li>找核心论文</li>
+<li>存入 Zotero</li>
+<li>用 PDF Translate 辅助理解</li>
+<li>用 SciSpace &#x2F; Explainpaper 问方法、术语、难句</li>
+<li>手动写精读卡：问题 &#x2F; 方法 &#x2F; 结果 &#x2F; 局限 &#x2F; 自己评价</li>
+</ol>
+<h3 id="方案-B：综述型"><a href="#方案-B：综述型" class="headerlink" title="方案 B：综述型"></a>方案 B：综述型</h3><p><strong>适合</strong>：写综述、开题报告</p>
+<p><strong>组合</strong></p>
+<ul>
+<li>Elicit</li>
+<li>ResearchRabbit</li>
+<li>NotebookLM</li>
+<li>scite</li>
+<li>Zotero</li>
+</ul>
+<p><strong>流程</strong></p>
+<ol>
+<li>用 Elicit 按问题找论文</li>
+<li>用 ResearchRabbit 看文献网络</li>
+<li>把核心论文放进 NotebookLM 比较</li>
+<li>用 scite 看关键论文是否被支持或质疑</li>
+<li>回写到 Zotero &#x2F; Obsidian</li>
+</ol>
+<h3 id="方案-C：深度精读型"><a href="#方案-C：深度精读型" class="headerlink" title="方案 C：深度精读型"></a>方案 C：深度精读型</h3><p><strong>适合</strong>：已经锁定核心论文，要真正读透</p>
+<p><strong>组合</strong></p>
+<ul>
+<li>Zotero</li>
+<li>SciSpace &#x2F; Humata</li>
+<li>scite</li>
+<li>NotebookLM</li>
+</ul>
+<p><strong>流程</strong></p>
+<ol>
+<li>选 1 篇核心论文</li>
+<li>用 SciSpace 逐段问：研究问题、方法流程、实验设计、结果支撑链</li>
+<li>用 scite 看后续影响</li>
+<li>再用 NotebookLM 和相关论文做横向比较</li>
+<li>输出自己的批判性笔记</li>
+</ol>
+<blockquote>
+<p>[!tip]<br>AI 负责解释、提炼、对比；你负责判断、批评、形成观点。</p>
+</blockquote>
+<h2 id="四、最值得保存的提示词"><a href="#四、最值得保存的提示词" class="headerlink" title="四、最值得保存的提示词"></a>四、最值得保存的提示词</h2><h3 id="单篇精读"><a href="#单篇精读" class="headerlink" title="单篇精读"></a>单篇精读</h3><ul>
+<li><strong>抽结构</strong>：提取研究问题、方法、数据、结果、结论、局限</li>
+<li><strong>讲人话</strong>：把一段学术表达重写成通俗中文，并解释术语</li>
+<li><strong>看论证链</strong>：作者如何从问题一步步推到结论</li>
+<li><strong>做批判</strong>：从研究设计、数据、方法、外推性四个角度分析</li>
+<li><strong>找创新点</strong>：指出相对已有研究的新意到底在哪里</li>
+</ul>
+<h3 id="多篇比较"><a href="#多篇比较" class="headerlink" title="多篇比较"></a>多篇比较</h3><ul>
+<li><strong>对比方法</strong>：比较研究问题、方法、数据、指标、局限，并生成表格</li>
+<li><strong>找分歧</strong>：哪些结论一致，哪些地方冲突，原因可能是什么</li>
+<li><strong>为综述服务</strong>：按研究问题或方法路线分组</li>
+</ul>
+<h2 id="五、AI-精读最容易踩的坑"><a href="#五、AI-精读最容易踩的坑" class="headerlink" title="五、AI 精读最容易踩的坑"></a>五、AI 精读最容易踩的坑</h2><h3 id="1-不能只看-AI-总结"><a href="#1-不能只看-AI-总结" class="headerlink" title="1. 不能只看 AI 总结"></a>1. 不能只看 AI 总结</h3><p>方法部分、结果图表、局限性一定要回原文确认。</p>
+<h3 id="2-不要让-AI-替你理解"><a href="#2-不要让-AI-替你理解" class="headerlink" title="2. 不要让 AI 替你理解"></a>2. 不要让 AI 替你理解</h3><p>不要只问“结论是什么”，还要问：</p>
+<ul>
+<li>证据是什么？</li>
+<li>图表如何支持结论？</li>
+<li>有没有别的解释？</li>
+</ul>
+<h3 id="3-要防幻觉和过度概括"><a href="#3-要防幻觉和过度概括" class="headerlink" title="3. 要防幻觉和过度概括"></a>3. 要防幻觉和过度概括</h3><p>相对更稳的工具：</p>
+<ul>
+<li>NotebookLM</li>
+<li>SciSpace</li>
+<li>ChatPDF &#x2F; Humata</li>
+<li>scite</li>
+</ul>
+<h3 id="4-不要让笔记散落在各个平台"><a href="#4-不要让笔记散落在各个平台" class="headerlink" title="4. 不要让笔记散落在各个平台"></a>4. 不要让笔记散落在各个平台</h3><p>AI 负责处理，Zotero &#x2F; Obsidian &#x2F; Notion 负责沉淀。</p>
+<h2 id="六、最终建议"><a href="#六、最终建议" class="headerlink" title="六、最终建议"></a>六、最终建议</h2><h3 id="轻量版"><a href="#轻量版" class="headerlink" title="轻量版"></a>轻量版</h3><ul>
+<li>Zotero</li>
+<li>Zotero PDF Translate</li>
+<li>SciSpace</li>
+<li>NotebookLM</li>
+</ul>
+<h3 id="进阶版"><a href="#进阶版" class="headerlink" title="进阶版"></a>进阶版</h3><ul>
+<li>Zotero</li>
+<li>PDF Translate</li>
+<li>ResearchRabbit</li>
+<li>Elicit</li>
+<li>SciSpace</li>
+<li>scite</li>
+<li>NotebookLM</li>
+</ul>
+<blockquote>
+<p>[!abstract]<br>一句话总结：<br>用 ResearchRabbit &#x2F; Elicit 找文献，<br>用 SciSpace &#x2F; Explainpaper 精读单篇，<br>用 NotebookLM 做多篇比较，<br>用 scite 做可信度验证，<br>最后把结果沉淀回 Zotero。</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>文献管理</tag>
+        <tag>AI</tag>
+        <tag>Zotero</tag>
+        <tag>学术研究</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello Blog</title>
     <url>/my-blog/2026/02/28/hello-blog/</url>
     <content><![CDATA[<p>欢迎来到我的个人博客。</p>
@@ -954,30 +1133,6 @@
         <tag>Hexo</tag>
         <tag>GitHub Pages</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>关于</title>
-    <url>/my-blog/about/index.html</url>
-    <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
-<p>这里主要会记录：</p>
-<ul>
-<li>AI Infra &#x2F; CUDA &#x2F; 推理优化方向的学习与复盘</li>
-<li>个人项目的设计、实现和迭代过程</li>
-<li>值得长期保留的方法论、工作流与工程经验</li>
-</ul>
-<p>你也可以通过邮箱联系我：<a href="mailto:&#97;&#x72;&#x69;&#97;&#115;&#x75;&#x5f;&#x6a;&#x74;&#108;&#101;&#x40;&#49;&#54;&#x33;&#46;&#99;&#x6f;&#109;">ariasu_jtle@163.com</a></p>
-<p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
-]]></content>
-  </entry>
-  <entry>
-    <title>分类</title>
-    <url>/my-blog/categories/index.html</url>
-    <content><![CDATA[]]></content>
-  </entry>
-  <entry>
-    <title>标签</title>
-    <url>/my-blog/tags/index.html</url>
-    <content><![CDATA[]]></content>
   </entry>
   <entry>
     <title>项目</title>
@@ -1005,5 +1160,29 @@
   </article>
 </div>
 ]]></content>
+  </entry>
+  <entry>
+    <title>关于</title>
+    <url>/my-blog/about/index.html</url>
+    <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
+<p>这里主要会记录：</p>
+<ul>
+<li>AI Infra &#x2F; CUDA &#x2F; 推理优化方向的学习与复盘</li>
+<li>个人项目的设计、实现和迭代过程</li>
+<li>值得长期保留的方法论、工作流与工程经验</li>
+</ul>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#x61;&#114;&#x69;&#x61;&#115;&#x75;&#x5f;&#x6a;&#x74;&#108;&#x65;&#x40;&#x31;&#54;&#51;&#46;&#99;&#x6f;&#x6d;">ariasu_jtle@163.com</a></p>
+<p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>标签</title>
+    <url>/my-blog/tags/index.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>分类</title>
+    <url>/my-blog/categories/index.html</url>
+    <content><![CDATA[]]></content>
   </entry>
 </search>
