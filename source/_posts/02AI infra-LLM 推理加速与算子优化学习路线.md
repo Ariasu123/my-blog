@@ -4,7 +4,7 @@ tags:
   - CPP/LLM/CUDA/GPU
 published: true
 title: LLM 推理加速与算子优化学习路线
-categories: infra
+categories: AI Infra
 _sync_managed: repo-a
 _sync_source_path: 02AI infra/LLM 推理加速与算子优化学习路线.md
 ---
