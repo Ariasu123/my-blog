@@ -6,8 +6,6 @@ tags:
   - vLLM
   - SGLang
   - LLMServing
-  - 求职
-  - 博客
 published: true
 categories:
   - AI Infra
