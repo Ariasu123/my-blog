@@ -1,0 +1,1185 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=light>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/my-blog/img/fluid.png">
+  <link rel="icon" href="/my-blog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#ffffffcc">
+  <meta name="author" content="Ariasu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="PyTorch 及其他相关方法1. PyTorch 的基础架构   组件 一句话理解    Tensor 张量，PyTorch 最基础的数据结构。   Parameter 可训练参数，会被模型自动注册。   Module 层或模型的基类，用来组织参数和子模块。   Autograd 自动求导系统，负责计算梯度。   Optimizer 根据梯度更新参数。   2. 常用 torch 方法2.1 t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件">
+<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="my-blog">
+<meta property="og:description" content="PyTorch 及其他相关方法1. PyTorch 的基础架构   组件 一句话理解    Tensor 张量，PyTorch 最基础的数据结构。   Parameter 可训练参数，会被模型自动注册。   Module 层或模型的基类，用来组织参数和子模块。   Autograd 自动求导系统，负责计算梯度。   Optimizer 根据梯度更新参数。   2. 常用 torch 方法2.1 t">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/images/default-cover.svg">
+<meta property="article:published_time" content="2026-04-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-20T08:15:54.376Z">
+<meta property="article:author" content="Ariasu">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="PyTorch">
+<meta property="article:tag" content="Tensor">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ariasu123.github.io/my-blog/assets/images/default-cover.svg">
+  
+  
+  
+  <title>PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件 - my-blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/my-blog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/my-blog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/my-blog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/my-blog/assets/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ariasu123.github.io","root":"/my-blog/","version":"1.9.9","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"expand_all":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"openkounter":{"server_url":"https://open-kounter.mintimate.cn","path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/my-blog/search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/my-blog/js/utils.js" ></script>
+  <script  src="/my-blog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 65vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/my-blog/">
+      <strong>Ariasu Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content (desktop) -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/projects/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile grid menu overlay -->
+<div id="mobile-grid-menu" class="d-lg-none">
+  <div class="mobile-grid-menu-inner">
+    <div class="container">
+      <div class="row">
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-home-fill"></i>
+                  <span>首页</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/categories/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-category-fill"></i>
+                  <span>分类</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/tags/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-tags-fill"></i>
+                  <span>标签</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/projects/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-link-fill"></i>
+                  <span>项目</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/about/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-user-fill"></i>
+                  <span>关于</span>
+                </div>
+              </a>
+            </div>
+          
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-search-btn">
+            <a href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-search"></i>
+                <span>搜索</span>
+              </div>
+            </a>
+          </div>
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-color-toggle-btn"
+               data-label-light="开灯"
+               data-label-dark="关灯">
+            <a href="javascript:;" aria-label="Color Toggle">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-dark" id="mobile-color-toggle-icon"></i>
+                <span id="mobile-color-toggle-label">关灯</span>
+              </div>
+            </a>
+          </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/my-blog/assets/images/default-banner.svg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.25)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-04-15 00:00" pubdate>
+          2026-04-15
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          7.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          64 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="PyTorch-及其他相关方法"><a href="#PyTorch-及其他相关方法" class="headerlink" title="PyTorch 及其他相关方法"></a>PyTorch 及其他相关方法</h1><h2 id="1-PyTorch-的基础架构"><a href="#1-PyTorch-的基础架构" class="headerlink" title="1. PyTorch 的基础架构"></a>1. PyTorch 的基础架构</h2><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>一句话理解</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Tensor</code></td>
+<td>张量，PyTorch 最基础的数据结构。</td>
+</tr>
+<tr>
+<td><code>Parameter</code></td>
+<td>可训练参数，会被模型自动注册。</td>
+</tr>
+<tr>
+<td><code>Module</code></td>
+<td>层或模型的基类，用来组织参数和子模块。</td>
+</tr>
+<tr>
+<td><code>Autograd</code></td>
+<td>自动求导系统，负责计算梯度。</td>
+</tr>
+<tr>
+<td><code>Optimizer</code></td>
+<td>根据梯度更新参数。</td>
+</tr>
+</tbody></table>
+<h2 id="2-常用-torch-方法"><a href="#2-常用-torch-方法" class="headerlink" title="2. 常用 torch 方法"></a>2. 常用 <code>torch</code> 方法</h2><h3 id="2-1-torch-arange"><a href="#2-1-torch-arange" class="headerlink" title="2.1 torch.arange"></a>2.1 <code>torch.arange</code></h3><ul>
+<li><strong>作用</strong>：创建一个一维等差数列张量。</li>
+<li><strong>常见写法</strong>：<code>torch.arange(start, end, step)</code>。</li>
+<li><strong>适用场景</strong>：生成位置索引、步长序列、范围张量。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br><span class="hljs-built_in">print</span>(torch.arange(<span class="hljs-number">0</span>, <span class="hljs-number">10</span>, <span class="hljs-number">2</span>))<br><span class="hljs-comment"># tensor([0, 2, 4, 6, 8])</span><br><br><span class="hljs-built_in">print</span>(torch.arange(<span class="hljs-number">0.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">0.25</span>))<br><span class="hljs-comment"># tensor([0.0000, 0.2500, 0.5000, 0.7500])</span><br><br><span class="hljs-built_in">print</span>(torch.arange(<span class="hljs-number">5</span>, <span class="hljs-number">0</span>, -<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([5, 4, 3, 2, 1])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-2-torch-outer"><a href="#2-2-torch-outer" class="headerlink" title="2.2 torch.outer"></a>2.2 <code>torch.outer</code></h3><ul>
+<li><strong>作用</strong>：计算两个一维向量的外积。</li>
+<li><strong>输入</strong>：两个一维张量。</li>
+<li><strong>输出</strong>：一个二维矩阵，形状是 <code>[N, M]</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>v1 = torch.arange(<span class="hljs-number">1</span>, <span class="hljs-number">4</span>)  <span class="hljs-comment"># tensor([1, 2, 3])</span><br>v2 = torch.arange(<span class="hljs-number">1</span>, <span class="hljs-number">3</span>)  <span class="hljs-comment"># tensor([1, 2])</span><br><br><span class="hljs-built_in">print</span>(torch.outer(v1, v2))<br><span class="hljs-comment"># tensor([[1, 2],</span><br><span class="hljs-comment">#         [2, 4],</span><br><span class="hljs-comment">#         [3, 6]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-3-torch-where"><a href="#2-3-torch-where" class="headerlink" title="2.3 torch.where"></a>2.3 <code>torch.where</code></h3><ul>
+<li><strong>作用</strong>：按条件逐元素选择值，类似张量版 <code>if / else</code>。</li>
+<li><strong>常见写法</strong>：<code>torch.where(condition, x, y)</code>。</li>
+<li><strong>返回</strong>：条件为 <code>True</code> 取 <code>x</code>，否则取 <code>y</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>])<br>y = torch.tensor([<span class="hljs-number">10</span>, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>, <span class="hljs-number">40</span>, <span class="hljs-number">50</span>])<br>condition = x &gt; <span class="hljs-number">3</span><br><br><span class="hljs-built_in">print</span>(torch.where(condition, x, y))<br><span class="hljs-comment"># tensor([10, 20, 30,  4,  5])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-4-torch-cat"><a href="#2-4-torch-cat" class="headerlink" title="2.4 torch.cat"></a>2.4 <code>torch.cat</code></h3><ul>
+<li><strong>作用</strong>：沿指定维度拼接多个张量。</li>
+<li><strong>常见写法</strong>：<code>torch.cat([t1, t2], dim=0)</code>。</li>
+<li><strong>注意</strong>：除拼接维度外，其他维度必须一致。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>t1 = torch.tensor([[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>], [<span class="hljs-number">3</span>, <span class="hljs-number">4</span>]])<br>t2 = torch.tensor([[<span class="hljs-number">5</span>, <span class="hljs-number">6</span>], [<span class="hljs-number">7</span>, <span class="hljs-number">8</span>]])<br><br><span class="hljs-built_in">print</span>(torch.cat([t1, t2], dim=<span class="hljs-number">0</span>))<br><span class="hljs-comment"># tensor([[1, 2],</span><br><span class="hljs-comment">#         [3, 4],</span><br><span class="hljs-comment">#         [5, 6],</span><br><span class="hljs-comment">#         [7, 8]])</span><br><br><span class="hljs-built_in">print</span>(torch.cat([t1, t2], dim=<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([[1, 2, 5, 6],</span><br><span class="hljs-comment">#         [3, 4, 7, 8]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-5-torch-cos"><a href="#2-5-torch-cos" class="headerlink" title="2.5 torch.cos"></a>2.5 <code>torch.cos</code></h3><ul>
+<li><strong>作用</strong>：逐元素计算余弦值。</li>
+<li><strong>输入</strong>：弧度制张量。</li>
+<li><strong>输出</strong>：形状不变。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> math<br><span class="hljs-keyword">import</span> torch<br><br>angles = torch.tensor([<span class="hljs-number">0</span>, math.pi / <span class="hljs-number">2</span>, math.pi])<br><span class="hljs-built_in">print</span>(torch.cos(angles))<br><span class="hljs-comment"># tensor([ 1.0000e+00, -8.7423e-08, -1.0000e+00])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-6-torch-sin"><a href="#2-6-torch-sin" class="headerlink" title="2.6 torch.sin"></a>2.6 <code>torch.sin</code></h3><ul>
+<li><strong>作用</strong>：逐元素计算正弦值。</li>
+<li><strong>输入</strong>：弧度制张量。</li>
+<li><strong>输出</strong>：形状不变。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> math<br><span class="hljs-keyword">import</span> torch<br><br>angles = torch.tensor([<span class="hljs-number">0</span>, math.pi / <span class="hljs-number">2</span>, math.pi])<br><span class="hljs-built_in">print</span>(torch.sin(angles))<br><span class="hljs-comment"># tensor([0.0000e+00, 1.0000e+00, 1.2246e-16])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-7-torch-triu"><a href="#2-7-torch-triu" class="headerlink" title="2.7 torch.triu"></a>2.7 <code>torch.triu</code></h3><ul>
+<li><strong>作用</strong>：保留矩阵的上三角部分。</li>
+<li><strong>常见写法</strong>：<code>torch.triu(input, diagonal=0)</code>。</li>
+<li><strong><code>diagonal</code> 含义</strong>：<ul>
+<li><code>0</code>：从主对角线开始保留。</li>
+<li><code>1</code>：从主对角线上方一条线开始保留。</li>
+<li><code>-1</code>：会多保留一部分下三角。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<br>    [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>],<br>    [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>],<br>    [<span class="hljs-number">7</span>, <span class="hljs-number">8</span>, <span class="hljs-number">9</span>],<br>])<br><br><span class="hljs-built_in">print</span>(torch.triu(x))<br><span class="hljs-comment"># tensor([[1, 2, 3],</span><br><span class="hljs-comment">#         [0, 5, 6],</span><br><span class="hljs-comment">#         [0, 0, 9]])</span><br><br><span class="hljs-built_in">print</span>(torch.triu(x, diagonal=<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([[0, 2, 3],</span><br><span class="hljs-comment">#         [0, 0, 6],</span><br><span class="hljs-comment">#         [0, 0, 0]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-8-torch-reshape"><a href="#2-8-torch-reshape" class="headerlink" title="2.8 torch.reshape"></a>2.8 <code>torch.reshape</code></h3><ul>
+<li><strong>作用</strong>：改变张量形状，但不改变数据内容。</li>
+<li><strong>常见写法</strong>：<code>torch.reshape(x, shape)</code>。</li>
+<li><strong>注意</strong>：新旧形状的元素总数必须一致。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.arange(<span class="hljs-number">1</span>, <span class="hljs-number">7</span>)<br><span class="hljs-built_in">print</span>(torch.reshape(x, (<span class="hljs-number">2</span>, <span class="hljs-number">3</span>)))<br><span class="hljs-comment"># tensor([[1, 2, 3],</span><br><span class="hljs-comment">#         [4, 5, 6]])</span><br><br><span class="hljs-built_in">print</span>(torch.reshape(x, (<span class="hljs-number">3</span>, -<span class="hljs-number">1</span>)))<br><span class="hljs-comment"># tensor([[1, 2],</span><br><span class="hljs-comment">#         [3, 4],</span><br><span class="hljs-comment">#         [5, 6]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-9-torch-topk"><a href="#2-9-torch-topk" class="headerlink" title="2.9 torch.topk"></a>2.9 <code>torch.topk</code></h3><ul>
+<li><strong>作用</strong>：取出某个维度上最大的或最小的前 <code>k</code> 个值。</li>
+<li><strong>常见写法</strong>：<code>torch.topk(input, k, dim=None, largest=True)</code>。</li>
+<li><strong>返回</strong>：<ol>
+<li><code>values</code>：取出的值。</li>
+<li><code>indices</code>：这些值对应的索引。</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">10</span>, <span class="hljs-number">30</span>, <span class="hljs-number">20</span>, <span class="hljs-number">40</span>])<br>values, indices = torch.topk(x, k=<span class="hljs-number">2</span>)<br><br><span class="hljs-built_in">print</span>(values)   <span class="hljs-comment"># tensor([40, 30])</span><br><span class="hljs-built_in">print</span>(indices)  <span class="hljs-comment"># tensor([3, 1])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-10-torch-repeat-interleave"><a href="#2-10-torch-repeat-interleave" class="headerlink" title="2.10 torch.repeat_interleave"></a>2.10 <code>torch.repeat_interleave</code></h3><ul>
+<li><strong>作用</strong>：按元素级别重复张量中的值。</li>
+<li><strong>和 <code>repeat</code> 的区别</strong>：它重复的是“元素”，不是整段张量。</li>
+<li><strong>常见场景</strong>：扩展标签、复制索引、构造分组映射。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br><span class="hljs-built_in">print</span>(torch.repeat_interleave(x, repeats=<span class="hljs-number">2</span>))<br><span class="hljs-comment"># tensor([1, 1, 2, 2, 3, 3])</span><br><br>repeats = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br><span class="hljs-built_in">print</span>(torch.repeat_interleave(x, repeats))<br><span class="hljs-comment"># tensor([1, 2, 2, 3, 3, 3])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-11-torch-argsort"><a href="#2-11-torch-argsort" class="headerlink" title="2.11 torch.argsort"></a>2.11 <code>torch.argsort</code></h3><ul>
+<li><strong>作用</strong>：返回排序后元素在原张量中的索引。</li>
+<li><strong>直觉</strong>：不直接给你排序结果，而是告诉你“谁排第几”。</li>
+<li><strong>常见场景</strong>：排序索引、排名、特征重排。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">30</span>, <span class="hljs-number">10</span>, <span class="hljs-number">20</span>])<br>idx = torch.argsort(x)<br><br><span class="hljs-built_in">print</span>(idx)<br><span class="hljs-comment"># tensor([1, 2, 0])</span><br><br><span class="hljs-built_in">print</span>(x[idx])<br><span class="hljs-comment"># tensor([10, 20, 30])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-12-torch-bincount"><a href="#2-12-torch-bincount" class="headerlink" title="2.12 torch.bincount"></a>2.12 <code>torch.bincount</code></h3><ul>
+<li><strong>作用</strong>：统计非负整数出现的次数。</li>
+<li><strong>适用前提</strong>：输入必须是非负整数张量。</li>
+<li><strong>常见场景</strong>：类别计数、直方图统计。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>])<br><span class="hljs-built_in">print</span>(torch.bincount(x))<br><span class="hljs-comment"># tensor([1, 3, 1, 1])</span><br><br>weights = torch.tensor([<span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>])<br><span class="hljs-built_in">print</span>(torch.bincount(x, weights=weights))<br><span class="hljs-comment"># tensor([1., 3., 1., 2.])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-13-torch-div"><a href="#2-13-torch-div" class="headerlink" title="2.13 torch.div"></a>2.13 <code>torch.div</code></h3><ul>
+<li><strong>作用</strong>：逐元素除法。</li>
+<li><strong>本质</strong>：<code>torch.div(a, b)</code> 等价于 <code>a / b</code>。</li>
+<li><strong>适用场景</strong>：张量归一化、缩放、逐元素运算。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>a = torch.tensor([<span class="hljs-number">10</span>, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>])<br>b = torch.tensor([<span class="hljs-number">2</span>, <span class="hljs-number">5</span>, <span class="hljs-number">3</span>])<br><br><span class="hljs-built_in">print</span>(torch.div(a, b))<br><span class="hljs-comment"># tensor([ 5.,  4., 10.])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-14-torch-mean"><a href="#2-14-torch-mean" class="headerlink" title="2.14 torch.mean"></a>2.14 <code>torch.mean</code></h3><ul>
+<li><strong>作用</strong>：求平均值。</li>
+<li><strong>常见写法</strong>：<code>torch.mean(x, dim=...)</code>。</li>
+<li><strong>记忆方式</strong>：<code>dim</code> 表示“被消掉的维度”。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<br>    [<span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">3.0</span>],<br>    [<span class="hljs-number">4.0</span>, <span class="hljs-number">5.0</span>, <span class="hljs-number">6.0</span>],<br>])<br><br><span class="hljs-built_in">print</span>(torch.mean(x, dim=<span class="hljs-number">0</span>))<br><span class="hljs-comment"># tensor([2.5000, 3.5000, 4.5000])</span><br><br><span class="hljs-built_in">print</span>(torch.mean(x, dim=<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([2., 5.])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-15-torch-scatter-add"><a href="#2-15-torch-scatter-add" class="headerlink" title="2.15 torch.scatter_add_"></a>2.15 <code>torch.scatter_add_</code></h3><ul>
+<li><strong>作用</strong>：按索引把值加到目标张量指定位置。</li>
+<li><strong>下划线 <code>_</code> 含义</strong>：原地操作，会直接修改原张量。</li>
+<li><strong>直觉</strong>：把数据按 <code>index</code> 分桶相加。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>out = torch.zeros(<span class="hljs-number">5</span>)<br>index = torch.tensor([<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>])<br>src = torch.tensor([<span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">3.0</span>, <span class="hljs-number">4.0</span>])<br><br>out.scatter_add_(dim=<span class="hljs-number">0</span>, index=index, src=src)<br><span class="hljs-built_in">print</span>(out)<br><span class="hljs-comment"># tensor([4., 2., 0., 4., 0.])</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="3-常用-tensor-方法"><a href="#3-常用-tensor-方法" class="headerlink" title="3. 常用 tensor 方法"></a>3. 常用 <code>tensor</code> 方法</h2><h3 id="3-1-tensor-transpose"><a href="#3-1-tensor-transpose" class="headerlink" title="3.1 tensor.transpose"></a>3.1 <code>tensor.transpose</code></h3><ul>
+<li><strong>作用</strong>：交换两个指定维度。</li>
+<li><strong>常见写法</strong>：<code>x.transpose(dim0, dim1)</code>。</li>
+<li><strong>常见场景</strong>：注意力里的维度交换，如 <code>seq_len</code> 和 <code>head</code> 互换。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.randn(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)<br>y = x.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br><span class="hljs-built_in">print</span>(y.shape)<br><span class="hljs-comment"># torch.Size([2, 4, 3])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-2-tensor-view"><a href="#3-2-tensor-view" class="headerlink" title="3.2 tensor.view"></a>3.2 <code>tensor.view</code></h3><ul>
+<li><strong>作用</strong>：在不改变数据内容的前提下重塑张量视图。</li>
+<li><strong>常见写法</strong>：<code>x.view(new_shape)</code>。</li>
+<li><strong>注意</strong>：<ul>
+<li>新旧形状元素总数必须一致。</li>
+<li><code>view()</code> 要求张量在内存中是连续的。</li>
+<li>如果不确定是否连续，优先用 <code>reshape()</code>。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<br>    [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>],<br>    [<span class="hljs-number">7</span>, <span class="hljs-number">8</span>, <span class="hljs-number">9</span>, <span class="hljs-number">10</span>, <span class="hljs-number">11</span>, <span class="hljs-number">12</span>],<br>])<br><br><span class="hljs-built_in">print</span>(x.view(<span class="hljs-number">3</span>, <span class="hljs-number">4</span>))<br><span class="hljs-comment"># tensor([[ 1,  2,  3,  4],</span><br><span class="hljs-comment">#         [ 5,  6,  7,  8],</span><br><span class="hljs-comment">#         [ 9, 10, 11, 12]])</span><br><br><span class="hljs-built_in">print</span>(x.view(<span class="hljs-number">4</span>, <span class="hljs-number">3</span>))<br><span class="hljs-comment"># tensor([[ 1,  2,  3],</span><br><span class="hljs-comment">#         [ 4,  5,  6],</span><br><span class="hljs-comment">#         [ 7,  8,  9],</span><br><span class="hljs-comment">#         [10, 11, 12]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-3-tensor-unsqueeze"><a href="#3-3-tensor-unsqueeze" class="headerlink" title="3.3 tensor.unsqueeze"></a>3.3 <code>tensor.unsqueeze</code></h3><ul>
+<li><strong>作用</strong>：在指定位置插入一个大小为 <code>1</code> 的维度。</li>
+<li><strong>常见写法</strong>：<code>x.unsqueeze(dim)</code>。</li>
+<li><strong>常见场景</strong>：补 batch 维、补 head 维、方便广播。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br><span class="hljs-built_in">print</span>(x.shape)<br><span class="hljs-comment"># torch.Size([3])</span><br><br><span class="hljs-built_in">print</span>(x.unsqueeze(<span class="hljs-number">0</span>).shape)<br><span class="hljs-comment"># torch.Size([1, 3])</span><br><br><span class="hljs-built_in">print</span>(x.unsqueeze(<span class="hljs-number">1</span>).shape)<br><span class="hljs-comment"># torch.Size([3, 1])</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="4-常用-nn-组件"><a href="#4-常用-nn-组件" class="headerlink" title="4. 常用 nn 组件"></a>4. 常用 <code>nn</code> 组件</h2><h3 id="4-1-nn-Parameter"><a href="#4-1-nn-Parameter" class="headerlink" title="4.1 nn.Parameter"></a>4.1 <code>nn.Parameter</code></h3><ul>
+<li><strong>作用</strong>：把一个普通张量包装成“可训练参数”。</li>
+<li><strong>关键特点</strong>：<ul>
+<li>会被 <code>nn.Module</code> 自动注册到 <code>.parameters()</code>。</li>
+<li>默认 <code>requires_grad=True</code>。</li>
+</ul>
+</li>
+<li><strong>适用场景</strong>：自定义权重、偏置、缩放参数。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>weight = nn.Parameter(torch.ones(<span class="hljs-number">4</span>))<br><span class="hljs-built_in">print</span>(weight.requires_grad)<br><span class="hljs-comment"># True</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-2-nn-Module"><a href="#4-2-nn-Module" class="headerlink" title="4.2 nn.Module"></a>4.2 <code>nn.Module</code></h3><ul>
+<li><strong>作用</strong>：所有层和模型的基类。</li>
+<li><strong>你通常用它做两件事</strong>：<ul>
+<li>在 <code>__init__</code> 中定义参数和子模块。</li>
+<li>在 <code>forward()</code> 中定义数据流。</li>
+</ul>
+</li>
+<li><strong>额外能力</strong>：支持 <code>.parameters()</code>、<code>.to(device)</code>、<code>.train()</code>、<code>.eval()</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyModel</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.linear = nn.Linear(<span class="hljs-number">10</span>, <span class="hljs-number">5</span>)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.linear(x)<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-3-nn-Linear"><a href="#4-3-nn-Linear" class="headerlink" title="4.3 nn.Linear"></a>4.3 <code>nn.Linear</code></h3><ul>
+<li><strong>作用</strong>：执行线性变换 <code>y = xW^T + b</code>。</li>
+<li><strong>常见写法</strong>：<code>nn.Linear(in_features, out_features, bias=True)</code>。</li>
+<li><strong>适用场景</strong>：特征映射、维度升降、输出层投影。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>layer = nn.Linear(in_features=<span class="hljs-number">10</span>, out_features=<span class="hljs-number">5</span>, bias=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-4-nn-Dropout"><a href="#4-4-nn-Dropout" class="headerlink" title="4.4 nn.Dropout"></a>4.4 <code>nn.Dropout</code></h3><ul>
+<li><strong>作用</strong>：训练时随机把一部分元素置零，防止过拟合。</li>
+<li><strong>常见写法</strong>：<code>nn.Dropout(p=0.5)</code>。</li>
+<li><strong>注意</strong>：<ul>
+<li>只在 <code>model.train()</code> 时生效。</li>
+<li>在 <code>model.eval()</code> 时不会随机丢弃。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>dropout = nn.Dropout(p=<span class="hljs-number">0.5</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-5-nn-Embedding"><a href="#4-5-nn-Embedding" class="headerlink" title="4.5 nn.Embedding"></a>4.5 <code>nn.Embedding</code></h3><ul>
+<li><strong>作用</strong>：查找表，把整数 id 映射成向量。</li>
+<li><strong>常见场景</strong>：词向量、token embedding、类别 embedding。</li>
+<li><strong>输入要求</strong>：输入通常是整数类型，如 <code>torch.long</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>embedding = nn.Embedding(num_embeddings=<span class="hljs-number">1000</span>, embedding_dim=<span class="hljs-number">32</span>)<br>input_ids = torch.tensor(<span class="hljs-number">1</span>, <span class="hljs-number">5</span>, <span class="hljs-number">2</span>, <span class="hljs-number">9</span>, dtype=torch.long)<br>output = embedding(input_ids)<br><br><span class="hljs-built_in">print</span>(output.shape)<br><span class="hljs-comment"># torch.Size([1, 4, 32])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-6-nn-ModuleList"><a href="#4-6-nn-ModuleList" class="headerlink" title="4.6 nn.ModuleList"></a>4.6 <code>nn.ModuleList</code></h3><ul>
+<li><strong>作用</strong>：一个能被 PyTorch 正确注册的模块列表。</li>
+<li><strong>为什么不用普通 list</strong>：普通 Python 列表里的层不会被 <code>.parameters()</code> 或 <code>.to(device)</code> 自动识别。</li>
+<li><strong>适用场景</strong>：循环堆叠多层、按需迭代子模块。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">GoodModel</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.layers = nn.ModuleList([<br>            nn.Linear(<span class="hljs-number">10</span>, <span class="hljs-number">10</span>),<br>            nn.Linear(<span class="hljs-number">10</span>, <span class="hljs-number">10</span>),<br>        ])<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:<br>            x = layer(x)<br>        <span class="hljs-keyword">return</span> x<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-7-nn-Module-register-buffer"><a href="#4-7-nn-Module-register-buffer" class="headerlink" title="4.7 nn.Module.register_buffer"></a>4.7 <code>nn.Module.register_buffer</code></h3><ul>
+<li><strong>作用</strong>：注册一个“随模型一起移动和保存，但不参与训练”的张量。</li>
+<li><strong>好处</strong>：<ul>
+<li>会跟随 <code>model.to(device)</code> 自动移动。</li>
+<li>会进入 <code>state_dict()</code>。</li>
+<li>不会出现在 <code>model.parameters()</code> 中。</li>
+</ul>
+</li>
+<li><strong>适用场景</strong>：固定掩码、位置编码表、统计量。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyAttention</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, max_len=<span class="hljs-number">512</span></span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        mask = torch.triu(<br>            torch.full((max_len, max_len), <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>)),<br>            diagonal=<span class="hljs-number">1</span>,<br>        ).unsqueeze(<span class="hljs-number">0</span>).unsqueeze(<span class="hljs-number">0</span>)<br>        <span class="hljs-variable language_">self</span>.register_buffer(<span class="hljs-string">&#x27;causal_mask&#x27;</span>, mask)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        seq_len = x.shape[<span class="hljs-number">2</span>]<br>        <span class="hljs-keyword">return</span> x + <span class="hljs-variable language_">self</span>.causal_mask[:, :, :seq_len, :seq_len]<br></code></pre></td></tr></table></figure>
+
+<h2 id="5-训练相关方法与对象"><a href="#5-训练相关方法与对象" class="headerlink" title="5. 训练相关方法与对象"></a>5. 训练相关方法与对象</h2><h3 id="5-1-torch-nn-utils-clip-grad-norm"><a href="#5-1-torch-nn-utils-clip-grad-norm" class="headerlink" title="5.1 torch.nn.utils.clip_grad_norm_"></a>5.1 <code>torch.nn.utils.clip_grad_norm_</code></h3><ul>
+<li><strong>作用</strong>：梯度裁剪，防止梯度爆炸。</li>
+<li><strong>常见写法</strong>：<code>torch.nn.utils.clip_grad_norm_(parameters, max_norm)</code>。</li>
+<li><strong>适用场景</strong>：训练 Transformer、RNN、LLM 时非常常见。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-comment"># 假设 model 已经完成 backward()</span><br>torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="hljs-number">1.0</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-2-optimizer-param-groups"><a href="#5-2-optimizer-param-groups" class="headerlink" title="5.2 optimizer.param_groups"></a>5.2 <code>optimizer.param_groups</code></h3><ul>
+<li><strong>作用</strong>：保存优化器的参数组和对应超参数。</li>
+<li><strong>最常见用途</strong>：动态修改学习率。</li>
+<li><strong>典型操作</strong>：遍历每个参数组，更新其中的 <code>lr</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> param_group <span class="hljs-keyword">in</span> optimizer.param_groups:<br>    param_group[<span class="hljs-string">&#x27;lr&#x27;</span>] = lr<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-3-scaler-scale"><a href="#5-3-scaler-scale" class="headerlink" title="5.3 scaler.scale"></a>5.3 <code>scaler.scale</code></h3><ul>
+<li><strong>作用</strong>：AMP 混合精度训练中的梯度缩放。</li>
+<li><strong>为什么需要它</strong>：<code>float16</code> 下很小的梯度可能下溢成 0。</li>
+<li><strong>核心思路</strong>：先把 <code>loss</code> 放大，再反向传播，保护微小梯度。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">with</span> autocast():<br>    loss = model(x)<br><br>scaler.scale(loss).backward()<br>scaler.step(optimizer)<br>scaler.update()<br></code></pre></td></tr></table></figure>
+
+<h2 id="6-快速记忆"><a href="#6-快速记忆" class="headerlink" title="6. 快速记忆"></a>6. 快速记忆</h2><table>
+<thead>
+<tr>
+<th>方法 &#x2F; 组件</th>
+<th>最短记忆</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>torch.arange</code></td>
+<td>生成等差数列</td>
+</tr>
+<tr>
+<td><code>torch.outer</code></td>
+<td>向量外积</td>
+</tr>
+<tr>
+<td><code>torch.where</code></td>
+<td>条件选择</td>
+</tr>
+<tr>
+<td><code>torch.cat</code></td>
+<td>沿维度拼接</td>
+</tr>
+<tr>
+<td><code>torch.cos</code> &#x2F; <code>torch.sin</code></td>
+<td>三角函数</td>
+</tr>
+<tr>
+<td><code>torch.triu</code></td>
+<td>取上三角</td>
+</tr>
+<tr>
+<td><code>torch.reshape</code></td>
+<td>改形状</td>
+</tr>
+<tr>
+<td><code>torch.topk</code></td>
+<td>取前 k 个</td>
+</tr>
+<tr>
+<td><code>torch.repeat_interleave</code></td>
+<td>元素级重复</td>
+</tr>
+<tr>
+<td><code>torch.argsort</code></td>
+<td>返回排序索引</td>
+</tr>
+<tr>
+<td><code>torch.bincount</code></td>
+<td>计数统计</td>
+</tr>
+<tr>
+<td><code>torch.div</code></td>
+<td>逐元素除法</td>
+</tr>
+<tr>
+<td><code>torch.mean</code></td>
+<td>求平均</td>
+</tr>
+<tr>
+<td><code>torch.scatter_add_</code></td>
+<td>按索引累加</td>
+</tr>
+<tr>
+<td><code>tensor.transpose</code></td>
+<td>交换两个维度</td>
+</tr>
+<tr>
+<td><code>tensor.view</code></td>
+<td>连续内存上的重塑</td>
+</tr>
+<tr>
+<td><code>tensor.unsqueeze</code></td>
+<td>插入大小为 1 的维度</td>
+</tr>
+<tr>
+<td><code>nn.Parameter</code></td>
+<td>可训练参数</td>
+</tr>
+<tr>
+<td><code>nn.Module</code></td>
+<td>模型 &#x2F; 层的基类</td>
+</tr>
+<tr>
+<td><code>nn.Linear</code></td>
+<td>线性映射</td>
+</tr>
+<tr>
+<td><code>nn.Dropout</code></td>
+<td>随机丢弃</td>
+</tr>
+<tr>
+<td><code>nn.Embedding</code></td>
+<td>查表取向量</td>
+</tr>
+<tr>
+<td><code>nn.ModuleList</code></td>
+<td>可注册的模块列表</td>
+</tr>
+<tr>
+<td><code>register_buffer</code></td>
+<td>非训练但随模型保存的张量</td>
+</tr>
+<tr>
+<td><code>clip_grad_norm_</code></td>
+<td>梯度裁剪</td>
+</tr>
+<tr>
+<td><code>optimizer.param_groups</code></td>
+<td>调学习率 &#x2F; 参数组</td>
+</tr>
+<tr>
+<td><code>scaler.scale</code></td>
+<td>AMP 梯度缩放</td>
+</tr>
+</tbody></table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/my-blog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/my-blog/tags/PyTorch/" class="print-no-link">#PyTorch</a>
+      
+        <a href="/my-blog/tags/Tensor/" class="print-no-link">#Tensor</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Ariasu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年4月15日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/" title="Rope位置编码和YaRN">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Rope位置编码和YaRN</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/" title="MiniMind 架构图解析">
+                        <span class="hidden-mobile">MiniMind 架构图解析</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/my-blog/js/events.js" ></script>
+<script  src="/my-blog/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/my-blog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    function isExpandAllEnabled() {
+      return CONFIG.toc && CONFIG.toc.expand_all === true;
+    }
+    function expandAllToc() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .tocbot-is-collapsed').removeClass('tocbot-is-collapsed');
+    }
+    function updateTocToggle($li, $childList) {
+      var $toggle = $li.children('.toc-toggle');
+      if ($toggle.length === 0) { return; }
+      var collapsed = $childList.hasClass('tocbot-is-collapsed');
+      $toggle
+        .toggleClass('toc-toggle-collapsed', collapsed)
+        .toggleClass('toc-toggle-expanded', !collapsed);
+    }
+    function bindTocToggle() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .toc-list-item').each(function() {
+        var $li = jQuery(this);
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) {
+          if ($li.children('.toc-toggle').length === 0) {
+            $li.prepend('<span class="toc-toggle toc-toggle-placeholder" aria-hidden="true">›</span>');
+          }
+          return;
+        }
+
+        if ($li.children('.toc-toggle').length === 0) {
+          $li.prepend('<span class="toc-toggle toc-toggle-expanded" aria-hidden="true">›</span>');
+        }
+        updateTocToggle($li, $childList);
+      });
+      jQuery('#toc-body').off('click.tocToggle').on('click.tocToggle', '.toc-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $li = jQuery(this).parent('.toc-list-item');
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) { return; }
+        $childList.toggleClass('tocbot-is-collapsed');
+        updateTocToggle($li, $childList);
+      });
+      if (!window.__tocToggleObserver) {
+        window.__tocToggleObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') { return; }
+            var $list = jQuery(mutation.target);
+            var $li = $list.parent('.toc-list-item');
+            if ($li.length === 0) { return; }
+            updateTocToggle($li, $list);
+          });
+        });
+        jQuery('#toc-body ol').each(function() {
+          window.__tocToggleObserver.observe(this, { attributes: true });
+        });
+      }
+    }
+    var tocConfig = Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc);
+    if (isExpandAllEnabled()) {
+      tocConfig.collapseDepth = 6;
+    }
+    window.tocbot.init(tocConfig);
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+    expandAllToc();
+    bindTocToggle();
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+        expandAllToc();
+        bindTocToggle();
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/my-blog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/my-blog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

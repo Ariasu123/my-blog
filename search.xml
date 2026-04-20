@@ -1,6 +1,721 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>vLLM 与 SGLang 学习路线</title>
+    <url>/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
+    <content><![CDATA[<blockquote>
+<p>[!summary]</p>
+<ul>
+<li>推荐顺序：先学 <code>vLLM</code>，再学 <code>SGLang</code>。</li>
+<li><code>Mac</code> 适合做学习、开发和 toy experiment；真实性能实验放到远程 <code>Linux GPU</code>。</li>
+<li>如果目标是 AI infra 岗位，重点不是“会用框架”，而是“能 benchmark、能 profile、能读核心代码、能做小改动”。</li>
+</ul>
+</blockquote>
+<p>可以这样理解：</p>
+<ul>
+<li><code>vLLM</code> 帮你建立“现代 LLM serving engine”的标准心智模型。</li>
+<li><code>SGLang</code> 让你看到“推理引擎 + 可编程前端 + 更复杂调度 &#x2F; 缓存复用”的另一种范式。</li>
+</ul>
+<h2 id="为什么推荐先学-vLLM，再学-SGLang"><a href="#为什么推荐先学-vLLM，再学-SGLang" class="headerlink" title="为什么推荐先学 vLLM，再学 SGLang"></a>为什么推荐先学 vLLM，再学 SGLang</h2><ul>
+<li><code>vLLM</code> 已经是更普遍的行业基线，生态更广，官方文档和外部资料也更完整。</li>
+<li><code>SGLang</code> 更适合在你已经理解 serving 基础后，用来扩展对结构化生成、程序式推理和缓存复用的认识。</li>
+<li>如果你的目标是进入 AI infra，先建立标准 serving 认知，再理解不同系统的设计分歧，学习路径会更稳。</li>
+</ul>
+<h3 id="为什么不建议“全本地”"><a href="#为什么不建议“全本地”" class="headerlink" title="为什么不建议“全本地”"></a>为什么不建议“全本地”</h3><p>官方支持边界其实很明确：</p>
+<ul>
+<li><code>vLLM</code> 在 macOS Apple Silicon 上属于 experimental，官方文档注明目前需要源码构建；CPU 实现只支持 <code>FP32/FP16</code>。</li>
+<li>官方文档也提到 Apple Silicon 如果想做 Metal 加速，可以看 <code>vllm-metal</code>，但这是 community-maintained。</li>
+<li><code>SGLang</code> 官方安装页主要围绕 NVIDIA GPU 平台，没有把 macOS Apple Silicon 当作一等公民。</li>
+<li><code>Mini-SGLang</code> 更直接：文档明确写的是 Linux only，不支持 Windows 和 macOS。</li>
+</ul>
+<h3 id="阶段-A：Mac-本地建立心智模型"><a href="#阶段-A：Mac-本地建立心智模型" class="headerlink" title="阶段 A：Mac 本地建立心智模型"></a>阶段 A：Mac 本地建立心智模型</h3><p><strong>目标</strong>：理解 serving，不追求真实性能。</p>
+<p>建议做这些：</p>
+<ul>
+<li>用 <code>uv</code> 管理 Python 环境。</li>
+<li>装好 Xcode Command Line Tools。</li>
+<li>Apple Silicon 本地尝试：<ul>
+<li><code>vLLM CPU from source</code></li>
+<li>或 <code>vllm-metal</code></li>
+</ul>
+</li>
+<li>再配合 <code>MLX / mlx-lm</code> 或 <code>llama.cpp</code> 跑小模型，帮助你理解 token 生成、KV cache、量化、上下文长度这些基本概念。</li>
+</ul>
+<p>这一阶段适合跑：</p>
+<ul>
+<li><code>0.5B ~ 3B</code> 量级的小模型</li>
+<li>OpenAI-compatible server</li>
+<li>小规模 benchmark</li>
+<li>代码阅读和 toy experiment</li>
+</ul>
+<p>这一阶段不适合：</p>
+<ul>
+<li>真正比较 <code>vLLM vs SGLang</code> 的性能</li>
+<li>学习 CUDA 热路径</li>
+<li>学分布式推理的真实性能特征</li>
+</ul>
+<h3 id="阶段-B：Mac-远程-Linux-GPU"><a href="#阶段-B：Mac-远程-Linux-GPU" class="headerlink" title="阶段 B：Mac + 远程 Linux GPU"></a>阶段 B：Mac + 远程 Linux GPU</h3><p><strong>目标</strong>：把 learning 变成 infra 能力。</p>
+<p>做法：</p>
+<ul>
+<li>Mac 当开发机</li>
+<li>远程租 &#x2F; 借一台 Linux GPU 机器，哪怕先从单卡开始</li>
+<li>用 <code>SSH + tmux</code> 远程开发</li>
+<li>真正跑：<ul>
+<li><code>vLLM</code></li>
+<li><code>SGLang</code></li>
+<li>profiling</li>
+<li>benchmark</li>
+<li>多卡 &#x2F; 多机实验</li>
+</ul>
+</li>
+</ul>
+<p>这是更理想的路线，因为你在 Mac 上获得舒适开发体验，在 Linux GPU 上获得真实系统行为。</p>
+<h2 id="我建议的学习顺序"><a href="#我建议的学习顺序" class="headerlink" title="我建议的学习顺序"></a>我建议的学习顺序</h2><h3 id="第-0-阶段：补底子（1-2-周）"><a href="#第-0-阶段：补底子（1-2-周）" class="headerlink" title="第 0 阶段：补底子（1-2 周）"></a>第 0 阶段：补底子（1-2 周）</h3><p>先确保这些不是短板：</p>
+<ul>
+<li>Python 熟练</li>
+<li>C++ 至少能读能改</li>
+<li>PyTorch 基础</li>
+<li>Transformer 推理流程</li>
+<li>Linux、进程、线程、内存、网络</li>
+<li>Docker</li>
+<li>基本 SQL &#x2F; 缓存 &#x2F; 消息队列认知</li>
+</ul>
+<p>如果这些不稳，直接上 <code>vLLM / SGLang</code> 会很痛苦。</p>
+<h3 id="第-1-阶段：先学“推理系统”而不是框架（2-周）"><a href="#第-1-阶段：先学“推理系统”而不是框架（2-周）" class="headerlink" title="第 1 阶段：先学“推理系统”而不是框架（2 周）"></a>第 1 阶段：先学“推理系统”而不是框架（2 周）</h3><p><strong>重点概念</strong>：</p>
+<ul>
+<li>autoregressive decoding</li>
+<li>prefill vs decode</li>
+<li>KV cache</li>
+<li>prefix caching</li>
+<li>continuous batching</li>
+<li>chunked prefill</li>
+<li>quantization</li>
+<li>TTFT &#x2F; TPS &#x2F; latency &#x2F; P99</li>
+</ul>
+<p><strong>建议同时看</strong>：</p>
+<ul>
+<li><code>vLLM</code> 的架构和 V1 blog</li>
+<li><code>SGLang</code> docs 概览</li>
+<li><code>Mini-SGLang / nano-vllm</code></li>
+</ul>
+<p><strong>输出物</strong>：</p>
+<ul>
+<li>自己写一篇笔记，把这些概念讲明白</li>
+<li>最好画一张 request lifecycle 图</li>
+</ul>
+<h3 id="第-2-阶段：先在-Mac-上把-vLLM-跑起来（1-2-周）"><a href="#第-2-阶段：先在-Mac-上把-vLLM-跑起来（1-2-周）" class="headerlink" title="第 2 阶段：先在 Mac 上把 vLLM 跑起来（1-2 周）"></a>第 2 阶段：先在 Mac 上把 vLLM 跑起来（1-2 周）</h3><p><strong>目标</strong>：不是压性能，而是把链路跑通。</p>
+<p>要做的事：</p>
+<ul>
+<li>build <code>vLLM CPU</code> 或试 <code>vllm-metal</code></li>
+<li>启一个 OpenAI-compatible server</li>
+<li>用 Python client &#x2F; <code>curl</code> 调它</li>
+<li>记录不同 <code>max model len / batch / concurrency</code> 的表现</li>
+</ul>
+<p>要掌握：</p>
+<ul>
+<li>server 参数</li>
+<li>常见 OOM &#x2F; model loading 问题</li>
+<li>metrics 的基本观察方式</li>
+</ul>
+<p>输出物：</p>
+<ul>
+<li>一个可复现的本地 demo</li>
+<li>一篇简短 benchmark note</li>
+</ul>
+<h3 id="第-3-阶段：开始读“精简实现”（2-周）"><a href="#第-3-阶段：开始读“精简实现”（2-周）" class="headerlink" title="第 3 阶段：开始读“精简实现”（2 周）"></a>第 3 阶段：开始读“精简实现”（2 周）</h3><p>这一步非常关键。</p>
+<p><strong>阅读顺序</strong>：</p>
+<ol>
+<li><code>nano-vllm</code></li>
+<li><code>Mini-SGLang</code></li>
+</ol>
+<p><strong>目标不是逐行读完，而是回答这些问题</strong>：</p>
+<ul>
+<li>请求是怎么排队的</li>
+<li>cache 是怎么管理的</li>
+<li>为什么 prefix reuse 能省内存 &#x2F; 省算力</li>
+<li>scheduler 为什么容易成为瓶颈</li>
+<li>CPU overhead 为什么会拖垮 GPU 利用率</li>
+</ul>
+<p><strong>输出物</strong>：</p>
+<ul>
+<li>一份你自己的 code map</li>
+<li>至少改一个小点，比如日志、统计、简单策略</li>
+</ul>
+<h3 id="第-4-阶段：上远程-Linux-GPU，先学-vLLM（2-3-周）"><a href="#第-4-阶段：上远程-Linux-GPU，先学-vLLM（2-3-周）" class="headerlink" title="第 4 阶段：上远程 Linux GPU，先学 vLLM（2-3 周）"></a>第 4 阶段：上远程 Linux GPU，先学 vLLM（2-3 周）</h3><p>这是你真正开始接近岗位要求的时候。</p>
+<p>你要做：</p>
+<ul>
+<li>跑 <code>vLLM</code> 服务</li>
+<li>跑不同模型和不同并发</li>
+<li>测 <code>TTFT / throughput / P99</code></li>
+<li>用 profiler 看热路径</li>
+<li>学单卡、多卡、<code>TP / PP</code></li>
+</ul>
+<p>这一阶段要开始把“应用层感受”变成“系统层分析”。</p>
+<p><strong>输出物</strong>：</p>
+<ul>
+<li>一份 benchmark 报告</li>
+<li>至少一个性能结论，例如：<ul>
+<li>batch 变化如何影响吞吐</li>
+<li>长 prompt 如何影响 TTFT</li>
+<li>prefix cache 命中时收益多大</li>
+</ul>
+</li>
+</ul>
+<h3 id="第-5-阶段：再学-SGLang（2-3-周）"><a href="#第-5-阶段：再学-SGLang（2-3-周）" class="headerlink" title="第 5 阶段：再学 SGLang（2-3 周）"></a>第 5 阶段：再学 SGLang（2-3 周）</h3><p>重点不是“它比 <code>vLLM</code> 快多少”，而是：</p>
+<ul>
+<li>它为什么要有前端语言 &#x2F; DSL</li>
+<li><code>RadixAttention</code> 和 prefix reuse 的思路</li>
+<li>结构化生成、复杂程序式推理场景有什么差异</li>
+<li>服务层、调度层、缓存层和 <code>vLLM</code> 有哪些不同</li>
+</ul>
+<p><strong>输出物</strong>：</p>
+<ul>
+<li>一份 <code>vLLM vs SGLang</code> 对比</li>
+<li>对比维度至少包括：<ul>
+<li>易用性</li>
+<li>代码可读性</li>
+<li>结构化生成</li>
+<li>serving 特性</li>
+<li>benchmark 方法</li>
+</ul>
+</li>
+</ul>
+<h3 id="第-6-阶段：补底层优化（长期）"><a href="#第-6-阶段：补底层优化（长期）" class="headerlink" title="第 6 阶段：补底层优化（长期）"></a>第 6 阶段：补底层优化（长期）</h3><p>这部分才是真正的 infra 壁垒：</p>
+<ul>
+<li>CUDA 基础</li>
+<li>Triton</li>
+<li>CUTLASS</li>
+<li>FlashAttention &#x2F; FlashInfer</li>
+<li>NCCL &#x2F; 通信</li>
+<li>多机多卡</li>
+<li>profiling with Nsight</li>
+<li>kernel-level bottleneck analysis</li>
+</ul>
+<p>这一层不需要一口吃成胖子，但至少要把 <code>CUDA + Triton + profiling</code> 拉起来。</p>
+<h2 id="什么样的作品对找工作最有用"><a href="#什么样的作品对找工作最有用" class="headerlink" title="什么样的作品对找工作最有用"></a>什么样的作品对找工作最有用</h2><p>如果你想把这条路线变成求职资产，最有价值的不是“我学过”，而是下面这些可展示的成果：</p>
+<ul>
+<li>一个 <code>vLLM vs SGLang</code> 的 benchmark repo</li>
+<li>一份详细 profiling 报告</li>
+<li>一个你改过的小功能 &#x2F; 小优化 PR</li>
+<li>一篇系统性技术博客</li>
+<li>一个把 serving、监控、压测、回归测试串起来的小平台</li>
+</ul>
+<p>对招聘方来说，这比“看完几篇文章”有说服力得多。</p>
+<h2 id="最现实的建议"><a href="#最现实的建议" class="headerlink" title="最现实的建议"></a>最现实的建议</h2><p>如果你现在是从应用 &#x2F; 后端转 infra，不要把目标定成“先把 CUDA 学满再碰框架”。更推荐的顺序是：</p>
+<ol>
+<li>先把 serving 心智模型建立起来</li>
+<li>用 <code>vLLM</code> 建立行业基线</li>
+<li>用 <code>SGLang</code> 扩展到更复杂的 serving 思维</li>
+<li>再往 <code>CUDA / Triton</code> 深挖</li>
+</ol>
+<p>如果一开始就陷进 kernel 细节，很容易学了几个月，却还是回答不清“一个请求在推理引擎里到底经历了什么”。</p>
+<h2 id="一句话结论"><a href="#一句话结论" class="headerlink" title="一句话结论"></a>一句话结论</h2><p>这条学习方向是对的，而且在中国市场有真实岗位需求；但如果目标是进入 AI infra，就不要把目标设成“会用 <code>vLLM</code> 和 <code>SGLang</code>”，而要设成：</p>
+<p><strong>能用它们、能 benchmark、能 profile、能读核心代码、能做小改动，并且懂系统与性能。</strong></p>
+<h2 id="Sources"><a href="#Sources" class="headerlink" title="Sources"></a>Sources</h2><ul>
+<li><a href="https://docs.vllm.ai/">vLLM docs</a></li>
+<li><a href="https://docs.vllm.ai/en/stable/getting_started/installation/cpu/">vLLM macOS CPU install</a></li>
+<li><a href="https://vllm.ai/blog/v1-alpha-release">vLLM V1 blog</a></li>
+<li><a href="https://vllm.ai/blog/distributed-inference">vLLM distributed inference blog</a></li>
+<li><a href="https://github.com/vllm-project/vllm/issues/8779">vLLM V1 architecture issue</a></li>
+<li><a href="https://github.com/vllm-project/vllm">vLLM GitHub</a></li>
+<li><a href="https://github.com/vllm-project/vllm-metal">vllm-metal</a></li>
+<li><a href="https://docs.sglang.io/">SGLang docs</a></li>
+<li><a href="https://docs.sglang.io/get_started/install.html">SGLang install</a></li>
+<li><a href="https://docs.sglang.io/developer_guide/contribution_guide.html">SGLang contribution guide</a></li>
+<li><a href="https://github.com/sgl-project/sgl-learning-materials">SGLang learning materials</a></li>
+<li><a href="https://github.com/sgl-project/sglang">SGLang GitHub</a></li>
+<li><a href="https://www.lmsys.org/blog/2025-12-17-minisgl/">Mini-SGLang blog</a></li>
+<li><a href="https://www.mintlify.com/sgl-project/mini-sglang/introduction">Mini-SGLang docs</a></li>
+<li><a href="https://github.com/GeeeekExplorer/nano-vllm">Nano-vLLM</a></li>
+<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1pp43wr/we_distilled_sglang_to_help_you_learn_how_modern/">Reddit: Mini-SGLang learning thread</a></li>
+<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1k2zn6o/sglang_vs_vllm/">Reddit: SGLang vs vLLM discussion</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>AI Infra</category>
+      </categories>
+      <tags>
+        <tag>AIInfra</tag>
+        <tag>vLLM</tag>
+        <tag>SGLang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude Code实用生态工具</title>
+    <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
+    <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
+<p><strong>💡 写在前面的话：</strong><br>最近 AI 编程圈子（尤其是基于命令行的 CLI 工具）涌现了大量的开源项目。由于各大 AI 模型的 API 官方计费昂贵，且跨模型协作繁琐，开发者们“魔改”出了一个庞大的外围生态。</p>
+</blockquote>
+<hr>
+<h2 id="一、-核心底座"><a href="#一、-核心底座" class="headerlink" title="一、 核心底座"></a>一、 核心底座</h2><p>这部分是整个生态的基础，你不需要去配置它们，但需要知道它们是什么。</p>
+<ul>
+<li><p><strong>cc (Claude Code)</strong></p>
+<ul>
+<li>Anthropic 官方推出的基于命令行的 AI 编码助手。</li>
+</ul>
+</li>
+<li><p><strong>lsp (Language Server Protocol)</strong></p>
+<ul>
+<li><strong>是什么</strong>：语言服务器协议。</li>
+<li><strong>小白理解</strong>：编辑器（如 VS Code）和 AI 沟通的“标准普通话”，有了它，AI 才能看懂你的代码结构和上下文。</li>
+</ul>
+</li>
+<li><p><strong>ace (Augment Context Engine)</strong></p>
+<ul>
+<li>增强上下文引擎。</li>
+<li><strong>1. 实时语义索引 (Semantic Understanding)</strong> 它不是简单的关键字搜索，而是对你的整个代码库进行“向量化语义分析”。它能看懂文件之间的关系，知道“如果你修改了这个前端接口，后端哪个微服务也需要同步修改”。</li>
+</ul>
+<ul>
+<li><p><strong>2. 包含历史记忆 (Context Lineage)</strong> 这是它非常强大的一个点。ACE 不仅检索当前的代码，还会检索 Git 的 <strong>Commit 历史记录</strong>。当 AI 在修改一段祖传代码时，ACE 会告诉 AI：“两年前某人写这行代码是为了修复一个什么特殊的 Bug，你千万别瞎改。” 这极大地保留了团队的“部落知识”。</p>
+</li>
+<li><p><strong>3. 精准浓缩，只喂干货</strong> 当你在 Claude Code 里提问时，ACE 会在毫秒级内检索出最相关的几十行代码和背景信息，打包、浓缩后精准地喂给模型。这让大模型能以极低的 Token 消耗，给出极其准确的回答。</p>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="二、-代理与中转"><a href="#二、-代理与中转" class="headerlink" title="二、 代理与中转"></a>二、 代理与中转</h2><p>官方的 AI API 太贵了？这三个工具帮你把账单打下来。</p>
+<ul>
+<li><strong><a href="https://github.com/router-for-me/CLIProxyAPI">cpa (CLIProxyAPI)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>白嫖转换器</strong>。把你平时免费用的“网页版”AI（如 Gemini 2.5 Pro 免费版），伪装成标准的 API 给代码工具用。</li>
+<li><strong>适合谁</strong>：想零成本用顶级大模型的个人玩家。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/Wei-Shaw/claude-relay-service">crs (claude-relay-service)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>拼车记账管家</strong>。你和几个朋友凑钱买了一个昂贵的官方 API，它能把这个 API 切分成多个子账号，精确记录每个人花了多少钱。</li>
+<li><strong>适合谁</strong>：几个人合租 API 的“拼车党”。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/ding113/claude-code-hub">cch (claude-code-hub)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>团队级流量网关</strong>。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。</li>
+<li><strong>适合谁</strong>：需要统一管理几十个开发者的企业或小团队。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="left">工具对比</th>
+<th align="left">CPA</th>
+<th align="left">CRS</th>
+<th align="left">CCH</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>主打功能</strong></td>
+<td align="left">网页免费转 API</td>
+<td align="left">额度切分与账单 AA</td>
+<td align="left">高并发负载均衡与管理</td>
+</tr>
+<tr>
+<td align="left"><strong>目标用户</strong></td>
+<td align="left">个人白嫖党</td>
+<td align="left">几人合租小圈子</td>
+<td align="left">开发团队&#x2F;企业</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、-客户端与体验增强"><a href="#三、-客户端与体验增强" class="headerlink" title="三、 客户端与体验增强"></a>三、 客户端与体验增强</h2><p>觉得黑乎乎的命令行太难用？这些工具给你加上仪表盘和界面。</p>
+<ul>
+<li><strong><a href="https://github.com/musistudio/claude-code-router">ccr (claude-code-router)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>单机版智能路由</strong>。接管原生的 Claude Code，遇到简单的任务自动切给便宜模型（如 DeepSeek），遇到难的再切给原版 Claude，极致省钱。</li>
+<li>CCR使用流程</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/CooperJiang/coding-tool">cc-tool (coding-tool)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>本地数据大屏</strong>。它在你电脑本地跑一个网页后台，实时监控你发了多少请求、耗了多少 Token、精确估算花了多少美分，并在后台默默保活你的代理。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/farion1231/cc-switch">ccs (cc-switch)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>CLI 工具的桌面级聚合宿主。</strong> 通过图形化界面封装底层命令行进程，提供环境变量管理、多模型状态监控和统一的交互入口，实现 AI 辅助编程工作流的可视化降维。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="四、-多模型协作与工作流"><a href="#四、-多模型协作与工作流" class="headerlink" title="四、 多模型协作与工作流"></a>四、 多模型协作与工作流</h2><p>如何让不同的 AI 打配合，或者让 AI 自动完成繁琐的 Git 流程？</p>
+<ul>
+<li><strong><a href="https://github.com/bfly123/claude_code_bridge">ccb (claude_code_bridge)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>AI 联合会议室</strong>。让 Claude、Gemini 等多个模型在同一个项目里无缝切换，且<strong>共享上下文记忆</strong>。Gemini 读完的长代码，Claude 直接接着改，不用重复发代码浪费钱。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/fengshao1227/ccg-workflow">ccg (ccg-workflow)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>17+ 一键自动化命令</strong>。不需要每次都打字对 AI 提要求，它内置了 <code>/review</code>（代码审查）、一键写 Git 提交等自动化指令，把聊天变成了标准化的工作流。</li>
+</ul>
+</li>
+<li><em>(注：还有另一个也叫 <strong>CCG (Coder-Codex-Gemini)</strong> 的概念，它是一个宏观的多模型协作双环境框架，强调几种特定模型的联合打法。)</em></li>
+</ul>
+<hr>
+<h2 id="🎯-总结建议：小白该从哪里下手？"><a href="#🎯-总结建议：小白该从哪里下手？" class="headerlink" title="🎯 总结建议：小白该从哪里下手？"></a>🎯 总结建议：小白该从哪里下手？</h2><p>如果你是一个刚刚接触 AI 辅助编程的新手，建议按照以下路线打怪升级：</p>
+<ol>
+<li><strong>第一步（先用起来）</strong>：先搞定 <strong>CPA</strong>，把免费额度接入你的开发环境，实现“Token 自由”。</li>
+<li><strong>第二步（体验升级）</strong>：安装 <strong>cc-tool</strong>，在本地看着可视化面板，清楚知道自己的调用情况。</li>
+<li><strong>第三步（进阶高玩）</strong>：尝试配置 <strong>ccr</strong> 或 <strong>ccb</strong>，体验让不同大模型在你电脑里无缝协作的快感。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>ClaudeCode</tag>
+        <tag>工具指南</tag>
+        <tag>效率</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude Code 使用心得</title>
+    <url>/my-blog/2026/03/19/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<h1 id="Claude-Code-使用心得：常用命令、技巧与速查版"><a href="#Claude-Code-使用心得：常用命令、技巧与速查版" class="headerlink" title="Claude Code 使用心得：常用命令、技巧与速查版"></a>Claude Code 使用心得：常用命令、技巧与速查版</h1><p>如果你刚开始接触 Claude Code，最容易卡住的往往不是不会写 Prompt，而是不知道哪些入口最值得先记、长会话该怎么收束、什么时候该先规划再执行。</p>
+<p>这篇笔记把我自己高频使用的命令、快捷键、插件和学习方向，整理成一篇博客：<br>前半部分讲思路，后半部分给速查。</p>
+<blockquote>
+<p>[!summary]<br>如果你只想先记住最常用的 6 个入口：</p>
+<ul>
+<li><code>/compact</code>：压缩上下文，适合长对话</li>
+<li><code>/clear</code>：清空当前会话</li>
+<li><code>/resume</code>：续接历史任务</li>
+<li><code>/plan</code>：先让 Claude 出方案</li>
+<li><code>/agent</code> &#x2F; <code>/agents</code>：调用子智能体并行处理</li>
+<li><code>/doctor</code>：排查环境和依赖问题</li>
+</ul>
+</blockquote>
+<h2 id="为什么值得把-Claude-Code-用顺手"><a href="#为什么值得把-Claude-Code-用顺手" class="headerlink" title="为什么值得把 Claude Code 用顺手"></a>为什么值得把 Claude Code 用顺手</h2><p>和普通聊天式 AI 相比，Claude Code 更像是终端里的 AI 搭子：它不是只负责回答问题，而是能直接参与到“读代码、改代码、跑命令、排查问题”的完整流程里。</p>
+<p>真正拉开效率差距的，通常不是模型本身，而是你会不会用好下面这几类能力：</p>
+<ul>
+<li>会话管理：避免上下文越来越乱</li>
+<li>计划模式：先想清楚，再改代码</li>
+<li>子智能体：把任务拆开并行处理</li>
+<li>Skills &#x2F; 插件：把高频动作工具化</li>
+</ul>
+<h2 id="快捷键速查"><a href="#快捷键速查" class="headerlink" title="快捷键速查"></a>快捷键速查</h2><table>
+<thead>
+<tr>
+<th>快捷键</th>
+<th>用途</th>
+<th>什么时候最有用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl + B</code></td>
+<td>将任务转到后台运行</td>
+<td>命令较慢，不想阻塞当前会话时</td>
+</tr>
+<tr>
+<td><code>Ctrl + J</code></td>
+<td>换行但不提交</td>
+<td>写长 Prompt、分段列需求时</td>
+</tr>
+<tr>
+<td><code>Esc Esc</code></td>
+<td>回滚输入，连按两次删除整行对话框内容</td>
+<td>输入写乱时快速清空</td>
+</tr>
+<tr>
+<td><code>Shift + Tab</code></td>
+<td>在普通模式、自动同意模式、计划模式之间切换</td>
+<td>需要在“先规划”和“直接执行”之间切换时</td>
+</tr>
+</tbody></table>
+<h2 id="常用命令，我会这样记"><a href="#常用命令，我会这样记" class="headerlink" title="常用命令，我会这样记"></a>常用命令，我会这样记</h2><h3 id="1-会话与上下文管理"><a href="#1-会话与上下文管理" class="headerlink" title="1. 会话与上下文管理"></a>1. 会话与上下文管理</h3><p>这组命令解决的是：对话聊久了，Claude 开始发散、回复越来越长，甚至偏离重点。</p>
+<ul>
+<li><code>/compact</code>：压缩对话历史，保留重点，适合长任务中途整理上下文</li>
+<li><code>/clear</code>：直接清空当前会话，适合彻底切换主题</li>
+<li><code>/rewind</code>：回到之前的检查点，适合“这一步走歪了，想撤回”</li>
+<li><code>/resume</code>：恢复历史会话，适合接着昨天没做完的任务继续</li>
+</ul>
+<blockquote>
+<p>[!tip]<br>如果你感觉 Claude 开始“话变多、重点变少、速度变慢”，先试一次 <code>/compact</code>，通常比你手动重述背景更省事。</p>
+</blockquote>
+<h3 id="2-项目与环境配置"><a href="#2-项目与环境配置" class="headerlink" title="2. 项目与环境配置"></a>2. 项目与环境配置</h3><p>这组命令更像是把工作台先搭好。</p>
+<ul>
+<li><code>/init</code>：在当前目录初始化项目，并生成 <code>CLAUDE.md</code>，适合沉淀项目级规范</li>
+<li><code>/config</code>：打开配置面板，快速调整全局设置</li>
+<li><code>/mcp</code>：管理 MCP 服务，让 Claude 连接更多外部工具和上下文</li>
+<li><code>/allowed-tools</code>：管理工具权限，减少重复确认</li>
+</ul>
+<h3 id="3-任务规划与并行处理"><a href="#3-任务规划与并行处理" class="headerlink" title="3. 任务规划与并行处理"></a>3. 任务规划与并行处理</h3><p>这是 Claude Code 最容易被低估的一块，也是最能提升效率的一块。</p>
+<ul>
+<li><code>/plan</code>：先输出完整思路和改动步骤，再决定是否执行</li>
+<li><code>/agent</code> &#x2F; <code>/agents</code>：把子任务分给 subagent 并行处理</li>
+<li><code>/tasks</code>：查看后台任务状态，管理长时间运行的工作</li>
+</ul>
+<blockquote>
+<p>[!note]<br>我自己的习惯是：需求不清、改动面大、涉及多个文件时，先 <code>/plan</code>；任务能拆分时，再交给 <code>/agent</code> 或 <code>/agents</code> 去并行跑。</p>
+</blockquote>
+<h3 id="4-状态与诊断"><a href="#4-状态与诊断" class="headerlink" title="4. 状态与诊断"></a>4. 状态与诊断</h3><p>这组命令适合处理“我怀疑不是我写错了，而是环境有问题”的场景。</p>
+<ul>
+<li><code>/cost</code> 或 <code>/cos</code>：查看当前 Session 的成本与耗时</li>
+<li><code>/usage</code>：查看 API 总体额度使用情况和限流状态</li>
+<li><code>/doctor</code>：检查当前终端环境、依赖和安装状态</li>
+</ul>
+<h2 id="插件与-Skills，哪些值得先上手"><a href="#插件与-Skills，哪些值得先上手" class="headerlink" title="插件与 Skills，哪些值得先上手"></a>插件与 Skills，哪些值得先上手</h2><h3 id="Skills"><a href="#Skills" class="headerlink" title="Skills"></a>Skills</h3><p>我当前重点关注的是这几类技能：</p>
+<ul>
+<li><code>openspec</code>：适合 OpenAPI 规范和接口文档类工作流</li>
+<li><code>helloagent</code>：适合理解 Agent &#x2F; Sub-agent 的基本思路</li>
+<li><code>skill-seeker</code>：适合搜索、生成和整理技能文档</li>
+<li><code>autogen</code>：偏多智能体方向</li>
+</ul>
+<p>其中 <code>helloagent</code> 可以参考：</p>
+<ul>
+<li><a href="https://github.com/jjyaoao/HelloAgents">GitHub - jjyaoao&#x2F;HelloAgents</a></li>
+<li><a href="https://github.com/hellowind777/helloagents/tree/main">GitHub - hellowind777&#x2F;helloagents</a></li>
+</ul>
+<h3 id="我在用的插件记录"><a href="#我在用的插件记录" class="headerlink" title="我在用的插件记录"></a>我在用的插件记录</h3><h4 id="context7"><a href="#context7" class="headerlink" title="context7"></a><code>context7</code></h4><ul>
+<li>跟 Claude Code 对话时，可以在 Prompt 结尾补一句：<code>use context7</code></li>
+<li>适合需要补充上下文、文档或知识参考的场景</li>
+</ul>
+<h4 id="document-skills"><a href="#document-skills" class="headerlink" title="document skills"></a><code>document skills</code></h4><ul>
+<li>可以隐式触发，也可以显式点名触发</li>
+</ul>
+<p>例如：</p>
+<ul>
+<li>隐式触发：帮我把 <code>report.pdf</code> 里的表格提取成 CSV</li>
+<li>显式触发：请使用 PDF skill 帮我把 <code>report.pdf</code> 里的表格提取成 CSV</li>
+<li>显式触发：用 docx 技能帮我创建一个标准的商业合同模板</li>
+</ul>
+<h3 id="Claude-Code-配置"><a href="#Claude-Code-配置" class="headerlink" title="Claude Code 配置"></a>Claude Code 配置</h3><p>我目前有记录的配置偏好：</p>
+<ul>
+<li><code>statusline</code><ul>
+<li><code>nerd_font</code> 字体</li>
+<li><code>cometix</code> 主题</li>
+</ul>
+</li>
+</ul>
+<h2 id="一套够用的上手流程"><a href="#一套够用的上手流程" class="headerlink" title="一套够用的上手流程"></a>一套够用的上手流程</h2><p>如果你不想一次记太多，可以先记住下面这条工作流：</p>
+<ol>
+<li>用 <code>/init</code> 给项目建立规则</li>
+<li>长对话中用 <code>/compact</code> 收束上下文</li>
+<li>遇到复杂需求先 <code>/plan</code></li>
+<li>能拆开的任务交给 <code>/agent</code> &#x2F; <code>/agents</code></li>
+<li>环境不对劲时先跑 <code>/doctor</code></li>
+</ol>
+<blockquote>
+<p>[!success]<br>对大多数日常开发场景来说，<code>/init → /plan → /agent(s) → /compact</code> 这条链路已经足够高频、足够实用。</p>
+</blockquote>
+<h2 id="延伸学习方向"><a href="#延伸学习方向" class="headerlink" title="延伸学习方向"></a>延伸学习方向</h2><p>如果你准备继续往下深挖，我建议优先看下面这些方向。</p>
+<h3 id="Skills-方向"><a href="#Skills-方向" class="headerlink" title="Skills 方向"></a>Skills 方向</h3><ul>
+<li><code>openspec</code><ul>
+<li><a href="https://www.aivi.fyi//llms/introduce-OpenSpec">博客教学</a></li>
+<li><a href="https://www.youtube.com/watch?v=ANjiJQQIBo0">YouTube 教学</a></li>
+<li><a href="https://linux.do/t/topic/1445627">L 站 openspec 实战</a></li>
+<li><a href="https://linux.do/t/topic/1701121">OPSX 任务拆分</a></li>
+</ul>
+</li>
+<li><code>skill-seeker</code><ul>
+<li><a href="https://www.aivi.fyi/aiagents/introduce-Skill-Seeker">博客教学</a></li>
+<li><a href="https://www.youtube.com/watch?v=K6-sR__mA3s&t=9s">YouTube 教学</a></li>
+</ul>
+</li>
+<li><code>Trellis</code><ul>
+<li><a href="https://linux.do/t/topic/1539636">L 站讨论</a></li>
+<li><a href="https://github.com/mindfold-ai/Trellis">GitHub - mindfold-ai&#x2F;Trellis</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="多智能体方向"><a href="#多智能体方向" class="headerlink" title="多智能体方向"></a>多智能体方向</h3><ul>
+<li><a href="https://github.com/datawhalechina/hello-agents">GitHub - datawhalechina&#x2F;hello-agents</a></li>
+<li><code>autogen</code></li>
+</ul>
+<h2 id="速查版"><a href="#速查版" class="headerlink" title="速查版"></a>速查版</h2><p>如果你只是临时回来翻一下命令，直接看这一节就够了。</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>首选命令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>对话太长，想保留重点继续聊</td>
+<td><code>/compact</code></td>
+</tr>
+<tr>
+<td>想彻底切到新话题</td>
+<td><code>/clear</code></td>
+</tr>
+<tr>
+<td>想恢复之前没做完的任务</td>
+<td><code>/resume</code></td>
+</tr>
+<tr>
+<td>动手前先看实现方案</td>
+<td><code>/plan</code></td>
+</tr>
+<tr>
+<td>想把任务并行拆开处理</td>
+<td><code>/agent</code> &#x2F; <code>/agents</code></td>
+</tr>
+<tr>
+<td>查看后台任务列表</td>
+<td><code>/tasks</code></td>
+</tr>
+<tr>
+<td>初始化当前项目规范</td>
+<td><code>/init</code></td>
+</tr>
+<tr>
+<td>管理工具权限</td>
+<td><code>/allowed-tools</code></td>
+</tr>
+<tr>
+<td>管理 MCP 服务</td>
+<td><code>/mcp</code></td>
+</tr>
+<tr>
+<td>管理插件 &#x2F; Skills</td>
+<td><code>/plugins</code></td>
+</tr>
+<tr>
+<td>查看本次会话成本</td>
+<td><code>/cost</code></td>
+</tr>
+<tr>
+<td>查看额度与限流</td>
+<td><code>/usage</code></td>
+</tr>
+<tr>
+<td>排查环境问题</td>
+<td><code>/doctor</code></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>[!abstract]<br>一句话总结：<br>Claude Code 真正好用的地方，不只是“能回答”，而是它能在正确的时机帮你<strong>压缩上下文、先做规划、并行处理任务、接入更多工具</strong>。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+      <tags>
+        <tag>ClaudeCode</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>LLM 推理加速与算子优化学习路线</title>
+    <url>/my-blog/2026/03/14/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
+    <content><![CDATA[<h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p>
+<h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p>
+<ul>
+<li><p><strong>《大规模并行处理器编程实战 (PMPP)》</strong>： GPU 架构和并行计算。理解硬件是如何执行任务的（Warp 调度、内存合并访问等）。</p>
+</li>
+<li><p><strong>《CUDA 编程：基础与实践》 (樊哲勇)</strong>：相比 PMPP 更加注重代码实践和快速上手，适合作为进入 CUDA 世界的第一块敲门砖。</p>
+</li>
+<li><p><strong><a href="https://docs.nvidia.cn/cuda/cuda-c-programming-guide/index.html#cuda-enabled-gpus">NVIDIA CUDA C++ Programming Guide</a></strong>：官方文档，遇到具体 API 或进阶特性（如 PTX, Tensor Cores）时的权威字典。</p>
+</li>
+<li><p><strong><a href="https://leetgpu.com/">LeetGPU</a></strong>：实战刷题网站。巩固 Reduce、Scan、Matrix Multiplication 等基础算子的编写。</p>
+</li>
+</ul>
+<h1 id="LLM-模型量化-Quantization"><a href="#LLM-模型量化-Quantization" class="headerlink" title="LLM 模型量化 (Quantization)"></a>LLM 模型量化 (Quantization)</h1><p>大模型推理通常是 Memory-bound（访存密集型）而非 Compute-bound（计算密集型）。量化是通过降低权重或激活值的精度，来大幅减少显存占用和访存带宽的核心技术。</p>
+<ul>
+<li><p><strong>GPTQ</strong>: <em>Weight-Only 权重量化的代表作</em>。重点解决了如何高效地将模型权重压缩到 4-bit 或 3-bit，同时保持极高的精度。</p>
+</li>
+<li><ul>
+<li>论文：<a href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li>
+</ul>
+</li>
+<li><p><strong>AWQ (Activation-aware Weight Quantization)</strong>: <em>端侧&#x2F;边缘计算友好的量化</em>。它发现并非所有权重都同等重要，通过观察激活值（Activation）的分布来保护那 1% 的显著权重（Salient Weights），量化效果极好且容易在硬件上实现。</p>
+<ul>
+<li>论文：<a href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li>
+</ul>
+</li>
+<li><p><strong>SmoothQuant</strong>: <em>W8A8 (权重和激活同时量化) 的里程碑</em>。大模型在超过 6.7B 参数后，激活值会出现极端的异常值（Outliers），导致传统量化崩溃。SmoothQuant 通过数学平滑手段解决了这个问题，是企业级部署的标配。</p>
+<ul>
+<li>论文：<a href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="算法级加速：打破自回归瓶颈与推理框架"><a href="#算法级加速：打破自回归瓶颈与推理框架" class="headerlink" title="算法级加速：打破自回归瓶颈与推理框架"></a>算法级加速：打破自回归瓶颈与推理框架</h1><p><strong>MEDUSA</strong>: <em>推测解码（Speculative Decoding）的进化版</em>。传统的 LLM 一次只能吐出一个词，速度极慢。Medusa 通过在模型头部增加多个“解码头”，一次预测多个后续 Token，然后并行验证，大幅提升了生成速度，且不需要额外部署一个“小草稿模型”。</p>
+<ul>
+<li>论文&#x2F;项目：<a href="https://arxiv.org/abs/2401.10774">Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></li>
+</ul>
+<p><strong>TensorRT-LLM</strong>: 它将上述的量化技术（AWQ, SmoothQuant）、算子优化（FlashAttention）、以及系统级调度（In-flight Batching）全部融合在了一起。</p>
+<ul>
+<li>项目：<a href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>AI Infra</category>
+      </categories>
+      <tags>
+        <tag>CPP/LLM/CUDA/GPU</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>手工敲代码到 AI 智能体流水线（Harness Engineering）</title>
+    <url>/my-blog/2026/03/27/03Agent-Harness/</url>
+    <content><![CDATA[<h1 id="聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线"><a href="#聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线" class="headerlink" title="聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线"></a>聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线</h1><p>前阵子，OpenAI 和 Anthropic 等顶尖 AI 实验室先后公布了他们的内部工程实践——<strong>让 AI 智能体（Agent）全自动写出了包含上百万行代码的真实产品，而人类一行代码都没写。</strong></p>
+<p>很多开发者看完后都有一个疑问：AI 经常会胡说八道（幻觉），写个百来行代码还能凑合，它是怎么做到自主完成几万、几十万行代码的复杂工程，并且不出 Bug 的？</p>
+<p>答案就隐藏在现代软件工程的几个核心概念里。今天，我们就来扒一扒软件开发的进化史，看看我们是如何一步步从“小作坊”走向“全自动化流水线”，并最终构建出让 AI 打工的“智能体工厂”的。</p>
+<p>本文会带你通俗易懂地搞懂四个高频技术词汇：<strong>PRD Driven、Spec Driven、CI&#x2F;CD Pipeline</strong>，以及在 AI 时代被赋予了全新魔力的 <strong>Harness</strong>。</p>
+<hr>
+<h2 id="时代一：图纸与契约（人类协同的艺术）"><a href="#时代一：图纸与契约（人类协同的艺术）" class="headerlink" title="时代一：图纸与契约（人类协同的艺术）"></a>时代一：图纸与契约（人类协同的艺术）</h2><p>在写下第一行代码之前，团队必须有一个明确的“行动指南”。否则前端造了个轮船，后端造了个飞机，最后根本拼不到一起。为了解决这个问题，业界演化出了两种驱动模式：</p>
+<h3 id="1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”"><a href="#1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”" class="headerlink" title="1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”"></a>1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”</h3><ul>
+<li><p><strong>这是什么</strong>：产品经理（PM）写出一份详尽的文档（PRD），规定好页面的长相、按钮点击后的反应、以及背后的业务逻辑。这在团队里是唯一的“圣旨”（Single Source of Truth）。</p>
+</li>
+<li><p><strong>通俗理解</strong>：这就好比你要盖一栋大楼，PRD 就是<strong>建筑效果图和商业计划书</strong>。它关心的是“这栋楼有几层、大堂是什么风格、面向哪些客户”。</p>
+</li>
+<li><p><strong>现实痛点</strong>：这种模式非常业务导向，但如果 PM 的文档写得含糊其辞，或者天天改需求，下游的程序员和测试人员就会痛不欲生。</p>
+</li>
+</ul>
+<h3 id="2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”"><a href="#2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”" class="headerlink" title="2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”"></a>2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”</h3><ul>
+<li><p><strong>这是什么</strong>：随着系统越来越复杂，尤其是前后端分离架构的普及，光有 PRD 不够了。架构师或后端开发会在写代码前，先定义好纯技术层面的“API 接口文档”（也就是 Spec）。</p>
+</li>
+<li><p><strong>通俗理解</strong>：Spec 就像是大楼的<strong>水电施工图纸</strong>。它严格规定了水管的口径、电线的电压。前端看着这份图纸去画页面，后端看着图纸去写数据库。</p>
+</li>
+<li><p><strong>它的魔法</strong>：契约一旦定好，大家就可以兵分两路、并行施工。最后对接时，只要大家都遵守了契约，系统就像插头插进插座一样，一次点亮。</p>
+</li>
+</ul>
+<hr>
+<h2 id="时代二：自动化的魔法（CI-CD-Pipeline）"><a href="#时代二：自动化的魔法（CI-CD-Pipeline）" class="headerlink" title="时代二：自动化的魔法（CI&#x2F;CD Pipeline）"></a>时代二：自动化的魔法（CI&#x2F;CD Pipeline）</h2><p>需求明确了，图纸画好了，程序员们开始疯狂敲代码。但在过去，大家各写各的，月底统一合并代码时，经常引发史诗级的“代码冲突灾难”。</p>
+<p>为了解决这个问题，工程师们发明了 <strong>CI&#x2F;CD Pipeline（持续集成&#x2F;持续交付流水线）</strong>。</p>
+<p>你可以把它想象成工厂里的<strong>全自动化产品传送带</strong>：</p>
+<ul>
+<li><p><strong>CI（持续集成）</strong>：强制要求程序员“小步快跑”，每天把写好的代码提交好几次。一旦提交，流水线就会<strong>自动</strong>拉取代码，<strong>自动</strong>运行几千个测试用例。哪怕你只写错了一个标点符号，传送带会立刻亮起红灯并报警（Fail Fast）。</p>
+</li>
+<li><p><strong>CD（持续部署）</strong>：当代码完美通过了所有的自动化测试，传送带会<strong>自动</strong>把这段代码打包，毫无人工干预地发布到生产环境。</p>
+</li>
+</ul>
+<p>有了 CI&#x2F;CD，软件的发布从过去“半个月一次的心惊胆战”，变成了现在“一天发布几十次的习以为常”。它是现代软件工厂的基石。</p>
+<hr>
+<h2 id="时代三：给-AI-建一座打工工厂（Agent-Harness）"><a href="#时代三：给-AI-建一座打工工厂（Agent-Harness）" class="headerlink" title="时代三：给 AI 建一座打工工厂（Agent Harness）"></a>时代三：给 AI 建一座打工工厂（Agent Harness）</h2><p>现在，深水区来了。</p>
+<p>CI&#x2F;CD 自动化了“测试和发布”，但<strong>代码依然是人类一行行敲出来的</strong>。到了 2025 年之后，大模型（LLM）爆发，我们希望 AI 能直接帮我们把代码写了。</p>
+<p>但如果你直接在对话框里让 AI 写个电商网站，它写到一半就会忘记前面的设定，或者因为代码太长而彻底崩溃。<strong>AI 需要一个极度受限、充满护栏的工作环境。</strong></p>
+<p>这就是 <strong>Harness（脚手架&#x2F;运行框架）</strong> 在 AI 时代迎来的终极进化。</p>
+<p>在过去，Harness 只是一个“测试底座”（给一小段代码提供模拟的测试环境）。但在**智能体优先（Agent-first）**的今天，<strong>Harness 变成了一座专门为 AI 打造的虚拟工厂</strong>。人类不再写业务代码，人类的工作变成了设计和维护这个 Harness。</p>
+<p>结合 Anthropic 和 OpenAI 最近披露的工程实践，一个现代的 Agent Harness 长这样：</p>
+<ol>
+<li><p><strong>分工明确的多智能体车间</strong></p>
+<p> Harness 里不是只有一个 AI，而是有分工的。</p>
+<ul>
+<li><p><strong>Planner（产品经理 AI）</strong>：负责把人类的一句话需求，扩写成详细的 PRD。</p>
+</li>
+<li><p><strong>Generator（牛马程序员 AI）</strong>：负责老老实实写代码。</p>
+</li>
+<li><p><strong>Evaluator（魔鬼测试员 AI）</strong>：因为 AI 往往会“盲目自信”地觉得自己的代码写得很好，所以 Harness 引入了 Evaluator。它会像真实用户一样去点击跑起来的网页，一旦发现 Bug 或是界面丑陋，就会无情地打回重做。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>给 AI 戴上“紧箍咒”（硬性约束）</strong></p>
+<p> 人类面对百万行代码会头晕，AI 也会。在 Harness 中，工程师会写死一套极其严格的自动化检查工具（Linter）。一旦 AI 乱写架构、跨层调用，Harness 就会立刻报错，并在报错信息中告诉 AI：“你违规了，请按照规定重写。”</p>
+</li>
+<li><p><strong>专为 AI 打造的“盲文”（可读性环境）</strong></p>
+<p> 人类的代码库是给人类看的，里面充满了黑话和默认潜规则。Harness 会把整个环境变得对 AI 极其友好。系统报错的日志、性能监控的图表、甚至浏览器的界面，全都会通过 Harness 转换成 AI 能直接读懂的格式，让它具备<strong>自我定位问题、自我修复</strong>的能力。</p>
+</li>
+</ol>
+<hr>
+<h2 id="结语：程序员要失业了吗？"><a href="#结语：程序员要失业了吗？" class="headerlink" title="结语：程序员要失业了吗？"></a>结语：程序员要失业了吗？</h2><p>看懂了这些，你就会明白未来软件工程的走向：</p>
+<ul>
+<li><p><strong>PRD 与 Spec</strong> 依然是灵魂，但可能以后是由人类口述，AI 来撰写。</p>
+</li>
+<li><p><strong>CI&#x2F;CD</strong> 是不可或缺的基础设施。</p>
+</li>
+<li><p>而 <strong>Harness</strong> 将成为各家科技公司最核心的壁垒。</p>
+</li>
+</ul>
+<p>以后，初级程序员确实不再需要去手写那些重复的“增删改查”代码了。但这并不意味着我们不需要工程师了。</p>
+<p><strong>未来的软件工程师，不再是流水线上的“打螺丝工人”，而是成为了设计这条 AI 流水线的“厂长”。</strong> 我们需要去定义架构、调优 Harness 框架、设计反馈回路，让 AI 智能体在这个框架内不知疲倦地为我们创造价值。</p>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+  </entry>
+  <entry>
     <title>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</title>
     <url>/my-blog/2026/04/12/02AI%20infra-%E4%BB%8E%20vLLM%20%E5%92%8C%20SGLang%20%E5%85%A5%E9%97%A8%EF%BC%8C%E5%88%B0%20AI%20Infra%20%E6%B1%82%E8%81%8C%E8%90%BD%E5%9C%B0/</url>
     <content><![CDATA[<h1 id="从-vLLM-和-SGLang-入门，到-AI-Infra-求职落地"><a href="#从-vLLM-和-SGLang-入门，到-AI-Infra-求职落地" class="headerlink" title="从 vLLM 和 SGLang 入门，到 AI Infra 求职落地"></a>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</h1><p>这两年，大模型工程岗位正在发生一个很明显的变化：</p>
@@ -265,718 +980,859 @@
       </tags>
   </entry>
   <entry>
-    <title>Claude Code 使用心得</title>
-    <url>/my-blog/2026/03/19/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/</url>
-    <content><![CDATA[<h1 id="Claude-Code-使用心得：常用命令、技巧与速查版"><a href="#Claude-Code-使用心得：常用命令、技巧与速查版" class="headerlink" title="Claude Code 使用心得：常用命令、技巧与速查版"></a>Claude Code 使用心得：常用命令、技巧与速查版</h1><p>如果你刚开始接触 Claude Code，最容易卡住的往往不是不会写 Prompt，而是不知道哪些入口最值得先记、长会话该怎么收束、什么时候该先规划再执行。</p>
-<p>这篇笔记把我自己高频使用的命令、快捷键、插件和学习方向，整理成一篇博客：<br>前半部分讲思路，后半部分给速查。</p>
-<blockquote>
-<p>[!summary]<br>如果你只想先记住最常用的 6 个入口：</p>
+    <title>从 OpenSpec、Superpowers 到 TRELLIS：AI 编码工作流的工程化演进</title>
+    <url>/my-blog/2026/04/01/03Agent-%E4%BB%8E%20OpenSpec%E3%80%81Superpowers%20%E5%88%B0%20TRELLIS%20%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%BC%94%E8%BF%9B/</url>
+    <content><![CDATA[<p>在 AI 编码助手越来越强的今天，<strong>“让模型写出代码”已经不是最难的问题，真正难的是让它在复杂项目里持续、稳定、低成本地写对代码。</strong></p>
+<p>很多人第一次接触 AI 编程时，都会被它的速度震撼：一句 Prompt，几百行代码立刻就出来了。但只要真正把 AI 拉进长期项目，你很快就会发现，真正麻烦的不是“生成”，而是<strong>对齐需求、约束行为、控制上下文、维持质量，以及让一次次会话形成连续的工程记忆</strong>。</p>
+<p>也正因为如此，社区对 AI 编码的探索，逐渐从“Prompt 怎么写更聪明”，演进到了“工作流和脚手架怎么设计更可靠”。沿着这条线去看，OpenSpec、Superpowers 和 TRELLIS 并不是三款互相替代的工具，而更像是三个阶段的代表性答案：</p>
 <ul>
-<li><code>/compact</code>：压缩上下文，适合长对话</li>
-<li><code>/clear</code>：清空当前会话</li>
-<li><code>/resume</code>：续接历史任务</li>
-<li><code>/plan</code>：先让 Claude 出方案</li>
-<li><code>/agent</code> &#x2F; <code>/agents</code>：调用子智能体并行处理</li>
-<li><code>/doctor</code>：排查环境和依赖问题</li>
+<li><strong>OpenSpec</strong> 回答的是：如何让 AI 在动手前先把需求和规范讲清楚。</li>
+<li><strong>Superpowers</strong> 回答的是：如何让 AI 不只是理解需求，还能像一支有纪律的工程团队那样执行。</li>
+<li><strong>TRELLIS</strong> 回答的是：如何把规范、执行、上下文治理、跨会话记忆和成本控制，真正收进同一套 Agent Harness 里。</li>
 </ul>
-</blockquote>
-<h2 id="为什么值得把-Claude-Code-用顺手"><a href="#为什么值得把-Claude-Code-用顺手" class="headerlink" title="为什么值得把 Claude Code 用顺手"></a>为什么值得把 Claude Code 用顺手</h2><p>和普通聊天式 AI 相比，Claude Code 更像是终端里的 AI 搭子：它不是只负责回答问题，而是能直接参与到“读代码、改代码、跑命令、排查问题”的完整流程里。</p>
-<p>真正拉开效率差距的，通常不是模型本身，而是你会不会用好下面这几类能力：</p>
+<p>这篇文章想讲的，不只是三个工具分别做了什么，而是<strong>为什么社区会一步步从 OpenSpec 走到 Superpowers，再走到 TRELLIS。</strong></p>
+<h2 id="问题的起点：AI-会写代码，不等于-AI-能稳定交付"><a href="#问题的起点：AI-会写代码，不等于-AI-能稳定交付" class="headerlink" title="问题的起点：AI 会写代码，不等于 AI 能稳定交付"></a>问题的起点：AI 会写代码，不等于 AI 能稳定交付</h2><p>如果只把 AI 当成“更快的代码生成器”，软件开发会很快陷入一种奇怪的悖论：写代码的门槛降低了，但项目失控的速度也更快了。</p>
+<p>原因很简单。软件开发从来都不只是把语法拼对，它还包括一整套隐性但关键的工程约束：</p>
 <ul>
-<li>会话管理：避免上下文越来越乱</li>
-<li>计划模式：先想清楚，再改代码</li>
-<li>子智能体：把任务拆开并行处理</li>
-<li>Skills &#x2F; 插件：把高频动作工具化</li>
+<li>需求是否被充分澄清</li>
+<li>架构边界是否被遵守</li>
+<li>修改是否可追溯</li>
+<li>测试是否覆盖关键路径</li>
+<li>多个任务是否会互相污染上下文</li>
+<li>上一次会话的结论能不能在下一次继续沿用</li>
 </ul>
-<h2 id="快捷键速查"><a href="#快捷键速查" class="headerlink" title="快捷键速查"></a>快捷键速查</h2><table>
-<thead>
-<tr>
-<th>快捷键</th>
-<th>用途</th>
-<th>什么时候最有用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>Ctrl + B</code></td>
-<td>将任务转到后台运行</td>
-<td>命令较慢，不想阻塞当前会话时</td>
-</tr>
-<tr>
-<td><code>Ctrl + J</code></td>
-<td>换行但不提交</td>
-<td>写长 Prompt、分段列需求时</td>
-</tr>
-<tr>
-<td><code>Esc Esc</code></td>
-<td>回滚输入，连按两次删除整行对话框内容</td>
-<td>输入写乱时快速清空</td>
-</tr>
-<tr>
-<td><code>Shift + Tab</code></td>
-<td>在普通模式、自动同意模式、计划模式之间切换</td>
-<td>需要在“先规划”和“直接执行”之间切换时</td>
-</tr>
-</tbody></table>
-<h2 id="常用命令，我会这样记"><a href="#常用命令，我会这样记" class="headerlink" title="常用命令，我会这样记"></a>常用命令，我会这样记</h2><h3 id="1-会话与上下文管理"><a href="#1-会话与上下文管理" class="headerlink" title="1. 会话与上下文管理"></a>1. 会话与上下文管理</h3><p>这组命令解决的是：对话聊久了，Claude 开始发散、回复越来越长，甚至偏离重点。</p>
+<p>这些约束原本依靠开发者经验、团队流程和代码评审来维持。可一旦把大量工作交给 AI，如果没有新的机制把这些约束重新“装回去”，AI 的高速度就会直接放大混乱：需求没对齐就开始写、写完缺少验证、长会话上下文越来越脏、不同任务互相串味、最终留下大量技术债。</p>
+<p>所以，真正的挑战从来不是“让 AI 写”，而是<strong>让 AI 在工程纪律之内写</strong>。</p>
+<h2 id="第一阶段：OpenSpec-让-AI-先学会“按规范行动”"><a href="#第一阶段：OpenSpec-让-AI-先学会“按规范行动”" class="headerlink" title="第一阶段：OpenSpec 让 AI 先学会“按规范行动”"></a>第一阶段：OpenSpec 让 AI 先学会“按规范行动”</h2><p>在这条演进路径里，OpenSpec 的价值非常明确：它让社区第一次比较系统地意识到，<strong>AI 编码不能只靠即时对话，而要先把规范和变更设计成工件。</strong></p>
+<p>OpenSpec 的核心理念其实很朴素：<strong>先想清楚，再动手。</strong> 与其让模型在一段长对话里边猜边写，不如先把这次改动的提案、设计、需求说明和任务拆解沉淀下来，让人和 AI 对“要做什么、为什么做、做到什么算完成”形成一致理解。</p>
+<p>它最有代表性的，就是一整套 <code>/opsx</code> 工作流：</p>
 <ul>
-<li><code>/compact</code>：压缩对话历史，保留重点，适合长任务中途整理上下文</li>
-<li><code>/clear</code>：直接清空当前会话，适合彻底切换主题</li>
-<li><code>/rewind</code>：回到之前的检查点，适合“这一步走歪了，想撤回”</li>
-<li><code>/resume</code>：恢复历史会话，适合接着昨天没做完的任务继续</li>
+<li><code>/opsx:explore</code>：先讨论问题，不急着写代码</li>
+<li><code>/opsx:propose</code>：创建提案和变更目录</li>
+<li><code>/opsx:ff</code>：一次性生成 proposal、design、specs 和 tasks</li>
+<li><code>/opsx:apply</code>：按任务清单实施代码</li>
+<li><code>/opsx:verify</code>：根据前面的规范校验实现</li>
+<li><code>/opsx:archive</code>：把本次变更归档，沉淀为长期知识</li>
 </ul>
-<blockquote>
-<p>[!tip]<br>如果你感觉 Claude 开始“话变多、重点变少、速度变慢”，先试一次 <code>/compact</code>，通常比你手动重述背景更省事。</p>
-</blockquote>
-<h3 id="2-项目与环境配置"><a href="#2-项目与环境配置" class="headerlink" title="2. 项目与环境配置"></a>2. 项目与环境配置</h3><p>这组命令更像是把工作台先搭好。</p>
-<ul>
-<li><code>/init</code>：在当前目录初始化项目，并生成 <code>CLAUDE.md</code>，适合沉淀项目级规范</li>
-<li><code>/config</code>：打开配置面板，快速调整全局设置</li>
-<li><code>/mcp</code>：管理 MCP 服务，让 Claude 连接更多外部工具和上下文</li>
-<li><code>/allowed-tools</code>：管理工具权限，减少重复确认</li>
-</ul>
-<h3 id="3-任务规划与并行处理"><a href="#3-任务规划与并行处理" class="headerlink" title="3. 任务规划与并行处理"></a>3. 任务规划与并行处理</h3><p>这是 Claude Code 最容易被低估的一块，也是最能提升效率的一块。</p>
-<ul>
-<li><code>/plan</code>：先输出完整思路和改动步骤，再决定是否执行</li>
-<li><code>/agent</code> &#x2F; <code>/agents</code>：把子任务分给 subagent 并行处理</li>
-<li><code>/tasks</code>：查看后台任务状态，管理长时间运行的工作</li>
-</ul>
-<blockquote>
-<p>[!note]<br>我自己的习惯是：需求不清、改动面大、涉及多个文件时，先 <code>/plan</code>；任务能拆分时，再交给 <code>/agent</code> 或 <code>/agents</code> 去并行跑。</p>
-</blockquote>
-<h3 id="4-状态与诊断"><a href="#4-状态与诊断" class="headerlink" title="4. 状态与诊断"></a>4. 状态与诊断</h3><p>这组命令适合处理“我怀疑不是我写错了，而是环境有问题”的场景。</p>
-<ul>
-<li><code>/cost</code> 或 <code>/cos</code>：查看当前 Session 的成本与耗时</li>
-<li><code>/usage</code>：查看 API 总体额度使用情况和限流状态</li>
-<li><code>/doctor</code>：检查当前终端环境、依赖和安装状态</li>
-</ul>
-<h2 id="插件与-Skills，哪些值得先上手"><a href="#插件与-Skills，哪些值得先上手" class="headerlink" title="插件与 Skills，哪些值得先上手"></a>插件与 Skills，哪些值得先上手</h2><h3 id="Skills"><a href="#Skills" class="headerlink" title="Skills"></a>Skills</h3><p>我当前重点关注的是这几类技能：</p>
-<ul>
-<li><code>openspec</code>：适合 OpenAPI 规范和接口文档类工作流</li>
-<li><code>helloagent</code>：适合理解 Agent &#x2F; Sub-agent 的基本思路</li>
-<li><code>skill-seeker</code>：适合搜索、生成和整理技能文档</li>
-<li><code>autogen</code>：偏多智能体方向</li>
-</ul>
-<p>其中 <code>helloagent</code> 可以参考：</p>
-<ul>
-<li><a href="https://github.com/jjyaoao/HelloAgents">GitHub - jjyaoao&#x2F;HelloAgents</a></li>
-<li><a href="https://github.com/hellowind777/helloagents/tree/main">GitHub - hellowind777&#x2F;helloagents</a></li>
-</ul>
-<h3 id="我在用的插件记录"><a href="#我在用的插件记录" class="headerlink" title="我在用的插件记录"></a>我在用的插件记录</h3><h4 id="context7"><a href="#context7" class="headerlink" title="context7"></a><code>context7</code></h4><ul>
-<li>跟 Claude Code 对话时，可以在 Prompt 结尾补一句：<code>use context7</code></li>
-<li>适合需要补充上下文、文档或知识参考的场景</li>
-</ul>
-<h4 id="document-skills"><a href="#document-skills" class="headerlink" title="document skills"></a><code>document skills</code></h4><ul>
-<li>可以隐式触发，也可以显式点名触发</li>
-</ul>
-<p>例如：</p>
-<ul>
-<li>隐式触发：帮我把 <code>report.pdf</code> 里的表格提取成 CSV</li>
-<li>显式触发：请使用 PDF skill 帮我把 <code>report.pdf</code> 里的表格提取成 CSV</li>
-<li>显式触发：用 docx 技能帮我创建一个标准的商业合同模板</li>
-</ul>
-<h3 id="Claude-Code-配置"><a href="#Claude-Code-配置" class="headerlink" title="Claude Code 配置"></a>Claude Code 配置</h3><p>我目前有记录的配置偏好：</p>
-<ul>
-<li><code>statusline</code><ul>
-<li><code>nerd_font</code> 字体</li>
-<li><code>cometix</code> 主题</li>
-</ul>
-</li>
-</ul>
-<h2 id="一套够用的上手流程"><a href="#一套够用的上手流程" class="headerlink" title="一套够用的上手流程"></a>一套够用的上手流程</h2><p>如果你不想一次记太多，可以先记住下面这条工作流：</p>
+<p>从工程视角看，OpenSpec 的突破点并不只是“命令设计得好”，而是它第一次把 AI 协作中的几个关键事实说透了：</p>
 <ol>
-<li>用 <code>/init</code> 给项目建立规则</li>
-<li>长对话中用 <code>/compact</code> 收束上下文</li>
-<li>遇到复杂需求先 <code>/plan</code></li>
-<li>能拆开的任务交给 <code>/agent</code> &#x2F; <code>/agents</code></li>
-<li>环境不对劲时先跑 <code>/doctor</code></li>
+<li><strong>需求不能只存在聊天记录里</strong>，而要转化成可以追溯的文档工件。</li>
+<li><strong>实现不能脱离规范单飞</strong>，而要和设计、任务拆解形成链路。</li>
+<li><strong>一次变更最好留下历史痕迹</strong>，否则项目会很快失去可解释性。</li>
 </ol>
-<blockquote>
-<p>[!success]<br>对大多数日常开发场景来说，<code>/init → /plan → /agent(s) → /compact</code> 这条链路已经足够高频、足够实用。</p>
-</blockquote>
-<h2 id="延伸学习方向"><a href="#延伸学习方向" class="headerlink" title="延伸学习方向"></a>延伸学习方向</h2><p>如果你准备继续往下深挖，我建议优先看下面这些方向。</p>
-<h3 id="Skills-方向"><a href="#Skills-方向" class="headerlink" title="Skills 方向"></a>Skills 方向</h3><ul>
-<li><code>openspec</code><ul>
-<li><a href="https://www.aivi.fyi//llms/introduce-OpenSpec">博客教学</a></li>
-<li><a href="https://www.youtube.com/watch?v=ANjiJQQIBo0">YouTube 教学</a></li>
-<li><a href="https://linux.do/t/topic/1445627">L 站 openspec 实战</a></li>
-<li><a href="https://linux.do/t/topic/1701121">OPSX 任务拆分</a></li>
+<p>这也是为什么 OpenSpec 对已有项目尤其有吸引力。对于 Brownfield 场景，它比“直接和 AI 聊着改”要稳得多，因为每次改动至少有提案、有设计、有验证，不至于一通生成之后谁也说不清这次到底改了什么、为什么这么改。</p>
+<p>但 OpenSpec 的问题也很快暴露出来了。</p>
+<p>它的强项在于<strong>规范驱动</strong>，但短板也恰恰来自这里：很多基础约束需要反复书写，长对话里依然要依赖全局上下文共享，模型的注意力还是可能漂移。换句话说，OpenSpec 解决了“先把图纸画清楚”的问题，却没有彻底解决“在执行阶段如何持续保持纪律”的问题。</p>
+<p>所以它更像第一代答案：<strong>让 AI 从“凭感觉写”进入“按规范写”。</strong> 这一步非常重要，但还不够。</p>
+<h2 id="第二阶段：Superpowers-让-AI-像一支有纪律的工程团队一样执行"><a href="#第二阶段：Superpowers-让-AI-像一支有纪律的工程团队一样执行" class="headerlink" title="第二阶段：Superpowers 让 AI 像一支有纪律的工程团队一样执行"></a>第二阶段：Superpowers 让 AI 像一支有纪律的工程团队一样执行</h2><p>如果说 OpenSpec 把焦点放在“规范先行”，那么 Superpowers 的出现，代表社区开始进一步追问：<strong>仅仅有规范还不够，能不能把执行过程本身也工程化？</strong></p>
+<p>这正是 Superpowers 最有意思的地方。它不是简单提供几个命令，而是试图把一整条高质量开发链路，用 Skills 的方式做成一个强约束工作流。它关心的不只是“你想让 AI 做什么”，还关心“AI 必须按什么顺序做、在哪些节点停下来、如何验证自己没有走偏”。</p>
+<p>它的典型链路大致是这样的：</p>
+<ol>
+<li><code>brainstorming</code>：先通过提问细化需求，形成被确认的设计</li>
+<li><code>using-git-worktrees</code>：在隔离工作区中执行，避免污染主线</li>
+<li><code>writing-plans</code>：把设计拆成短周期、可验证的微任务</li>
+<li><code>subagent-driven-development</code>：交给独立子代理实现，减少上下文串扰</li>
+<li><code>test-driven-development</code>：强制先写失败测试，再写实现</li>
+<li><code>requesting-code-review</code>：通过独立审查代理检查规范覆盖率与代码质量</li>
+<li><code>finishing-a-development-branch</code>：收尾、验证、合并或丢弃分支</li>
+</ol>
+<p>这套体系最大的进步，在于它把 AI 从“强模型 + 好 Prompt”的范式，往“多角色协作 + 明确边界 + 强制验证”的范式推进了一大步。</p>
+<p>也就是说，Superpowers 不再相信一个大而全的主对话就能稳定搞定一切，而是主动引入：</p>
+<ul>
+<li><strong>隔离</strong>：不同任务放在独立 worktree 和独立子代理里</li>
+<li><strong>拆解</strong>：把大任务切成可控的小步骤</li>
+<li><strong>验证</strong>：用 TDD 和审查流程限制“先写后想”</li>
+<li><strong>编排</strong>：把技能串成固定的执行顺序</li>
 </ul>
-</li>
-<li><code>skill-seeker</code><ul>
-<li><a href="https://www.aivi.fyi/aiagents/introduce-Skill-Seeker">博客教学</a></li>
-<li><a href="https://www.youtube.com/watch?v=K6-sR__mA3s&t=9s">YouTube 教学</a></li>
+<p>这使它看起来更像一支训练有素的工程团队，而不是一个坐在聊天框里的万能助手。</p>
+<p>但问题也随之升级了。</p>
+<p>Superpowers 的执行质量确实非常强，可它的代价也极其明显：<strong>系统编排变重了，Token 消耗和上下文压力迅速上升。</strong></p>
+<p>因为每完成一点点工作，系统都可能需要反复唤醒不同角色：设计者、计划拆解者、实现者、审查者、收尾代理……这些角色之间还要反复传递计划、约束和上下文。理论上这让流程更严密，实际上也意味着：</p>
+<ul>
+<li>任务链条更长</li>
+<li>编排成本更高</li>
+<li>上下文搬运更多</li>
+<li>长线项目更容易触发窗口拥挤和幻觉</li>
+<li>一旦某个环节失灵，人工接管成本也会更高</li>
 </ul>
-</li>
-<li><code>Trellis</code><ul>
-<li><a href="https://linux.do/t/topic/1539636">L 站讨论</a></li>
-<li><a href="https://github.com/mindfold-ai/Trellis">GitHub - mindfold-ai&#x2F;Trellis</a></li>
+<p>所以，Superpowers 给出的第二代答案是：<strong>让 AI 不只是按规范理解问题，更要按工程纪律执行问题。</strong></p>
+<p>它把“执行质量”推到了一个很高的水平，但也把另一个矛盾暴露得更加彻底：<strong>如果为了工程纪律而付出过高的上下文与 Token 成本，这套体系就很难在长期项目中真正普及。</strong></p>
+<h2 id="第三阶段：TRELLIS-开始把工程纪律内建进-Harness"><a href="#第三阶段：TRELLIS-开始把工程纪律内建进-Harness" class="headerlink" title="第三阶段：TRELLIS 开始把工程纪律内建进 Harness"></a>第三阶段：TRELLIS 开始把工程纪律内建进 Harness</h2><p>到了这一步，社区其实已经积累了两个很重要的共识：</p>
+<p>第一，<strong>规范不能少。</strong> 没有规范，AI 只会在即时对话里凭局部上下文猜测需求。<br>第二，<strong>执行纪律也不能少。</strong> 没有拆解、隔离、验证和审查，AI 在复杂项目里很难稳定交付。</p>
+<p>但真正难的地方在于：<strong>怎么把规范驱动和技能驱动放进同一套可持续的系统里，同时又不把上下文和成本压到失控。</strong></p>
+<p>TRELLIS 的出现，正是在回答这个问题。</p>
+<p>它和前两者最大的不同，不只是“功能更全”，而是它开始把工程化约束往更底层的 Harness 层收。也就是说，很多原本需要在每次对话里反复提醒、在每个技能之间来回传递的内容，被转移到了系统性的结构里。</p>
+<p>这类结构主要体现在几个方面。</p>
+<h3 id="1-规范不再每次重写，而是常驻在系统里"><a href="#1-规范不再每次重写，而是常驻在系统里" class="headerlink" title="1. 规范不再每次重写，而是常驻在系统里"></a>1. 规范不再每次重写，而是常驻在系统里</h3><p>OpenSpec 最大的问题之一，是很多约束虽然重要，却要在不同任务里不断重复表达。TRELLIS 试图解决的，就是这种“规范存在，但总要反复搬运”的低效。</p>
+<p>通过 <code>.trellis/spec/</code>，开发约定、架构要求、工作方式可以更稳定地沉淀下来。任务执行时，系统再根据当前上下文做按需注入，而不是把所有历史背景一次性塞进会话。</p>
+<p>这件事非常关键。因为它意味着规范从“会话里的描述”变成了“脚手架里的资产”。一旦规范常驻，AI 的执行就不再严重依赖某次对话有没有把背景讲全。</p>
+<h3 id="2-项目记忆从聊天记录转向工作区记忆"><a href="#2-项目记忆从聊天记录转向工作区记忆" class="headerlink" title="2. 项目记忆从聊天记录转向工作区记忆"></a>2. 项目记忆从聊天记录转向工作区记忆</h3><p>另一个长期困扰 AI 编码的痛点，是跨会话延续。</p>
+<p>很多时候，真正有价值的不是某次生成的代码，而是过程中的判断：为什么当时选这个方案、某个坑是怎么踩出来的、还有哪些边界条件没处理。这些内容如果只存在聊天记录里，就很难在下一次会话中稳定被继承。</p>
+<p>TRELLIS 通过 <code>.trellis/workspace/</code> 一类工作区日志与记忆结构，把这类过程性知识从“对话残留”变成“项目状态的一部分”。这样一来，新的 AI 会话拿到的就不只是代码目录，而是带着一定历史判断和进度脉络的工作现场。</p>
+<p>这一步非常像软件工程里的文档化和状态管理，只不过对象从“人类协作者”变成了“未来的 AI 协作者”。</p>
+<h3 id="3-多代理仍然存在，但上下文治理变得更精细"><a href="#3-多代理仍然存在，但上下文治理变得更精细" class="headerlink" title="3. 多代理仍然存在，但上下文治理变得更精细"></a>3. 多代理仍然存在，但上下文治理变得更精细</h3><p>TRELLIS 并不是否定多代理、隔离执行和工作流编排。恰恰相反，它吸收了 Superpowers 的很多经验：复杂任务依然需要拆解，隔离依然重要，并行依然有价值。</p>
+<p>区别在于，TRELLIS 更强调<strong>按需注入、精准上下文控制和底层结构化治理</strong>。这使得它不是单纯依靠“更多角色 + 更长流程”来提升质量，而是通过更好的上下文组织方式，减少不必要的搬运和冗余。</p>
+<p>从结果上看，这让它更像是在做两件事：</p>
+<ul>
+<li>保留多代理工作流带来的纪律性</li>
+<li>避免多代理工作流带来的灾难性 Token 膨胀</li>
 </ul>
-</li>
+<p>也正因为如此，TRELLIS 更容易被看作一种“Agent Harness”，而不是某个单点能力工具。它关注的不是某个技能是否强，而是整套系统能否<strong>长期稳定地承载 AI 开发行为。</strong></p>
+<hr>
+<p>这里我不想简单下一个“谁最强”的结论。因为不同团队、不同项目阶段，适合的工作方式本来就不一样。</p>
+<p>如果你面对的是短任务、单次改动、一次性原型，很多时候并不需要上到很重的脚手架，Prompt 加上基本规范就足够了。<br>如果你在已有项目里推进中等规模改动，OpenSpec 这种强调变更工件和设计对齐的方式，仍然有很高的实用价值。<br>如果你在追求极致执行质量，且能接受较高成本，Superpowers 所代表的那种强纪律流水线也依然很有参考意义。</p>
+<p>但如果你的目标是：</p>
+<ul>
+<li>服务长期项目</li>
+<li>支撑多人协作</li>
+<li>允许跨会话接力</li>
+<li>既要保持规范与审查，又不能让 Token 成本失控</li>
 </ul>
-<h3 id="多智能体方向"><a href="#多智能体方向" class="headerlink" title="多智能体方向"></a>多智能体方向</h3><ul>
-<li><a href="https://github.com/datawhalechina/hello-agents">GitHub - datawhalechina&#x2F;hello-agents</a></li>
-<li><code>autogen</code></li>
-</ul>
-<h2 id="速查版"><a href="#速查版" class="headerlink" title="速查版"></a>速查版</h2><p>如果你只是临时回来翻一下命令，直接看这一节就够了。</p>
+<p>那么你最后大概率会走向一种更完整的 Agent Harness。而这正是 TRELLIS 现在最有吸引力的地方：它开始把过去分散在 Prompt、技能和人工习惯里的工程纪律，逐渐沉淀成系统能力。</p>
+<p>这也是为什么我更愿意把 TRELLIS 看成一种<strong>阶段性更成熟的工程化答案</strong>，而不只是一个新工具名字。</p>
+<h2 id="文末速览：OpenSpec、Superpowers-与-TRELLIS-如何选"><a href="#文末速览：OpenSpec、Superpowers-与-TRELLIS-如何选" class="headerlink" title="文末速览：OpenSpec、Superpowers 与 TRELLIS 如何选"></a>文末速览：OpenSpec、Superpowers 与 TRELLIS 如何选</h2><p>如果你是收藏型读者，或者准备转发给同样在折腾 Claude Code &#x2F; Agent 工作流的朋友，这张表可以直接当速览版来看。</p>
 <table>
 <thead>
 <tr>
-<th>场景</th>
-<th>首选命令</th>
+<th>维度</th>
+<th>OpenSpec</th>
+<th>Superpowers</th>
+<th>TRELLIS</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>对话太长，想保留重点继续聊</td>
-<td><code>/compact</code></td>
+<td>核心定位</td>
+<td>规范驱动的变更工作流</td>
+<td>技能驱动的强纪律执行流水线</td>
+<td>面向长期项目的 Agent Harness</td>
 </tr>
 <tr>
-<td>想彻底切到新话题</td>
-<td><code>/clear</code></td>
+<td>主要解决的问题</td>
+<td>先把需求、设计和任务讲清楚</td>
+<td>让 AI 按拆解、测试、审查流程执行</td>
+<td>把规范、执行、记忆、上下文治理与成本控制整合进系统</td>
 </tr>
 <tr>
-<td>想恢复之前没做完的任务</td>
-<td><code>/resume</code></td>
+<td>最适合的场景</td>
+<td>已有项目中的中等规模改动</td>
+<td>追求高质量交付、愿意接受重流程</td>
+<td>长期项目、多人协作、跨会话接力</td>
 </tr>
 <tr>
-<td>动手前先看实现方案</td>
-<td><code>/plan</code></td>
+<td>优势</td>
+<td>工件清晰、可追溯、容易建立规范意识</td>
+<td>执行纪律强、隔离彻底、验证完整</td>
+<td>规范常驻、按需注入、记忆沉淀、长期成本更可控</td>
 </tr>
 <tr>
-<td>想把任务并行拆开处理</td>
-<td><code>/agent</code> &#x2F; <code>/agents</code></td>
+<td>主要代价</td>
+<td>约束容易重复书写，依赖长会话上下文</td>
+<td>Token 消耗高，系统编排重</td>
+<td>对脚手架设计和结构化治理要求更高</td>
 </tr>
 <tr>
-<td>查看后台任务列表</td>
-<td><code>/tasks</code></td>
+<td>上下文管理方式</td>
+<td>仍较依赖主会话与文档链路</td>
+<td>依赖多角色编排与上下文传递</td>
+<td>更强调按需注入与底层结构化治理</td>
 </tr>
 <tr>
-<td>初始化当前项目规范</td>
-<td><code>/init</code></td>
+<td>跨会话延续能力</td>
+<td>有归档，但项目记忆能力有限</td>
+<td>依赖流程编排，延续成本较高</td>
+<td>更适合把历史决策沉淀成工作区记忆</td>
 </tr>
 <tr>
-<td>管理工具权限</td>
-<td><code>/allowed-tools</code></td>
+<td>工程纪律强度</td>
+<td>中等，重在规范先行</td>
+<td>很强，重在执行过程控制</td>
+<td>很强，且更强调系统级长期稳定性</td>
 </tr>
 <tr>
-<td>管理 MCP 服务</td>
-<td><code>/mcp</code></td>
-</tr>
-<tr>
-<td>管理插件 &#x2F; Skills</td>
-<td><code>/plugins</code></td>
-</tr>
-<tr>
-<td>查看本次会话成本</td>
-<td><code>/cost</code></td>
-</tr>
-<tr>
-<td>查看额度与限流</td>
-<td><code>/usage</code></td>
-</tr>
-<tr>
-<td>排查环境问题</td>
-<td><code>/doctor</code></td>
+<td>更适合谁</td>
+<td>想把 AI 协作先做规范化的人</td>
+<td>想把 AI 当成严格工程团队来驱动的人</td>
+<td>想搭一套可持续 Agent 工程体系的人</td>
 </tr>
 </tbody></table>
+<h2 id="结语：纪律不只是写在流程里，更要长在脚手架里"><a href="#结语：纪律不只是写在流程里，更要长在脚手架里" class="headerlink" title="结语：纪律不只是写在流程里，更要长在脚手架里"></a>结语：纪律不只是写在流程里，更要长在脚手架里</h2><p>回头看这条演进线，社区其实一直在回答同一个问题：<strong>如何让 AI 在真实工程里，不只是会写代码，而是能稳定交付代码。</strong></p>
+<p>OpenSpec 的贡献，是让我们重新重视规范和工件；Superpowers 的贡献，是让我们看到多代理、TDD 和审查链路能把执行质量推到多高；而 TRELLIS 更进一步，它试图把这些经验收束进一套能长期运行的 Harness 结构里。</p>
+<p>所以，这篇文章真正想表达的结论不是“TRELLIS 赢了”，而是：</p>
 <blockquote>
-<p>[!abstract]<br>一句话总结：<br>Claude Code 真正好用的地方，不只是“能回答”，而是它能在正确的时机帮你<strong>压缩上下文、先做规划、并行处理任务、接入更多工具</strong>。</p>
+<p>当 AI 编码从演示走向生产，真正决定上限的，已经不再只是模型本身，而是你有没有一套足够好的工程化脚手架。</p>
 </blockquote>
+<p>从这个意义上说，从 OpenSpec 到 Superpowers，再到 TRELLIS，演进的从来不是某几个工具名，而是我们对 <strong>AI 工程纪律</strong> 的理解正在不断变深。</p>
 ]]></content>
       <categories>
         <category>vibe coding</category>
       </categories>
       <tags>
-        <tag>ClaudeCode</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>手工敲代码到 AI 智能体流水线（Harness Engineering）</title>
-    <url>/my-blog/2026/03/27/03Agent-Harness/</url>
-    <content><![CDATA[<h1 id="聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线"><a href="#聊聊软件工程的进化：从手工敲代码到-AI-智能体流水线" class="headerlink" title="聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线"></a>聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线</h1><p>前阵子，OpenAI 和 Anthropic 等顶尖 AI 实验室先后公布了他们的内部工程实践——<strong>让 AI 智能体（Agent）全自动写出了包含上百万行代码的真实产品，而人类一行代码都没写。</strong></p>
-<p>很多开发者看完后都有一个疑问：AI 经常会胡说八道（幻觉），写个百来行代码还能凑合，它是怎么做到自主完成几万、几十万行代码的复杂工程，并且不出 Bug 的？</p>
-<p>答案就隐藏在现代软件工程的几个核心概念里。今天，我们就来扒一扒软件开发的进化史，看看我们是如何一步步从“小作坊”走向“全自动化流水线”，并最终构建出让 AI 打工的“智能体工厂”的。</p>
-<p>本文会带你通俗易懂地搞懂四个高频技术词汇：<strong>PRD Driven、Spec Driven、CI&#x2F;CD Pipeline</strong>，以及在 AI 时代被赋予了全新魔力的 <strong>Harness</strong>。</p>
-<hr>
-<h2 id="时代一：图纸与契约（人类协同的艺术）"><a href="#时代一：图纸与契约（人类协同的艺术）" class="headerlink" title="时代一：图纸与契约（人类协同的艺术）"></a>时代一：图纸与契约（人类协同的艺术）</h2><p>在写下第一行代码之前，团队必须有一个明确的“行动指南”。否则前端造了个轮船，后端造了个飞机，最后根本拼不到一起。为了解决这个问题，业界演化出了两种驱动模式：</p>
-<h3 id="1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”"><a href="#1-PRD-Driven（产品需求文档驱动）：搞清楚“造什么”" class="headerlink" title="1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”"></a>1. PRD Driven（产品需求文档驱动）：搞清楚“造什么”</h3><ul>
-<li><p><strong>这是什么</strong>：产品经理（PM）写出一份详尽的文档（PRD），规定好页面的长相、按钮点击后的反应、以及背后的业务逻辑。这在团队里是唯一的“圣旨”（Single Source of Truth）。</p>
-</li>
-<li><p><strong>通俗理解</strong>：这就好比你要盖一栋大楼，PRD 就是<strong>建筑效果图和商业计划书</strong>。它关心的是“这栋楼有几层、大堂是什么风格、面向哪些客户”。</p>
-</li>
-<li><p><strong>现实痛点</strong>：这种模式非常业务导向，但如果 PM 的文档写得含糊其辞，或者天天改需求，下游的程序员和测试人员就会痛不欲生。</p>
-</li>
-</ul>
-<h3 id="2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”"><a href="#2-Spec-Driven（规格-契约驱动）：搞清楚“怎么连”" class="headerlink" title="2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”"></a>2. Spec Driven（规格&#x2F;契约驱动）：搞清楚“怎么连”</h3><ul>
-<li><p><strong>这是什么</strong>：随着系统越来越复杂，尤其是前后端分离架构的普及，光有 PRD 不够了。架构师或后端开发会在写代码前，先定义好纯技术层面的“API 接口文档”（也就是 Spec）。</p>
-</li>
-<li><p><strong>通俗理解</strong>：Spec 就像是大楼的<strong>水电施工图纸</strong>。它严格规定了水管的口径、电线的电压。前端看着这份图纸去画页面，后端看着图纸去写数据库。</p>
-</li>
-<li><p><strong>它的魔法</strong>：契约一旦定好，大家就可以兵分两路、并行施工。最后对接时，只要大家都遵守了契约，系统就像插头插进插座一样，一次点亮。</p>
-</li>
-</ul>
-<hr>
-<h2 id="时代二：自动化的魔法（CI-CD-Pipeline）"><a href="#时代二：自动化的魔法（CI-CD-Pipeline）" class="headerlink" title="时代二：自动化的魔法（CI&#x2F;CD Pipeline）"></a>时代二：自动化的魔法（CI&#x2F;CD Pipeline）</h2><p>需求明确了，图纸画好了，程序员们开始疯狂敲代码。但在过去，大家各写各的，月底统一合并代码时，经常引发史诗级的“代码冲突灾难”。</p>
-<p>为了解决这个问题，工程师们发明了 <strong>CI&#x2F;CD Pipeline（持续集成&#x2F;持续交付流水线）</strong>。</p>
-<p>你可以把它想象成工厂里的<strong>全自动化产品传送带</strong>：</p>
-<ul>
-<li><p><strong>CI（持续集成）</strong>：强制要求程序员“小步快跑”，每天把写好的代码提交好几次。一旦提交，流水线就会<strong>自动</strong>拉取代码，<strong>自动</strong>运行几千个测试用例。哪怕你只写错了一个标点符号，传送带会立刻亮起红灯并报警（Fail Fast）。</p>
-</li>
-<li><p><strong>CD（持续部署）</strong>：当代码完美通过了所有的自动化测试，传送带会<strong>自动</strong>把这段代码打包，毫无人工干预地发布到生产环境。</p>
-</li>
-</ul>
-<p>有了 CI&#x2F;CD，软件的发布从过去“半个月一次的心惊胆战”，变成了现在“一天发布几十次的习以为常”。它是现代软件工厂的基石。</p>
-<hr>
-<h2 id="时代三：给-AI-建一座打工工厂（Agent-Harness）"><a href="#时代三：给-AI-建一座打工工厂（Agent-Harness）" class="headerlink" title="时代三：给 AI 建一座打工工厂（Agent Harness）"></a>时代三：给 AI 建一座打工工厂（Agent Harness）</h2><p>现在，深水区来了。</p>
-<p>CI&#x2F;CD 自动化了“测试和发布”，但<strong>代码依然是人类一行行敲出来的</strong>。到了 2025 年之后，大模型（LLM）爆发，我们希望 AI 能直接帮我们把代码写了。</p>
-<p>但如果你直接在对话框里让 AI 写个电商网站，它写到一半就会忘记前面的设定，或者因为代码太长而彻底崩溃。<strong>AI 需要一个极度受限、充满护栏的工作环境。</strong></p>
-<p>这就是 <strong>Harness（脚手架&#x2F;运行框架）</strong> 在 AI 时代迎来的终极进化。</p>
-<p>在过去，Harness 只是一个“测试底座”（给一小段代码提供模拟的测试环境）。但在**智能体优先（Agent-first）**的今天，<strong>Harness 变成了一座专门为 AI 打造的虚拟工厂</strong>。人类不再写业务代码，人类的工作变成了设计和维护这个 Harness。</p>
-<p>结合 Anthropic 和 OpenAI 最近披露的工程实践，一个现代的 Agent Harness 长这样：</p>
-<ol>
-<li><p><strong>分工明确的多智能体车间</strong></p>
-<p> Harness 里不是只有一个 AI，而是有分工的。</p>
-<ul>
-<li><p><strong>Planner（产品经理 AI）</strong>：负责把人类的一句话需求，扩写成详细的 PRD。</p>
-</li>
-<li><p><strong>Generator（牛马程序员 AI）</strong>：负责老老实实写代码。</p>
-</li>
-<li><p><strong>Evaluator（魔鬼测试员 AI）</strong>：因为 AI 往往会“盲目自信”地觉得自己的代码写得很好，所以 Harness 引入了 Evaluator。它会像真实用户一样去点击跑起来的网页，一旦发现 Bug 或是界面丑陋，就会无情地打回重做。</p>
-</li>
-</ul>
-</li>
-<li><p><strong>给 AI 戴上“紧箍咒”（硬性约束）</strong></p>
-<p> 人类面对百万行代码会头晕，AI 也会。在 Harness 中，工程师会写死一套极其严格的自动化检查工具（Linter）。一旦 AI 乱写架构、跨层调用，Harness 就会立刻报错，并在报错信息中告诉 AI：“你违规了，请按照规定重写。”</p>
-</li>
-<li><p><strong>专为 AI 打造的“盲文”（可读性环境）</strong></p>
-<p> 人类的代码库是给人类看的，里面充满了黑话和默认潜规则。Harness 会把整个环境变得对 AI 极其友好。系统报错的日志、性能监控的图表、甚至浏览器的界面，全都会通过 Harness 转换成 AI 能直接读懂的格式，让它具备<strong>自我定位问题、自我修复</strong>的能力。</p>
-</li>
-</ol>
-<hr>
-<h2 id="结语：程序员要失业了吗？"><a href="#结语：程序员要失业了吗？" class="headerlink" title="结语：程序员要失业了吗？"></a>结语：程序员要失业了吗？</h2><p>看懂了这些，你就会明白未来软件工程的走向：</p>
-<ul>
-<li><p><strong>PRD 与 Spec</strong> 依然是灵魂，但可能以后是由人类口述，AI 来撰写。</p>
-</li>
-<li><p><strong>CI&#x2F;CD</strong> 是不可或缺的基础设施。</p>
-</li>
-<li><p>而 <strong>Harness</strong> 将成为各家科技公司最核心的壁垒。</p>
-</li>
-</ul>
-<p>以后，初级程序员确实不再需要去手写那些重复的“增删改查”代码了。但这并不意味着我们不需要工程师了。</p>
-<p><strong>未来的软件工程师，不再是流水线上的“打螺丝工人”，而是成为了设计这条 AI 流水线的“厂长”。</strong> 我们需要去定义架构、调优 Harness 框架、设计反馈回路，让 AI 智能体在这个框架内不知疲倦地为我们创造价值。</p>
-]]></content>
-      <categories>
-        <category>vibe coding</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>Claude Code实用生态工具</title>
-    <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
-    <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
-<p><strong>💡 写在前面的话：</strong><br>最近 AI 编程圈子（尤其是基于命令行的 CLI 工具）涌现了大量的开源项目。由于各大 AI 模型的 API 官方计费昂贵，且跨模型协作繁琐，开发者们“魔改”出了一个庞大的外围生态。</p>
-</blockquote>
-<hr>
-<h2 id="一、-核心底座"><a href="#一、-核心底座" class="headerlink" title="一、 核心底座"></a>一、 核心底座</h2><p>这部分是整个生态的基础，你不需要去配置它们，但需要知道它们是什么。</p>
-<ul>
-<li><p><strong>cc (Claude Code)</strong></p>
-<ul>
-<li>Anthropic 官方推出的基于命令行的 AI 编码助手。</li>
-</ul>
-</li>
-<li><p><strong>lsp (Language Server Protocol)</strong></p>
-<ul>
-<li><strong>是什么</strong>：语言服务器协议。</li>
-<li><strong>小白理解</strong>：编辑器（如 VS Code）和 AI 沟通的“标准普通话”，有了它，AI 才能看懂你的代码结构和上下文。</li>
-</ul>
-</li>
-<li><p><strong>ace (Augment Context Engine)</strong></p>
-<ul>
-<li>增强上下文引擎。</li>
-<li><strong>1. 实时语义索引 (Semantic Understanding)</strong> 它不是简单的关键字搜索，而是对你的整个代码库进行“向量化语义分析”。它能看懂文件之间的关系，知道“如果你修改了这个前端接口，后端哪个微服务也需要同步修改”。</li>
-</ul>
-<ul>
-<li><p><strong>2. 包含历史记忆 (Context Lineage)</strong> 这是它非常强大的一个点。ACE 不仅检索当前的代码，还会检索 Git 的 <strong>Commit 历史记录</strong>。当 AI 在修改一段祖传代码时，ACE 会告诉 AI：“两年前某人写这行代码是为了修复一个什么特殊的 Bug，你千万别瞎改。” 这极大地保留了团队的“部落知识”。</p>
-</li>
-<li><p><strong>3. 精准浓缩，只喂干货</strong> 当你在 Claude Code 里提问时，ACE 会在毫秒级内检索出最相关的几十行代码和背景信息，打包、浓缩后精准地喂给模型。这让大模型能以极低的 Token 消耗，给出极其准确的回答。</p>
-</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="二、-代理与中转"><a href="#二、-代理与中转" class="headerlink" title="二、 代理与中转"></a>二、 代理与中转</h2><p>官方的 AI API 太贵了？这三个工具帮你把账单打下来。</p>
-<ul>
-<li><strong><a href="https://github.com/router-for-me/CLIProxyAPI">cpa (CLIProxyAPI)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>白嫖转换器</strong>。把你平时免费用的“网页版”AI（如 Gemini 2.5 Pro 免费版），伪装成标准的 API 给代码工具用。</li>
-<li><strong>适合谁</strong>：想零成本用顶级大模型的个人玩家。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/Wei-Shaw/claude-relay-service">crs (claude-relay-service)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>拼车记账管家</strong>。你和几个朋友凑钱买了一个昂贵的官方 API，它能把这个 API 切分成多个子账号，精确记录每个人花了多少钱。</li>
-<li><strong>适合谁</strong>：几个人合租 API 的“拼车党”。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/ding113/claude-code-hub">cch (claude-code-hub)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>团队级流量网关</strong>。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。</li>
-<li><strong>适合谁</strong>：需要统一管理几十个开发者的企业或小团队。</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th align="left">工具对比</th>
-<th align="left">CPA</th>
-<th align="left">CRS</th>
-<th align="left">CCH</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left"><strong>主打功能</strong></td>
-<td align="left">网页免费转 API</td>
-<td align="left">额度切分与账单 AA</td>
-<td align="left">高并发负载均衡与管理</td>
-</tr>
-<tr>
-<td align="left"><strong>目标用户</strong></td>
-<td align="left">个人白嫖党</td>
-<td align="left">几人合租小圈子</td>
-<td align="left">开发团队&#x2F;企业</td>
-</tr>
-</tbody></table>
-<hr>
-<h2 id="三、-客户端与体验增强"><a href="#三、-客户端与体验增强" class="headerlink" title="三、 客户端与体验增强"></a>三、 客户端与体验增强</h2><p>觉得黑乎乎的命令行太难用？这些工具给你加上仪表盘和界面。</p>
-<ul>
-<li><strong><a href="https://github.com/musistudio/claude-code-router">ccr (claude-code-router)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>单机版智能路由</strong>。接管原生的 Claude Code，遇到简单的任务自动切给便宜模型（如 DeepSeek），遇到难的再切给原版 Claude，极致省钱。</li>
-<li>CCR使用流程</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/CooperJiang/coding-tool">cc-tool (coding-tool)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>本地数据大屏</strong>。它在你电脑本地跑一个网页后台，实时监控你发了多少请求、耗了多少 Token、精确估算花了多少美分，并在后台默默保活你的代理。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/farion1231/cc-switch">ccs (cc-switch)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>CLI 工具的桌面级聚合宿主。</strong> 通过图形化界面封装底层命令行进程，提供环境变量管理、多模型状态监控和统一的交互入口，实现 AI 辅助编程工作流的可视化降维。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="四、-多模型协作与工作流"><a href="#四、-多模型协作与工作流" class="headerlink" title="四、 多模型协作与工作流"></a>四、 多模型协作与工作流</h2><p>如何让不同的 AI 打配合，或者让 AI 自动完成繁琐的 Git 流程？</p>
-<ul>
-<li><strong><a href="https://github.com/bfly123/claude_code_bridge">ccb (claude_code_bridge)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>AI 联合会议室</strong>。让 Claude、Gemini 等多个模型在同一个项目里无缝切换，且<strong>共享上下文记忆</strong>。Gemini 读完的长代码，Claude 直接接着改，不用重复发代码浪费钱。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/fengshao1227/ccg-workflow">ccg (ccg-workflow)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>17+ 一键自动化命令</strong>。不需要每次都打字对 AI 提要求，它内置了 <code>/review</code>（代码审查）、一键写 Git 提交等自动化指令，把聊天变成了标准化的工作流。</li>
-</ul>
-</li>
-<li><em>(注：还有另一个也叫 <strong>CCG (Coder-Codex-Gemini)</strong> 的概念，它是一个宏观的多模型协作双环境框架，强调几种特定模型的联合打法。)</em></li>
-</ul>
-<hr>
-<h2 id="🎯-总结建议：小白该从哪里下手？"><a href="#🎯-总结建议：小白该从哪里下手？" class="headerlink" title="🎯 总结建议：小白该从哪里下手？"></a>🎯 总结建议：小白该从哪里下手？</h2><p>如果你是一个刚刚接触 AI 辅助编程的新手，建议按照以下路线打怪升级：</p>
-<ol>
-<li><strong>第一步（先用起来）</strong>：先搞定 <strong>CPA</strong>，把免费额度接入你的开发环境，实现“Token 自由”。</li>
-<li><strong>第二步（体验升级）</strong>：安装 <strong>cc-tool</strong>，在本地看着可视化面板，清楚知道自己的调用情况。</li>
-<li><strong>第三步（进阶高玩）</strong>：尝试配置 <strong>ccr</strong> 或 <strong>ccb</strong>，体验让不同大模型在你电脑里无缝协作的快感。</li>
-</ol>
-]]></content>
-      <categories>
-        <category>vibe coding</category>
-      </categories>
-      <tags>
-        <tag>ClaudeCode</tag>
-        <tag>AI编程</tag>
         <tag>工具指南</tag>
         <tag>效率</tag>
+        <tag>生产力工具</tag>
       </tags>
   </entry>
   <entry>
-    <title>LLM 推理加速与算子优化学习路线</title>
-    <url>/my-blog/2026/03/14/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
-    <content><![CDATA[<h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p>
-<h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p>
+    <title>Attention 与 GQA：从 KV Cache 到多头共享</title>
+    <url>/my-blog/2026/04/16/06llm-Attention%20-GQA/</url>
+    <content><![CDATA[<h2 id="1-注意力机制："><a href="#1-注意力机制：" class="headerlink" title="1. 注意力机制："></a>1. 注意力机制：</h2><h3 id="数学公式"><a href="#数学公式" class="headerlink" title="数学公式"></a>数学公式</h3><p>$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
 <ul>
-<li><p><strong>《大规模并行处理器编程实战 (PMPP)》</strong>： GPU 架构和并行计算。理解硬件是如何执行任务的（Warp 调度、内存合并访问等）。</p>
-</li>
-<li><p><strong>《CUDA 编程：基础与实践》 (樊哲勇)</strong>：相比 PMPP 更加注重代码实践和快速上手，适合作为进入 CUDA 世界的第一块敲门砖。</p>
-</li>
-<li><p><strong><a href="https://docs.nvidia.cn/cuda/cuda-c-programming-guide/index.html#cuda-enabled-gpus">NVIDIA CUDA C++ Programming Guide</a></strong>：官方文档，遇到具体 API 或进阶特性（如 PTX, Tensor Cores）时的权威字典。</p>
-</li>
-<li><p><strong><a href="https://leetgpu.com/">LeetGPU</a></strong>：实战刷题网站。巩固 Reduce、Scan、Matrix Multiplication 等基础算子的编写。</p>
-</li>
+<li><strong>$Q$ (Query)</strong>: “我要找什么？”（当前词的查询向量）。</li>
+<li><strong>$K$ (Key)</strong>: “我有什么标签？”（所有词的索引向量）。</li>
+<li><strong>$V$ (Value)</strong>: “我包含什么信息？”（所有词的内容向量）。</li>
+<li><strong>$\sqrt{d_k}$</strong>: 缩放因子，防止点积结果过大导致梯度消失。</li>
+<li><strong>$\text{softmax}$</strong>: 将得分转换为概率（权重），总和为 1。</li>
 </ul>
-<h1 id="LLM-模型量化-Quantization"><a href="#LLM-模型量化-Quantization" class="headerlink" title="LLM 模型量化 (Quantization)"></a>LLM 模型量化 (Quantization)</h1><p>大模型推理通常是 Memory-bound（访存密集型）而非 Compute-bound（计算密集型）。量化是通过降低权重或激活值的精度，来大幅减少显存占用和访存带宽的核心技术。</p>
+<hr>
+<h2 id="2-KV-Cache：推理的加速器"><a href="#2-KV-Cache：推理的加速器" class="headerlink" title="2. KV Cache：推理的加速器"></a>2. KV Cache：推理的加速器</h2><p><strong>为什么需要它？</strong></p>
+<p>在生成模式（Decoding）下，模型是一个字一个字往外蹦的。如果不存缓存，生成第 100 个词时，需要重新计算前 99 个词的 $K$ 和 $V$，这会造成巨大的重复计算。</p>
 <ul>
-<li><p><strong>GPTQ</strong>: <em>Weight-Only 权重量化的代表作</em>。重点解决了如何高效地将模型权重压缩到 4-bit 或 3-bit，同时保持极高的精度。</p>
-</li>
-<li><ul>
-<li>论文：<a href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li>
+<li><strong>原理</strong>：在计算当前词时，把算好的 $K$ 和 $V$ 存入显存。下次计算只需算“新词”的 <code>QKV</code>，然后直接读取历史的 $K$ 和 $V$ 进行拼接。</li>
+<li><strong>代价</strong>：显存占用极高。显存容量限制了 Batch Size 和最大序列长度。</li>
 </ul>
-</li>
-<li><p><strong>AWQ (Activation-aware Weight Quantization)</strong>: <em>端侧&#x2F;边缘计算友好的量化</em>。它发现并非所有权重都同等重要，通过观察激活值（Activation）的分布来保护那 1% 的显著权重（Salient Weights），量化效果极好且容易在硬件上实现。</p>
+<hr>
+<h2 id="3-三大架构：MHA-vs-MQA-vs-GQA"><a href="#3-三大架构：MHA-vs-MQA-vs-GQA" class="headerlink" title="3. 三大架构：MHA vs MQA vs GQA"></a>3. 三大架构：MHA vs MQA vs GQA</h2><p>这三种架构的区别本质上是：<strong>Q 和 KV 的配对比例。</strong></p>
+<h3 id="A-MHA-Multi-Head-Attention-多头注意力"><a href="#A-MHA-Multi-Head-Attention-多头注意力" class="headerlink" title="A. MHA (Multi-Head Attention) - 多头注意力"></a>A. MHA (Multi-Head Attention) - 多头注意力</h3><ul>
+<li><strong>结构</strong>：$H$ 个 $Q$ 对应 $H$ 个 $K$ 和 $H$ 个 $V$（1:1 配对）。</li>
+<li><strong>优点</strong>：表达能力最强，精度最高。</li>
+<li><strong>缺点</strong>：<strong>KV Cache 巨大</strong>。每个头都要存一套 KV，显存压力极大。</li>
+</ul>
+<h3 id="B-MQA-Multi-Query-Attention-多查询注意力"><a href="#B-MQA-Multi-Query-Attention-多查询注意力" class="headerlink" title="B. MQA (Multi-Query Attention) - 多查询注意力"></a>B. MQA (Multi-Query Attention) - 多查询注意力</h3><ul>
+<li><strong>结构</strong>：$H$ 个 $Q$ 共享 <strong>1 个</strong> $K$ 和 <strong>1 个</strong> $V$（N:1 配对）。</li>
+<li><strong>优点</strong>：KV Cache 极小，推理速度极快。</li>
+<li><strong>缺点</strong>：精度损失大，模型容易变得“智力下降”。</li>
+</ul>
+<h3 id="C-GQA-Grouped-Query-Attention-分组查询注意力"><a href="#C-GQA-Grouped-Query-Attention-分组查询注意力" class="headerlink" title="C. GQA (Grouped-Query Attention) - 分组查询注意力"></a>C. GQA (Grouped-Query Attention) - 分组查询注意力</h3><ul>
+<li><strong>结构</strong>：将 $H$ 个 $Q$ 分成 $G$ 组，每组共享一对 $K$ 和 $V$（N:G 配对）。</li>
+<li><strong>特点</strong>：例如 32 个 Q，8 个 KV，每 4 个 Q 共用 1 对 KV。</li>
+<li><strong>意义</strong>：<strong>完美的折中</strong>。显存占用远低于 MHA，但模型表现几乎持平 MHA。</li>
+</ul>
+<hr>
+<h2 id="4-维度对比表-以-Llama-7B-为例"><a href="#4-维度对比表-以-Llama-7B-为例" class="headerlink" title="4. 维度对比表 (以 Llama-7B 为例)"></a>4. 维度对比表 (以 Llama-7B 为例)</h2><p>假设 $Batch&#x3D;1, Seq_len&#x3D;1, Head_dim&#x3D;128$：</p>
+<table>
+<thead>
+<tr>
+<th><strong>架构</strong></th>
+<th><strong>Q 的形状</strong></th>
+<th><strong>K&#x2F;V 的形状 (KV Cache)</strong></th>
+<th><strong>备注</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>MHA</strong></td>
+<td><code>[1, 32, 1, 128]</code></td>
+<td><code>[1, 32, Total, 128]</code></td>
+<td>每个头都有一份缓存</td>
+</tr>
+<tr>
+<td><strong>MQA</strong></td>
+<td><code>[1, 32, 1, 128]</code></td>
+<td><code>[1, 1, Total, 128]</code></td>
+<td>所有头共用一份缓存</td>
+</tr>
+<tr>
+<td><strong>GQA</strong></td>
+<td><code>[1, 32, 1, 128]</code></td>
+<td><code>[1, 8, Total, 128]</code></td>
+<td>4 个 Q 头共用一份缓存</td>
+</tr>
+</tbody></table>
+<h2 id="5-在-MiniMind-中-Attention-机制的具体实现"><a href="#5-在-MiniMind-中-Attention-机制的具体实现" class="headerlink" title="5. 在 MiniMind 中 Attention 机制的具体实现"></a>5. 在 MiniMind 中 Attention 机制的具体实现</h2><h3 id="1-输入-Tensor-x"><a href="#1-输入-Tensor-x" class="headerlink" title="1. 输入 Tensor x"></a>1. 输入 Tensor <code>x</code></h3><ul>
+<li>形状：<code>[bsz, seq_len, hidden_size]</code></li>
+</ul>
+<h3 id="2-Q、K、V-进行线性变换，扩展成多头（四维）"><a href="#2-Q、K、V-进行线性变换，扩展成多头（四维）" class="headerlink" title="2. Q、K、V 进行线性变换，扩展成多头（四维）"></a>2. Q、K、V 进行线性变换，扩展成多头（四维）</h3><ul>
+<li>使用 <code>nn.Linear</code> 分别对 <code>Q</code>、<code>K</code>、<code>V</code> 做线性投影。</li>
+<li>输入维度是 <code>hidden_size</code>，输出维度通常是 <code>num_head * head_dim</code>。</li>
+<li>再通过 <code>tensor.view（）</code> 扩展成多头所需的四维张量。</li>
+</ul>
+<h3 id="3-对-Q、K-进行-RoPE-位置编码"><a href="#3-对-Q、K-进行-RoPE-位置编码" class="headerlink" title="3. 对 Q、K 进行 RoPE 位置编码"></a>3. 对 Q、K 进行 RoPE 位置编码</h3><ul>
+<li><code>cos</code> 和 <code>sin</code> 的形状为 <code>[seq_len, head_dim]</code>。</li>
+<li>在 <code>apply_rotary_pos_emb</code> 的实现中，<code>cos</code> 和 <code>sin</code> 会在维度 1 上扩展，以匹配 <code>Q</code> 和 <code>K</code> 的形状：<code>[seq_len, 1, head_dim]</code>。</li>
+<li>PyTorch 的广播计算遵循从右往左对齐的规则。</li>
+</ul>
+<h3 id="4-KV-Cache-处理"><a href="#4-KV-Cache-处理" class="headerlink" title="4. KV Cache 处理"></a>4. KV Cache 处理</h3><ul>
+<li>如果提供了 <code>past_key_value</code>，就将新的 <code>K</code>、<code>V</code> 与缓存中的 <code>K</code>、<code>V</code> 连接起来。</li>
+<li>拼接发生在 <code>seq_len</code> 这个维度上，通常使用 <code>torch.cat</code>。</li>
+</ul>
+<h3 id="5-GQA：进行-KV-重复，以支持多头共享"><a href="#5-GQA：进行-KV-重复，以支持多头共享" class="headerlink" title="5. GQA：进行 KV 重复，以支持多头共享"></a>5. GQA：进行 KV 重复，以支持多头共享</h3><figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">repeat_kv</span>(<span class="hljs-params">x: torch.Tensor, n_rep: <span class="hljs-built_in">int</span></span>) -&gt; torch.Tensor:<br>    <span class="hljs-comment"># 提取张量的四个维度</span><br>    bs, slen, num_key_value_heads, head_dim = x.shape<br><br>    <span class="hljs-comment"># 防呆设计</span><br>    <span class="hljs-keyword">if</span> n_rep == <span class="hljs-number">1</span>:<br>        <span class="hljs-keyword">return</span> x<br><br>    <span class="hljs-comment"># 在 num_key_value_heads 维度上增加一个维度，再展开并 reshape</span><br>    <span class="hljs-keyword">return</span> (<br>        x[:, :, :, <span class="hljs-literal">None</span>, :]<br>        .expand(bs, slen, num_key_value_heads, n_rep, head_dim)<br>        .reshape(bs, slen, num_key_value_heads * n_rep, head_dim)<br>    )<br></code></pre></td></tr></table></figure>
+
 <ul>
-<li>论文：<a href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li>
+<li>之后通常会通过 <code>transpose(1, 2)</code> 交换 <code>seq_len</code> 和 <code>num_head</code>。</li>
+<li>这是因为 PyTorch 的注意力矩阵运算主要发生在最后两维。</li>
+</ul>
+<h3 id="6-Attention-计算"><a href="#6-Attention-计算" class="headerlink" title="6. Attention 计算"></a>6. Attention 计算</h3><ul>
+<li>满足条件时，优先使用 <code>flash_attention</code>，即调用 <code>torch</code> 的 <code>scaled_dot_product_attention</code>。</li>
+<li>否则走标准实现：<code>scores = QK^T / sqrt(d_k)</code>。</li>
+<li><code>scores</code> 的形状为 <code>[bsz, heads, seq_len, total_len]</code>。</li>
+</ul>
+<h4 id="注意力掩码"><a href="#注意力掩码" class="headerlink" title="注意力掩码"></a>注意力掩码</h4><ol>
+<li><p>内部掩码（因果掩码）</p>
+<ul>
+<li>作用：让模型无法看到后面的词向量信息。</li>
+<li>选中 <code>scores</code> 张量中最后 <code>seq_len</code> 个位置。</li>
+<li>使用 <code>torch.triu</code> 创建上三角矩阵。</li>
+<li>再通过填充把对应位置设为 <code>-inf</code>。</li>
+<li>这样右上角元素会被设置为 <code>-inf</code>，左下角元素保留为 <code>0</code>。</li>
 </ul>
 </li>
-<li><p><strong>SmoothQuant</strong>: <em>W8A8 (权重和激活同时量化) 的里程碑</em>。大模型在超过 6.7B 参数后，激活值会出现极端的异常值（Outliers），导致传统量化崩溃。SmoothQuant 通过数学平滑手段解决了这个问题，是企业级部署的标配。</p>
+<li><p>外部掩码</p>
 <ul>
-<li>论文：<a href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li>
+<li>作用：屏蔽 <code>[PAD]</code> 或逻辑上不该关注的块。</li>
+<li><code>attention_mask</code> 的形状为 <code>[bsz, total_len]</code>。</li>
 </ul>
 </li>
+</ol>
+<h3 id="7-归一化以及-Output-形状恢复（三维）"><a href="#7-归一化以及-Output-形状恢复（三维）" class="headerlink" title="7. 归一化以及 Output 形状恢复（三维）"></a>7. 归一化以及 Output 形状恢复（三维）</h3><ul>
+<li>对 <code>scores</code> 的 <code>total_len</code> 维度进行归一化，再做 <code>dropout</code>。</li>
+<li><code>output = scores @ V</code>，此时 <code>output</code> 的形状为 <code>[bsz, n_heads, seq_len, head_dim]</code>。</li>
+<li>之后先 <code>transpose(1, 2)</code>，再 <code>reshape</code> 为 <code>[bsz, seq_len, n_heads * head_dim]</code>。</li>
+<li>最后通过线性层投影（<code>Linear</code>）回 <code>hidden_size</code> 维度。</li>
 </ul>
-<h1 id="算法级加速：打破自回归瓶颈与推理框架"><a href="#算法级加速：打破自回归瓶颈与推理框架" class="headerlink" title="算法级加速：打破自回归瓶颈与推理框架"></a>算法级加速：打破自回归瓶颈与推理框架</h1><p><strong>MEDUSA</strong>: <em>推测解码（Speculative Decoding）的进化版</em>。传统的 LLM 一次只能吐出一个词，速度极慢。Medusa 通过在模型头部增加多个“解码头”，一次预测多个后续 Token，然后并行验证，大幅提升了生成速度，且不需要额外部署一个“小草稿模型”。</p>
-<ul>
-<li>论文&#x2F;项目：<a href="https://arxiv.org/abs/2401.10774">Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></li>
+<h3 id="8-返回-output-和-past-kv"><a href="#8-返回-output-和-past-kv" class="headerlink" title="8. 返回 output 和 past_kv"></a>8. 返回 <code>output</code> 和 <code>past_kv</code></h3><ul>
+<li><code>output</code> 用于后续的残差连接。</li>
+<li><code>past_kv</code> 用于累积 KV 缓存，支持后续增量解码。</li>
 </ul>
-<p><strong>TensorRT-LLM</strong>: 它将上述的量化技术（AWQ, SmoothQuant）、算子优化（FlashAttention）、以及系统级调度（In-flight Batching）全部融合在了一起。</p>
-<ul>
-<li>项目：<a href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li>
-</ul>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 前向传播方法</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self,</span><br><span class="hljs-params">    x: torch.Tensor,</span><br><span class="hljs-params">    position_embeddings: <span class="hljs-type">Tuple</span>[torch.Tensor, torch.Tensor],</span><br><span class="hljs-params">    <span class="hljs-comment"># 过去词的 kv 缓存</span></span><br><span class="hljs-params">    past_key_value: <span class="hljs-type">Optional</span>[<span class="hljs-type">Tuple</span>[torch.Tensor, torch.Tensor]] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    use_cache=<span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    attention_mask: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params"></span>):<br>    <span class="hljs-comment"># 得到输入的 batch size 和序列长度</span><br>    bsz, seq_len, _ = x.shape<br><br>    <span class="hljs-comment"># 线性变换得到 q、k、v</span><br>    xq, xk, xv = <span class="hljs-variable language_">self</span>.q_proj(x), <span class="hljs-variable language_">self</span>.k_proj(x), <span class="hljs-variable language_">self</span>.v_proj(x)<br><br>    <span class="hljs-comment"># 将 q、k、v 重塑为多头格式</span><br>    xq = xq.view(bsz, seq_len, <span class="hljs-variable language_">self</span>.n_local_heads, <span class="hljs-variable language_">self</span>.head_dim)<br>    xk = xk.view(bsz, seq_len, <span class="hljs-variable language_">self</span>.n_local_kv_heads, <span class="hljs-variable language_">self</span>.head_dim)<br>    xv = xv.view(bsz, seq_len, <span class="hljs-variable language_">self</span>.n_local_kv_heads, <span class="hljs-variable language_">self</span>.head_dim)<br><br>    <span class="hljs-comment"># 取出 cos、sin 表</span><br>    cos, sin = position_embeddings<br><br>    <span class="hljs-comment"># 应用 Rope 位置编码，cos 和 sin 的形状为 [seq_len, head_dim]</span><br>    <span class="hljs-comment"># apply_rotary_pos_emb 的实现中，cos 和 sin 在维度 1 位置被扩展以匹配 q 和 k 的形状</span><br>    xq, xk = apply_rotary_pos_emb(xq, xk, cos, sin)<br><br>    <span class="hljs-comment"># ------------ kv cache 处理 -------------------</span><br>    <span class="hljs-comment"># 如果提供了 past_key_value，则将新的 k 和 v 与缓存的 k 和 v 连接起来</span><br>    <span class="hljs-keyword">if</span> past_key_value <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        xk = torch.cat([past_key_value[<span class="hljs-number">0</span>], xk], dim=<span class="hljs-number">1</span>)<br>        xv = torch.cat([past_key_value[<span class="hljs-number">1</span>], xv], dim=<span class="hljs-number">1</span>)<br><br>    <span class="hljs-comment"># 如果需要缓存，返回拼接的 k 和 v</span><br>    past_kv = (xk, xv) <span class="hljs-keyword">if</span> use_cache <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br><br>    <span class="hljs-comment"># ----------- GQA：进行 kv 重复以支持多头共享 ----------</span><br>    <span class="hljs-comment"># 进行矩阵旋转，torch 只支持最后两个维度进行矩阵乘法</span><br>    <span class="hljs-comment"># 所以需要先把 n_local_heads 和 head_dim 交换位置</span><br>    xq = xq.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)  <span class="hljs-comment"># [bsz, n_local_heads, seq_len, head_dim]</span><br>    xk = repeat_kv(xk, <span class="hljs-variable language_">self</span>.n_rep).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br>    xv = repeat_kv(xv, <span class="hljs-variable language_">self</span>.n_rep).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br><br>    <span class="hljs-comment"># ------------ Attention 计算 -------------------</span><br>    <span class="hljs-comment"># 优先使用 flash attention，如果满足条件则调用 torch 的 scaled_dot_product_attention</span><br>    <span class="hljs-comment"># 否则使用传统的点积注意力计算</span><br>    <span class="hljs-keyword">if</span> (<br>        <span class="hljs-variable language_">self</span>.flash  <span class="hljs-comment"># 条件一：初始化时启用了 flash attention</span><br>        <span class="hljs-keyword">and</span> (seq_len &gt; <span class="hljs-number">1</span>)  <span class="hljs-comment"># 条件二：序列长度大于 1（长度为 1 时不需要计算注意力）</span><br>        <span class="hljs-keyword">and</span> (past_key_value <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>)  <span class="hljs-comment"># 条件三：没有提供 past_key_value（全量计算模式 prefill）</span><br>        <span class="hljs-comment"># 条件四：没有提供 attention_mask，或者提供的 attention_mask 全为 1</span><br>        <span class="hljs-keyword">and</span> (attention_mask <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">or</span> torch.<span class="hljs-built_in">all</span>(attention_mask == <span class="hljs-number">1</span>))<br>    ):<br>        output = F.scaled_dot_product_attention(<br>            xq,<br>            xk,<br>            xv,<br>            dropout_p=<span class="hljs-variable language_">self</span>.dropout <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.training <span class="hljs-keyword">else</span> <span class="hljs-number">0.0</span>,<br>            is_causal=<span class="hljs-literal">True</span>,  <span class="hljs-comment"># 自动开启因果掩码</span><br>        )<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-comment"># 标准实现 scores = QK^T / sqrt(d_k)</span><br>        <span class="hljs-comment"># scores 的形状为 [bsz, heads, seq_len, total_len]</span><br>        scores = (xq @ xk.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)) / math.sqrt(<span class="hljs-variable language_">self</span>.head_dim)<br><br>        <span class="hljs-comment"># ------ 应用注意力掩码 ------</span><br>        <span class="hljs-comment"># 内部掩码（因果掩码）</span><br>        <span class="hljs-comment"># scores[:, :, :, -seq_len:] 选中了 scores 张量中最后 seq_len 个位置的所有分数</span><br>        <span class="hljs-comment"># torch.triu 创建一个上三角矩阵，用于生成因果掩码</span><br>        <span class="hljs-comment"># 右上角的元素被设置为 -inf，左下角的元素被设置为 0</span><br>        scores[:, :, :, -seq_len:] += torch.triu(<br>            torch.full((seq_len, seq_len), <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>), device=scores.device),<br>            diagonal=<span class="hljs-number">1</span>,<br>        )<br><br>        <span class="hljs-comment"># 外部掩码（屏蔽 [PAD] 或逻辑不关块）</span><br>        <span class="hljs-comment"># attention_mask 的形状为 [bsz, total_len]</span><br>        <span class="hljs-keyword">if</span> attention_mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            extended_attention_mask = attention_mask.unsqueeeze(<span class="hljs-number">1</span>).unsqueeze(<span class="hljs-number">2</span>)  <span class="hljs-comment"># [bsz, 1, 1, total_len]</span><br><br>            <span class="hljs-comment"># 原掩码 1 表示注意，0 表示不注意</span><br>            extended_attention_mask = (<span class="hljs-number">1.0</span> - extended_attention_mask) * -<span class="hljs-number">1e9</span><br>            scores += extended_attention_mask<br><br>        <span class="hljs-comment"># softmax 归一化得到注意力权重</span><br>        <span class="hljs-comment"># type_as(xq) 确保 scores 的 dtype 与 xq 相同，避免数值不稳定</span><br>        <span class="hljs-comment"># scores 的形状为 [bsz, heads, seq_len, total_len]</span><br>        scores = F.softmax(scores.<span class="hljs-built_in">float</span>(), dim=-<span class="hljs-number">1</span>).type_as(xq)<br>        scores = <span class="hljs-variable language_">self</span>.attn_dropout(scores)<br><br>        <span class="hljs-comment"># xv 的形状为 [bsz, n_k_v_heads, total_len, head_dim]</span><br>        output = scores @ xv  <span class="hljs-comment"># 此时 output 的形状为 [bsz, n_heads, seq_len, head_dim]</span><br><br>    <span class="hljs-comment"># 恢复形状 + 残差 dropout</span><br>    <span class="hljs-comment"># 先 reshape 为 [bsz, seq_len, n_heads * head_dim] 找回形状，再通过线性层投影回 hidden_size 维度</span><br>    output = output.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).reshape(bsz, seq_len, -<span class="hljs-number">1</span>)  <span class="hljs-comment"># [bsz, seq_len, hidden_size]</span><br>    output = <span class="hljs-variable language_">self</span>.resid_dropout(<span class="hljs-variable language_">self</span>.o_proj(output))<br><br>    <span class="hljs-comment"># output 输出用于后续的残差连接</span><br>    <span class="hljs-comment"># 累积的 kv 缓存</span><br>    <span class="hljs-keyword">return</span> output, past_kv<br></code></pre></td></tr></table></figure>
 ]]></content>
       <categories>
-        <category>AI Infra</category>
+        <category>LLM</category>
       </categories>
       <tags>
-        <tag>CPP/LLM/CUDA/GPU</tag>
+        <tag>LLM</tag>
+        <tag>GQA</tag>
+        <tag>KVCache</tag>
       </tags>
   </entry>
   <entry>
-    <title>vLLM 与 SGLang 学习路线</title>
-    <url>/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
-    <content><![CDATA[<blockquote>
-<p>[!summary]</p>
-<ul>
-<li>推荐顺序：先学 <code>vLLM</code>，再学 <code>SGLang</code>。</li>
-<li><code>Mac</code> 适合做学习、开发和 toy experiment；真实性能实验放到远程 <code>Linux GPU</code>。</li>
-<li>如果目标是 AI infra 岗位，重点不是“会用框架”，而是“能 benchmark、能 profile、能读核心代码、能做小改动”。</li>
+    <title>PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</title>
+    <url>/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/</url>
+    <content><![CDATA[<h1 id="PyTorch-及其他相关方法"><a href="#PyTorch-及其他相关方法" class="headerlink" title="PyTorch 及其他相关方法"></a>PyTorch 及其他相关方法</h1><h2 id="1-PyTorch-的基础架构"><a href="#1-PyTorch-的基础架构" class="headerlink" title="1. PyTorch 的基础架构"></a>1. PyTorch 的基础架构</h2><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>一句话理解</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Tensor</code></td>
+<td>张量，PyTorch 最基础的数据结构。</td>
+</tr>
+<tr>
+<td><code>Parameter</code></td>
+<td>可训练参数，会被模型自动注册。</td>
+</tr>
+<tr>
+<td><code>Module</code></td>
+<td>层或模型的基类，用来组织参数和子模块。</td>
+</tr>
+<tr>
+<td><code>Autograd</code></td>
+<td>自动求导系统，负责计算梯度。</td>
+</tr>
+<tr>
+<td><code>Optimizer</code></td>
+<td>根据梯度更新参数。</td>
+</tr>
+</tbody></table>
+<h2 id="2-常用-torch-方法"><a href="#2-常用-torch-方法" class="headerlink" title="2. 常用 torch 方法"></a>2. 常用 <code>torch</code> 方法</h2><h3 id="2-1-torch-arange"><a href="#2-1-torch-arange" class="headerlink" title="2.1 torch.arange"></a>2.1 <code>torch.arange</code></h3><ul>
+<li><strong>作用</strong>：创建一个一维等差数列张量。</li>
+<li><strong>常见写法</strong>：<code>torch.arange(start, end, step)</code>。</li>
+<li><strong>适用场景</strong>：生成位置索引、步长序列、范围张量。</li>
 </ul>
-</blockquote>
-<p>可以这样理解：</p>
-<ul>
-<li><code>vLLM</code> 帮你建立“现代 LLM serving engine”的标准心智模型。</li>
-<li><code>SGLang</code> 让你看到“推理引擎 + 可编程前端 + 更复杂调度 &#x2F; 缓存复用”的另一种范式。</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br><span class="hljs-built_in">print</span>(torch.arange(<span class="hljs-number">0</span>, <span class="hljs-number">10</span>, <span class="hljs-number">2</span>))<br><span class="hljs-comment"># tensor([0, 2, 4, 6, 8])</span><br><br><span class="hljs-built_in">print</span>(torch.arange(<span class="hljs-number">0.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">0.25</span>))<br><span class="hljs-comment"># tensor([0.0000, 0.2500, 0.5000, 0.7500])</span><br><br><span class="hljs-built_in">print</span>(torch.arange(<span class="hljs-number">5</span>, <span class="hljs-number">0</span>, -<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([5, 4, 3, 2, 1])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-2-torch-outer"><a href="#2-2-torch-outer" class="headerlink" title="2.2 torch.outer"></a>2.2 <code>torch.outer</code></h3><ul>
+<li><strong>作用</strong>：计算两个一维向量的外积。</li>
+<li><strong>输入</strong>：两个一维张量。</li>
+<li><strong>输出</strong>：一个二维矩阵，形状是 <code>[N, M]</code>。</li>
 </ul>
-<h2 id="为什么推荐先学-vLLM，再学-SGLang"><a href="#为什么推荐先学-vLLM，再学-SGLang" class="headerlink" title="为什么推荐先学 vLLM，再学 SGLang"></a>为什么推荐先学 vLLM，再学 SGLang</h2><ul>
-<li><code>vLLM</code> 已经是更普遍的行业基线，生态更广，官方文档和外部资料也更完整。</li>
-<li><code>SGLang</code> 更适合在你已经理解 serving 基础后，用来扩展对结构化生成、程序式推理和缓存复用的认识。</li>
-<li>如果你的目标是进入 AI infra，先建立标准 serving 认知，再理解不同系统的设计分歧，学习路径会更稳。</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>v1 = torch.arange(<span class="hljs-number">1</span>, <span class="hljs-number">4</span>)  <span class="hljs-comment"># tensor([1, 2, 3])</span><br>v2 = torch.arange(<span class="hljs-number">1</span>, <span class="hljs-number">3</span>)  <span class="hljs-comment"># tensor([1, 2])</span><br><br><span class="hljs-built_in">print</span>(torch.outer(v1, v2))<br><span class="hljs-comment"># tensor([[1, 2],</span><br><span class="hljs-comment">#         [2, 4],</span><br><span class="hljs-comment">#         [3, 6]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-3-torch-where"><a href="#2-3-torch-where" class="headerlink" title="2.3 torch.where"></a>2.3 <code>torch.where</code></h3><ul>
+<li><strong>作用</strong>：按条件逐元素选择值，类似张量版 <code>if / else</code>。</li>
+<li><strong>常见写法</strong>：<code>torch.where(condition, x, y)</code>。</li>
+<li><strong>返回</strong>：条件为 <code>True</code> 取 <code>x</code>，否则取 <code>y</code>。</li>
 </ul>
-<h3 id="为什么不建议“全本地”"><a href="#为什么不建议“全本地”" class="headerlink" title="为什么不建议“全本地”"></a>为什么不建议“全本地”</h3><p>官方支持边界其实很明确：</p>
-<ul>
-<li><code>vLLM</code> 在 macOS Apple Silicon 上属于 experimental，官方文档注明目前需要源码构建；CPU 实现只支持 <code>FP32/FP16</code>。</li>
-<li>官方文档也提到 Apple Silicon 如果想做 Metal 加速，可以看 <code>vllm-metal</code>，但这是 community-maintained。</li>
-<li><code>SGLang</code> 官方安装页主要围绕 NVIDIA GPU 平台，没有把 macOS Apple Silicon 当作一等公民。</li>
-<li><code>Mini-SGLang</code> 更直接：文档明确写的是 Linux only，不支持 Windows 和 macOS。</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>])<br>y = torch.tensor([<span class="hljs-number">10</span>, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>, <span class="hljs-number">40</span>, <span class="hljs-number">50</span>])<br>condition = x &gt; <span class="hljs-number">3</span><br><br><span class="hljs-built_in">print</span>(torch.where(condition, x, y))<br><span class="hljs-comment"># tensor([10, 20, 30,  4,  5])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-4-torch-cat"><a href="#2-4-torch-cat" class="headerlink" title="2.4 torch.cat"></a>2.4 <code>torch.cat</code></h3><ul>
+<li><strong>作用</strong>：沿指定维度拼接多个张量。</li>
+<li><strong>常见写法</strong>：<code>torch.cat([t1, t2], dim=0)</code>。</li>
+<li><strong>注意</strong>：除拼接维度外，其他维度必须一致。</li>
 </ul>
-<h3 id="阶段-A：Mac-本地建立心智模型"><a href="#阶段-A：Mac-本地建立心智模型" class="headerlink" title="阶段 A：Mac 本地建立心智模型"></a>阶段 A：Mac 本地建立心智模型</h3><p><strong>目标</strong>：理解 serving，不追求真实性能。</p>
-<p>建议做这些：</p>
-<ul>
-<li>用 <code>uv</code> 管理 Python 环境。</li>
-<li>装好 Xcode Command Line Tools。</li>
-<li>Apple Silicon 本地尝试：<ul>
-<li><code>vLLM CPU from source</code></li>
-<li>或 <code>vllm-metal</code></li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>t1 = torch.tensor([[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>], [<span class="hljs-number">3</span>, <span class="hljs-number">4</span>]])<br>t2 = torch.tensor([[<span class="hljs-number">5</span>, <span class="hljs-number">6</span>], [<span class="hljs-number">7</span>, <span class="hljs-number">8</span>]])<br><br><span class="hljs-built_in">print</span>(torch.cat([t1, t2], dim=<span class="hljs-number">0</span>))<br><span class="hljs-comment"># tensor([[1, 2],</span><br><span class="hljs-comment">#         [3, 4],</span><br><span class="hljs-comment">#         [5, 6],</span><br><span class="hljs-comment">#         [7, 8]])</span><br><br><span class="hljs-built_in">print</span>(torch.cat([t1, t2], dim=<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([[1, 2, 5, 6],</span><br><span class="hljs-comment">#         [3, 4, 7, 8]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-5-torch-cos"><a href="#2-5-torch-cos" class="headerlink" title="2.5 torch.cos"></a>2.5 <code>torch.cos</code></h3><ul>
+<li><strong>作用</strong>：逐元素计算余弦值。</li>
+<li><strong>输入</strong>：弧度制张量。</li>
+<li><strong>输出</strong>：形状不变。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> math<br><span class="hljs-keyword">import</span> torch<br><br>angles = torch.tensor([<span class="hljs-number">0</span>, math.pi / <span class="hljs-number">2</span>, math.pi])<br><span class="hljs-built_in">print</span>(torch.cos(angles))<br><span class="hljs-comment"># tensor([ 1.0000e+00, -8.7423e-08, -1.0000e+00])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-6-torch-sin"><a href="#2-6-torch-sin" class="headerlink" title="2.6 torch.sin"></a>2.6 <code>torch.sin</code></h3><ul>
+<li><strong>作用</strong>：逐元素计算正弦值。</li>
+<li><strong>输入</strong>：弧度制张量。</li>
+<li><strong>输出</strong>：形状不变。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> math<br><span class="hljs-keyword">import</span> torch<br><br>angles = torch.tensor([<span class="hljs-number">0</span>, math.pi / <span class="hljs-number">2</span>, math.pi])<br><span class="hljs-built_in">print</span>(torch.sin(angles))<br><span class="hljs-comment"># tensor([0.0000e+00, 1.0000e+00, 1.2246e-16])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-7-torch-triu"><a href="#2-7-torch-triu" class="headerlink" title="2.7 torch.triu"></a>2.7 <code>torch.triu</code></h3><ul>
+<li><strong>作用</strong>：保留矩阵的上三角部分。</li>
+<li><strong>常见写法</strong>：<code>torch.triu(input, diagonal=0)</code>。</li>
+<li><strong><code>diagonal</code> 含义</strong>：<ul>
+<li><code>0</code>：从主对角线开始保留。</li>
+<li><code>1</code>：从主对角线上方一条线开始保留。</li>
+<li><code>-1</code>：会多保留一部分下三角。</li>
 </ul>
 </li>
-<li>再配合 <code>MLX / mlx-lm</code> 或 <code>llama.cpp</code> 跑小模型，帮助你理解 token 生成、KV cache、量化、上下文长度这些基本概念。</li>
 </ul>
-<p>这一阶段适合跑：</p>
-<ul>
-<li><code>0.5B ~ 3B</code> 量级的小模型</li>
-<li>OpenAI-compatible server</li>
-<li>小规模 benchmark</li>
-<li>代码阅读和 toy experiment</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<br>    [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>],<br>    [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>],<br>    [<span class="hljs-number">7</span>, <span class="hljs-number">8</span>, <span class="hljs-number">9</span>],<br>])<br><br><span class="hljs-built_in">print</span>(torch.triu(x))<br><span class="hljs-comment"># tensor([[1, 2, 3],</span><br><span class="hljs-comment">#         [0, 5, 6],</span><br><span class="hljs-comment">#         [0, 0, 9]])</span><br><br><span class="hljs-built_in">print</span>(torch.triu(x, diagonal=<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([[0, 2, 3],</span><br><span class="hljs-comment">#         [0, 0, 6],</span><br><span class="hljs-comment">#         [0, 0, 0]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-8-torch-reshape"><a href="#2-8-torch-reshape" class="headerlink" title="2.8 torch.reshape"></a>2.8 <code>torch.reshape</code></h3><ul>
+<li><strong>作用</strong>：改变张量形状，但不改变数据内容。</li>
+<li><strong>常见写法</strong>：<code>torch.reshape(x, shape)</code>。</li>
+<li><strong>注意</strong>：新旧形状的元素总数必须一致。</li>
 </ul>
-<p>这一阶段不适合：</p>
-<ul>
-<li>真正比较 <code>vLLM vs SGLang</code> 的性能</li>
-<li>学习 CUDA 热路径</li>
-<li>学分布式推理的真实性能特征</li>
-</ul>
-<h3 id="阶段-B：Mac-远程-Linux-GPU"><a href="#阶段-B：Mac-远程-Linux-GPU" class="headerlink" title="阶段 B：Mac + 远程 Linux GPU"></a>阶段 B：Mac + 远程 Linux GPU</h3><p><strong>目标</strong>：把 learning 变成 infra 能力。</p>
-<p>做法：</p>
-<ul>
-<li>Mac 当开发机</li>
-<li>远程租 &#x2F; 借一台 Linux GPU 机器，哪怕先从单卡开始</li>
-<li>用 <code>SSH + tmux</code> 远程开发</li>
-<li>真正跑：<ul>
-<li><code>vLLM</code></li>
-<li><code>SGLang</code></li>
-<li>profiling</li>
-<li>benchmark</li>
-<li>多卡 &#x2F; 多机实验</li>
-</ul>
-</li>
-</ul>
-<p>这是更理想的路线，因为你在 Mac 上获得舒适开发体验，在 Linux GPU 上获得真实系统行为。</p>
-<h2 id="我建议的学习顺序"><a href="#我建议的学习顺序" class="headerlink" title="我建议的学习顺序"></a>我建议的学习顺序</h2><h3 id="第-0-阶段：补底子（1-2-周）"><a href="#第-0-阶段：补底子（1-2-周）" class="headerlink" title="第 0 阶段：补底子（1-2 周）"></a>第 0 阶段：补底子（1-2 周）</h3><p>先确保这些不是短板：</p>
-<ul>
-<li>Python 熟练</li>
-<li>C++ 至少能读能改</li>
-<li>PyTorch 基础</li>
-<li>Transformer 推理流程</li>
-<li>Linux、进程、线程、内存、网络</li>
-<li>Docker</li>
-<li>基本 SQL &#x2F; 缓存 &#x2F; 消息队列认知</li>
-</ul>
-<p>如果这些不稳，直接上 <code>vLLM / SGLang</code> 会很痛苦。</p>
-<h3 id="第-1-阶段：先学“推理系统”而不是框架（2-周）"><a href="#第-1-阶段：先学“推理系统”而不是框架（2-周）" class="headerlink" title="第 1 阶段：先学“推理系统”而不是框架（2 周）"></a>第 1 阶段：先学“推理系统”而不是框架（2 周）</h3><p><strong>重点概念</strong>：</p>
-<ul>
-<li>autoregressive decoding</li>
-<li>prefill vs decode</li>
-<li>KV cache</li>
-<li>prefix caching</li>
-<li>continuous batching</li>
-<li>chunked prefill</li>
-<li>quantization</li>
-<li>TTFT &#x2F; TPS &#x2F; latency &#x2F; P99</li>
-</ul>
-<p><strong>建议同时看</strong>：</p>
-<ul>
-<li><code>vLLM</code> 的架构和 V1 blog</li>
-<li><code>SGLang</code> docs 概览</li>
-<li><code>Mini-SGLang / nano-vllm</code></li>
-</ul>
-<p><strong>输出物</strong>：</p>
-<ul>
-<li>自己写一篇笔记，把这些概念讲明白</li>
-<li>最好画一张 request lifecycle 图</li>
-</ul>
-<h3 id="第-2-阶段：先在-Mac-上把-vLLM-跑起来（1-2-周）"><a href="#第-2-阶段：先在-Mac-上把-vLLM-跑起来（1-2-周）" class="headerlink" title="第 2 阶段：先在 Mac 上把 vLLM 跑起来（1-2 周）"></a>第 2 阶段：先在 Mac 上把 vLLM 跑起来（1-2 周）</h3><p><strong>目标</strong>：不是压性能，而是把链路跑通。</p>
-<p>要做的事：</p>
-<ul>
-<li>build <code>vLLM CPU</code> 或试 <code>vllm-metal</code></li>
-<li>启一个 OpenAI-compatible server</li>
-<li>用 Python client &#x2F; <code>curl</code> 调它</li>
-<li>记录不同 <code>max model len / batch / concurrency</code> 的表现</li>
-</ul>
-<p>要掌握：</p>
-<ul>
-<li>server 参数</li>
-<li>常见 OOM &#x2F; model loading 问题</li>
-<li>metrics 的基本观察方式</li>
-</ul>
-<p>输出物：</p>
-<ul>
-<li>一个可复现的本地 demo</li>
-<li>一篇简短 benchmark note</li>
-</ul>
-<h3 id="第-3-阶段：开始读“精简实现”（2-周）"><a href="#第-3-阶段：开始读“精简实现”（2-周）" class="headerlink" title="第 3 阶段：开始读“精简实现”（2 周）"></a>第 3 阶段：开始读“精简实现”（2 周）</h3><p>这一步非常关键。</p>
-<p><strong>阅读顺序</strong>：</p>
-<ol>
-<li><code>nano-vllm</code></li>
-<li><code>Mini-SGLang</code></li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.arange(<span class="hljs-number">1</span>, <span class="hljs-number">7</span>)<br><span class="hljs-built_in">print</span>(torch.reshape(x, (<span class="hljs-number">2</span>, <span class="hljs-number">3</span>)))<br><span class="hljs-comment"># tensor([[1, 2, 3],</span><br><span class="hljs-comment">#         [4, 5, 6]])</span><br><br><span class="hljs-built_in">print</span>(torch.reshape(x, (<span class="hljs-number">3</span>, -<span class="hljs-number">1</span>)))<br><span class="hljs-comment"># tensor([[1, 2],</span><br><span class="hljs-comment">#         [3, 4],</span><br><span class="hljs-comment">#         [5, 6]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-9-torch-topk"><a href="#2-9-torch-topk" class="headerlink" title="2.9 torch.topk"></a>2.9 <code>torch.topk</code></h3><ul>
+<li><strong>作用</strong>：取出某个维度上最大的或最小的前 <code>k</code> 个值。</li>
+<li><strong>常见写法</strong>：<code>torch.topk(input, k, dim=None, largest=True)</code>。</li>
+<li><strong>返回</strong>：<ol>
+<li><code>values</code>：取出的值。</li>
+<li><code>indices</code>：这些值对应的索引。</li>
 </ol>
-<p><strong>目标不是逐行读完，而是回答这些问题</strong>：</p>
-<ul>
-<li>请求是怎么排队的</li>
-<li>cache 是怎么管理的</li>
-<li>为什么 prefix reuse 能省内存 &#x2F; 省算力</li>
-<li>scheduler 为什么容易成为瓶颈</li>
-<li>CPU overhead 为什么会拖垮 GPU 利用率</li>
+</li>
 </ul>
-<p><strong>输出物</strong>：</p>
-<ul>
-<li>一份你自己的 code map</li>
-<li>至少改一个小点，比如日志、统计、简单策略</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">10</span>, <span class="hljs-number">30</span>, <span class="hljs-number">20</span>, <span class="hljs-number">40</span>])<br>values, indices = torch.topk(x, k=<span class="hljs-number">2</span>)<br><br><span class="hljs-built_in">print</span>(values)   <span class="hljs-comment"># tensor([40, 30])</span><br><span class="hljs-built_in">print</span>(indices)  <span class="hljs-comment"># tensor([3, 1])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-10-torch-repeat-interleave"><a href="#2-10-torch-repeat-interleave" class="headerlink" title="2.10 torch.repeat_interleave"></a>2.10 <code>torch.repeat_interleave</code></h3><ul>
+<li><strong>作用</strong>：按元素级别重复张量中的值。</li>
+<li><strong>和 <code>repeat</code> 的区别</strong>：它重复的是“元素”，不是整段张量。</li>
+<li><strong>常见场景</strong>：扩展标签、复制索引、构造分组映射。</li>
 </ul>
-<h3 id="第-4-阶段：上远程-Linux-GPU，先学-vLLM（2-3-周）"><a href="#第-4-阶段：上远程-Linux-GPU，先学-vLLM（2-3-周）" class="headerlink" title="第 4 阶段：上远程 Linux GPU，先学 vLLM（2-3 周）"></a>第 4 阶段：上远程 Linux GPU，先学 vLLM（2-3 周）</h3><p>这是你真正开始接近岗位要求的时候。</p>
-<p>你要做：</p>
-<ul>
-<li>跑 <code>vLLM</code> 服务</li>
-<li>跑不同模型和不同并发</li>
-<li>测 <code>TTFT / throughput / P99</code></li>
-<li>用 profiler 看热路径</li>
-<li>学单卡、多卡、<code>TP / PP</code></li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br><span class="hljs-built_in">print</span>(torch.repeat_interleave(x, repeats=<span class="hljs-number">2</span>))<br><span class="hljs-comment"># tensor([1, 1, 2, 2, 3, 3])</span><br><br>repeats = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br><span class="hljs-built_in">print</span>(torch.repeat_interleave(x, repeats))<br><span class="hljs-comment"># tensor([1, 2, 2, 3, 3, 3])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-11-torch-argsort"><a href="#2-11-torch-argsort" class="headerlink" title="2.11 torch.argsort"></a>2.11 <code>torch.argsort</code></h3><ul>
+<li><strong>作用</strong>：返回排序后元素在原张量中的索引。</li>
+<li><strong>直觉</strong>：不直接给你排序结果，而是告诉你“谁排第几”。</li>
+<li><strong>常见场景</strong>：排序索引、排名、特征重排。</li>
 </ul>
-<p>这一阶段要开始把“应用层感受”变成“系统层分析”。</p>
-<p><strong>输出物</strong>：</p>
-<ul>
-<li>一份 benchmark 报告</li>
-<li>至少一个性能结论，例如：<ul>
-<li>batch 变化如何影响吞吐</li>
-<li>长 prompt 如何影响 TTFT</li>
-<li>prefix cache 命中时收益多大</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">30</span>, <span class="hljs-number">10</span>, <span class="hljs-number">20</span>])<br>idx = torch.argsort(x)<br><br><span class="hljs-built_in">print</span>(idx)<br><span class="hljs-comment"># tensor([1, 2, 0])</span><br><br><span class="hljs-built_in">print</span>(x[idx])<br><span class="hljs-comment"># tensor([10, 20, 30])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-12-torch-bincount"><a href="#2-12-torch-bincount" class="headerlink" title="2.12 torch.bincount"></a>2.12 <code>torch.bincount</code></h3><ul>
+<li><strong>作用</strong>：统计非负整数出现的次数。</li>
+<li><strong>适用前提</strong>：输入必须是非负整数张量。</li>
+<li><strong>常见场景</strong>：类别计数、直方图统计。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>])<br><span class="hljs-built_in">print</span>(torch.bincount(x))<br><span class="hljs-comment"># tensor([1, 3, 1, 1])</span><br><br>weights = torch.tensor([<span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>])<br><span class="hljs-built_in">print</span>(torch.bincount(x, weights=weights))<br><span class="hljs-comment"># tensor([1., 3., 1., 2.])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-13-torch-div"><a href="#2-13-torch-div" class="headerlink" title="2.13 torch.div"></a>2.13 <code>torch.div</code></h3><ul>
+<li><strong>作用</strong>：逐元素除法。</li>
+<li><strong>本质</strong>：<code>torch.div(a, b)</code> 等价于 <code>a / b</code>。</li>
+<li><strong>适用场景</strong>：张量归一化、缩放、逐元素运算。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>a = torch.tensor([<span class="hljs-number">10</span>, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>])<br>b = torch.tensor([<span class="hljs-number">2</span>, <span class="hljs-number">5</span>, <span class="hljs-number">3</span>])<br><br><span class="hljs-built_in">print</span>(torch.div(a, b))<br><span class="hljs-comment"># tensor([ 5.,  4., 10.])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-14-torch-mean"><a href="#2-14-torch-mean" class="headerlink" title="2.14 torch.mean"></a>2.14 <code>torch.mean</code></h3><ul>
+<li><strong>作用</strong>：求平均值。</li>
+<li><strong>常见写法</strong>：<code>torch.mean(x, dim=...)</code>。</li>
+<li><strong>记忆方式</strong>：<code>dim</code> 表示“被消掉的维度”。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<br>    [<span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">3.0</span>],<br>    [<span class="hljs-number">4.0</span>, <span class="hljs-number">5.0</span>, <span class="hljs-number">6.0</span>],<br>])<br><br><span class="hljs-built_in">print</span>(torch.mean(x, dim=<span class="hljs-number">0</span>))<br><span class="hljs-comment"># tensor([2.5000, 3.5000, 4.5000])</span><br><br><span class="hljs-built_in">print</span>(torch.mean(x, dim=<span class="hljs-number">1</span>))<br><span class="hljs-comment"># tensor([2., 5.])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-15-torch-scatter-add"><a href="#2-15-torch-scatter-add" class="headerlink" title="2.15 torch.scatter_add_"></a>2.15 <code>torch.scatter_add_</code></h3><ul>
+<li><strong>作用</strong>：按索引把值加到目标张量指定位置。</li>
+<li><strong>下划线 <code>_</code> 含义</strong>：原地操作，会直接修改原张量。</li>
+<li><strong>直觉</strong>：把数据按 <code>index</code> 分桶相加。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>out = torch.zeros(<span class="hljs-number">5</span>)<br>index = torch.tensor([<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>])<br>src = torch.tensor([<span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">3.0</span>, <span class="hljs-number">4.0</span>])<br><br>out.scatter_add_(dim=<span class="hljs-number">0</span>, index=index, src=src)<br><span class="hljs-built_in">print</span>(out)<br><span class="hljs-comment"># tensor([4., 2., 0., 4., 0.])</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="3-常用-tensor-方法"><a href="#3-常用-tensor-方法" class="headerlink" title="3. 常用 tensor 方法"></a>3. 常用 <code>tensor</code> 方法</h2><h3 id="3-1-tensor-transpose"><a href="#3-1-tensor-transpose" class="headerlink" title="3.1 tensor.transpose"></a>3.1 <code>tensor.transpose</code></h3><ul>
+<li><strong>作用</strong>：交换两个指定维度。</li>
+<li><strong>常见写法</strong>：<code>x.transpose(dim0, dim1)</code>。</li>
+<li><strong>常见场景</strong>：注意力里的维度交换，如 <code>seq_len</code> 和 <code>head</code> 互换。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.randn(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)<br>y = x.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br><span class="hljs-built_in">print</span>(y.shape)<br><span class="hljs-comment"># torch.Size([2, 4, 3])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-2-tensor-view"><a href="#3-2-tensor-view" class="headerlink" title="3.2 tensor.view"></a>3.2 <code>tensor.view</code></h3><ul>
+<li><strong>作用</strong>：在不改变数据内容的前提下重塑张量视图。</li>
+<li><strong>常见写法</strong>：<code>x.view(new_shape)</code>。</li>
+<li><strong>注意</strong>：<ul>
+<li>新旧形状元素总数必须一致。</li>
+<li><code>view()</code> 要求张量在内存中是连续的。</li>
+<li>如果不确定是否连续，优先用 <code>reshape()</code>。</li>
 </ul>
 </li>
 </ul>
-<h3 id="第-5-阶段：再学-SGLang（2-3-周）"><a href="#第-5-阶段：再学-SGLang（2-3-周）" class="headerlink" title="第 5 阶段：再学 SGLang（2-3 周）"></a>第 5 阶段：再学 SGLang（2-3 周）</h3><p>重点不是“它比 <code>vLLM</code> 快多少”，而是：</p>
-<ul>
-<li>它为什么要有前端语言 &#x2F; DSL</li>
-<li><code>RadixAttention</code> 和 prefix reuse 的思路</li>
-<li>结构化生成、复杂程序式推理场景有什么差异</li>
-<li>服务层、调度层、缓存层和 <code>vLLM</code> 有哪些不同</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<br>    [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>],<br>    [<span class="hljs-number">7</span>, <span class="hljs-number">8</span>, <span class="hljs-number">9</span>, <span class="hljs-number">10</span>, <span class="hljs-number">11</span>, <span class="hljs-number">12</span>],<br>])<br><br><span class="hljs-built_in">print</span>(x.view(<span class="hljs-number">3</span>, <span class="hljs-number">4</span>))<br><span class="hljs-comment"># tensor([[ 1,  2,  3,  4],</span><br><span class="hljs-comment">#         [ 5,  6,  7,  8],</span><br><span class="hljs-comment">#         [ 9, 10, 11, 12]])</span><br><br><span class="hljs-built_in">print</span>(x.view(<span class="hljs-number">4</span>, <span class="hljs-number">3</span>))<br><span class="hljs-comment"># tensor([[ 1,  2,  3],</span><br><span class="hljs-comment">#         [ 4,  5,  6],</span><br><span class="hljs-comment">#         [ 7,  8,  9],</span><br><span class="hljs-comment">#         [10, 11, 12]])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-3-tensor-unsqueeze"><a href="#3-3-tensor-unsqueeze" class="headerlink" title="3.3 tensor.unsqueeze"></a>3.3 <code>tensor.unsqueeze</code></h3><ul>
+<li><strong>作用</strong>：在指定位置插入一个大小为 <code>1</code> 的维度。</li>
+<li><strong>常见写法</strong>：<code>x.unsqueeze(dim)</code>。</li>
+<li><strong>常见场景</strong>：补 batch 维、补 head 维、方便广播。</li>
 </ul>
-<p><strong>输出物</strong>：</p>
-<ul>
-<li>一份 <code>vLLM vs SGLang</code> 对比</li>
-<li>对比维度至少包括：<ul>
-<li>易用性</li>
-<li>代码可读性</li>
-<li>结构化生成</li>
-<li>serving 特性</li>
-<li>benchmark 方法</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br>x = torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br><span class="hljs-built_in">print</span>(x.shape)<br><span class="hljs-comment"># torch.Size([3])</span><br><br><span class="hljs-built_in">print</span>(x.unsqueeze(<span class="hljs-number">0</span>).shape)<br><span class="hljs-comment"># torch.Size([1, 3])</span><br><br><span class="hljs-built_in">print</span>(x.unsqueeze(<span class="hljs-number">1</span>).shape)<br><span class="hljs-comment"># torch.Size([3, 1])</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="4-常用-nn-组件"><a href="#4-常用-nn-组件" class="headerlink" title="4. 常用 nn 组件"></a>4. 常用 <code>nn</code> 组件</h2><h3 id="4-1-nn-Parameter"><a href="#4-1-nn-Parameter" class="headerlink" title="4.1 nn.Parameter"></a>4.1 <code>nn.Parameter</code></h3><ul>
+<li><strong>作用</strong>：把一个普通张量包装成“可训练参数”。</li>
+<li><strong>关键特点</strong>：<ul>
+<li>会被 <code>nn.Module</code> 自动注册到 <code>.parameters()</code>。</li>
+<li>默认 <code>requires_grad=True</code>。</li>
+</ul>
+</li>
+<li><strong>适用场景</strong>：自定义权重、偏置、缩放参数。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>weight = nn.Parameter(torch.ones(<span class="hljs-number">4</span>))<br><span class="hljs-built_in">print</span>(weight.requires_grad)<br><span class="hljs-comment"># True</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-2-nn-Module"><a href="#4-2-nn-Module" class="headerlink" title="4.2 nn.Module"></a>4.2 <code>nn.Module</code></h3><ul>
+<li><strong>作用</strong>：所有层和模型的基类。</li>
+<li><strong>你通常用它做两件事</strong>：<ul>
+<li>在 <code>__init__</code> 中定义参数和子模块。</li>
+<li>在 <code>forward()</code> 中定义数据流。</li>
+</ul>
+</li>
+<li><strong>额外能力</strong>：支持 <code>.parameters()</code>、<code>.to(device)</code>、<code>.train()</code>、<code>.eval()</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyModel</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.linear = nn.Linear(<span class="hljs-number">10</span>, <span class="hljs-number">5</span>)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.linear(x)<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-3-nn-Linear"><a href="#4-3-nn-Linear" class="headerlink" title="4.3 nn.Linear"></a>4.3 <code>nn.Linear</code></h3><ul>
+<li><strong>作用</strong>：执行线性变换 <code>y = xW^T + b</code>。</li>
+<li><strong>常见写法</strong>：<code>nn.Linear(in_features, out_features, bias=True)</code>。</li>
+<li><strong>适用场景</strong>：特征映射、维度升降、输出层投影。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>layer = nn.Linear(in_features=<span class="hljs-number">10</span>, out_features=<span class="hljs-number">5</span>, bias=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-4-nn-Dropout"><a href="#4-4-nn-Dropout" class="headerlink" title="4.4 nn.Dropout"></a>4.4 <code>nn.Dropout</code></h3><ul>
+<li><strong>作用</strong>：训练时随机把一部分元素置零，防止过拟合。</li>
+<li><strong>常见写法</strong>：<code>nn.Dropout(p=0.5)</code>。</li>
+<li><strong>注意</strong>：<ul>
+<li>只在 <code>model.train()</code> 时生效。</li>
+<li>在 <code>model.eval()</code> 时不会随机丢弃。</li>
 </ul>
 </li>
 </ul>
-<h3 id="第-6-阶段：补底层优化（长期）"><a href="#第-6-阶段：补底层优化（长期）" class="headerlink" title="第 6 阶段：补底层优化（长期）"></a>第 6 阶段：补底层优化（长期）</h3><p>这部分才是真正的 infra 壁垒：</p>
-<ul>
-<li>CUDA 基础</li>
-<li>Triton</li>
-<li>CUTLASS</li>
-<li>FlashAttention &#x2F; FlashInfer</li>
-<li>NCCL &#x2F; 通信</li>
-<li>多机多卡</li>
-<li>profiling with Nsight</li>
-<li>kernel-level bottleneck analysis</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>dropout = nn.Dropout(p=<span class="hljs-number">0.5</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-5-nn-Embedding"><a href="#4-5-nn-Embedding" class="headerlink" title="4.5 nn.Embedding"></a>4.5 <code>nn.Embedding</code></h3><ul>
+<li><strong>作用</strong>：查找表，把整数 id 映射成向量。</li>
+<li><strong>常见场景</strong>：词向量、token embedding、类别 embedding。</li>
+<li><strong>输入要求</strong>：输入通常是整数类型，如 <code>torch.long</code>。</li>
 </ul>
-<p>这一层不需要一口吃成胖子，但至少要把 <code>CUDA + Triton + profiling</code> 拉起来。</p>
-<h2 id="什么样的作品对找工作最有用"><a href="#什么样的作品对找工作最有用" class="headerlink" title="什么样的作品对找工作最有用"></a>什么样的作品对找工作最有用</h2><p>如果你想把这条路线变成求职资产，最有价值的不是“我学过”，而是下面这些可展示的成果：</p>
-<ul>
-<li>一个 <code>vLLM vs SGLang</code> 的 benchmark repo</li>
-<li>一份详细 profiling 报告</li>
-<li>一个你改过的小功能 &#x2F; 小优化 PR</li>
-<li>一篇系统性技术博客</li>
-<li>一个把 serving、监控、压测、回归测试串起来的小平台</li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br>embedding = nn.Embedding(num_embeddings=<span class="hljs-number">1000</span>, embedding_dim=<span class="hljs-number">32</span>)<br>input_ids = torch.tensor(<span class="hljs-number">1</span>, <span class="hljs-number">5</span>, <span class="hljs-number">2</span>, <span class="hljs-number">9</span>, dtype=torch.long)<br>output = embedding(input_ids)<br><br><span class="hljs-built_in">print</span>(output.shape)<br><span class="hljs-comment"># torch.Size([1, 4, 32])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-6-nn-ModuleList"><a href="#4-6-nn-ModuleList" class="headerlink" title="4.6 nn.ModuleList"></a>4.6 <code>nn.ModuleList</code></h3><ul>
+<li><strong>作用</strong>：一个能被 PyTorch 正确注册的模块列表。</li>
+<li><strong>为什么不用普通 list</strong>：普通 Python 列表里的层不会被 <code>.parameters()</code> 或 <code>.to(device)</code> 自动识别。</li>
+<li><strong>适用场景</strong>：循环堆叠多层、按需迭代子模块。</li>
 </ul>
-<p>对招聘方来说，这比“看完几篇文章”有说服力得多。</p>
-<h2 id="最现实的建议"><a href="#最现实的建议" class="headerlink" title="最现实的建议"></a>最现实的建议</h2><p>如果你现在是从应用 &#x2F; 后端转 infra，不要把目标定成“先把 CUDA 学满再碰框架”。更推荐的顺序是：</p>
-<ol>
-<li>先把 serving 心智模型建立起来</li>
-<li>用 <code>vLLM</code> 建立行业基线</li>
-<li>用 <code>SGLang</code> 扩展到更复杂的 serving 思维</li>
-<li>再往 <code>CUDA / Triton</code> 深挖</li>
-</ol>
-<p>如果一开始就陷进 kernel 细节，很容易学了几个月，却还是回答不清“一个请求在推理引擎里到底经历了什么”。</p>
-<h2 id="一句话结论"><a href="#一句话结论" class="headerlink" title="一句话结论"></a>一句话结论</h2><p>这条学习方向是对的，而且在中国市场有真实岗位需求；但如果目标是进入 AI infra，就不要把目标设成“会用 <code>vLLM</code> 和 <code>SGLang</code>”，而要设成：</p>
-<p><strong>能用它们、能 benchmark、能 profile、能读核心代码、能做小改动，并且懂系统与性能。</strong></p>
-<h2 id="Sources"><a href="#Sources" class="headerlink" title="Sources"></a>Sources</h2><ul>
-<li><a href="https://docs.vllm.ai/">vLLM docs</a></li>
-<li><a href="https://docs.vllm.ai/en/stable/getting_started/installation/cpu/">vLLM macOS CPU install</a></li>
-<li><a href="https://vllm.ai/blog/v1-alpha-release">vLLM V1 blog</a></li>
-<li><a href="https://vllm.ai/blog/distributed-inference">vLLM distributed inference blog</a></li>
-<li><a href="https://github.com/vllm-project/vllm/issues/8779">vLLM V1 architecture issue</a></li>
-<li><a href="https://github.com/vllm-project/vllm">vLLM GitHub</a></li>
-<li><a href="https://github.com/vllm-project/vllm-metal">vllm-metal</a></li>
-<li><a href="https://docs.sglang.io/">SGLang docs</a></li>
-<li><a href="https://docs.sglang.io/get_started/install.html">SGLang install</a></li>
-<li><a href="https://docs.sglang.io/developer_guide/contribution_guide.html">SGLang contribution guide</a></li>
-<li><a href="https://github.com/sgl-project/sgl-learning-materials">SGLang learning materials</a></li>
-<li><a href="https://github.com/sgl-project/sglang">SGLang GitHub</a></li>
-<li><a href="https://www.lmsys.org/blog/2025-12-17-minisgl/">Mini-SGLang blog</a></li>
-<li><a href="https://www.mintlify.com/sgl-project/mini-sglang/introduction">Mini-SGLang docs</a></li>
-<li><a href="https://github.com/GeeeekExplorer/nano-vllm">Nano-vLLM</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1pp43wr/we_distilled_sglang_to_help_you_learn_how_modern/">Reddit: Mini-SGLang learning thread</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1k2zn6o/sglang_vs_vllm/">Reddit: SGLang vs vLLM discussion</a></li>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">GoodModel</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.layers = nn.ModuleList([<br>            nn.Linear(<span class="hljs-number">10</span>, <span class="hljs-number">10</span>),<br>            nn.Linear(<span class="hljs-number">10</span>, <span class="hljs-number">10</span>),<br>        ])<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:<br>            x = layer(x)<br>        <span class="hljs-keyword">return</span> x<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-7-nn-Module-register-buffer"><a href="#4-7-nn-Module-register-buffer" class="headerlink" title="4.7 nn.Module.register_buffer"></a>4.7 <code>nn.Module.register_buffer</code></h3><ul>
+<li><strong>作用</strong>：注册一个“随模型一起移动和保存，但不参与训练”的张量。</li>
+<li><strong>好处</strong>：<ul>
+<li>会跟随 <code>model.to(device)</code> 自动移动。</li>
+<li>会进入 <code>state_dict()</code>。</li>
+<li>不会出现在 <code>model.parameters()</code> 中。</li>
 </ul>
+</li>
+<li><strong>适用场景</strong>：固定掩码、位置编码表、统计量。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyAttention</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, max_len=<span class="hljs-number">512</span></span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        mask = torch.triu(<br>            torch.full((max_len, max_len), <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>)),<br>            diagonal=<span class="hljs-number">1</span>,<br>        ).unsqueeze(<span class="hljs-number">0</span>).unsqueeze(<span class="hljs-number">0</span>)<br>        <span class="hljs-variable language_">self</span>.register_buffer(<span class="hljs-string">&#x27;causal_mask&#x27;</span>, mask)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        seq_len = x.shape[<span class="hljs-number">2</span>]<br>        <span class="hljs-keyword">return</span> x + <span class="hljs-variable language_">self</span>.causal_mask[:, :, :seq_len, :seq_len]<br></code></pre></td></tr></table></figure>
+
+<h2 id="5-训练相关方法与对象"><a href="#5-训练相关方法与对象" class="headerlink" title="5. 训练相关方法与对象"></a>5. 训练相关方法与对象</h2><h3 id="5-1-torch-nn-utils-clip-grad-norm"><a href="#5-1-torch-nn-utils-clip-grad-norm" class="headerlink" title="5.1 torch.nn.utils.clip_grad_norm_"></a>5.1 <code>torch.nn.utils.clip_grad_norm_</code></h3><ul>
+<li><strong>作用</strong>：梯度裁剪，防止梯度爆炸。</li>
+<li><strong>常见写法</strong>：<code>torch.nn.utils.clip_grad_norm_(parameters, max_norm)</code>。</li>
+<li><strong>适用场景</strong>：训练 Transformer、RNN、LLM 时非常常见。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><br><span class="hljs-comment"># 假设 model 已经完成 backward()</span><br>torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="hljs-number">1.0</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-2-optimizer-param-groups"><a href="#5-2-optimizer-param-groups" class="headerlink" title="5.2 optimizer.param_groups"></a>5.2 <code>optimizer.param_groups</code></h3><ul>
+<li><strong>作用</strong>：保存优化器的参数组和对应超参数。</li>
+<li><strong>最常见用途</strong>：动态修改学习率。</li>
+<li><strong>典型操作</strong>：遍历每个参数组，更新其中的 <code>lr</code>。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> param_group <span class="hljs-keyword">in</span> optimizer.param_groups:<br>    param_group[<span class="hljs-string">&#x27;lr&#x27;</span>] = lr<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-3-scaler-scale"><a href="#5-3-scaler-scale" class="headerlink" title="5.3 scaler.scale"></a>5.3 <code>scaler.scale</code></h3><ul>
+<li><strong>作用</strong>：AMP 混合精度训练中的梯度缩放。</li>
+<li><strong>为什么需要它</strong>：<code>float16</code> 下很小的梯度可能下溢成 0。</li>
+<li><strong>核心思路</strong>：先把 <code>loss</code> 放大，再反向传播，保护微小梯度。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">with</span> autocast():<br>    loss = model(x)<br><br>scaler.scale(loss).backward()<br>scaler.step(optimizer)<br>scaler.update()<br></code></pre></td></tr></table></figure>
+
+<h2 id="6-快速记忆"><a href="#6-快速记忆" class="headerlink" title="6. 快速记忆"></a>6. 快速记忆</h2><table>
+<thead>
+<tr>
+<th>方法 &#x2F; 组件</th>
+<th>最短记忆</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>torch.arange</code></td>
+<td>生成等差数列</td>
+</tr>
+<tr>
+<td><code>torch.outer</code></td>
+<td>向量外积</td>
+</tr>
+<tr>
+<td><code>torch.where</code></td>
+<td>条件选择</td>
+</tr>
+<tr>
+<td><code>torch.cat</code></td>
+<td>沿维度拼接</td>
+</tr>
+<tr>
+<td><code>torch.cos</code> &#x2F; <code>torch.sin</code></td>
+<td>三角函数</td>
+</tr>
+<tr>
+<td><code>torch.triu</code></td>
+<td>取上三角</td>
+</tr>
+<tr>
+<td><code>torch.reshape</code></td>
+<td>改形状</td>
+</tr>
+<tr>
+<td><code>torch.topk</code></td>
+<td>取前 k 个</td>
+</tr>
+<tr>
+<td><code>torch.repeat_interleave</code></td>
+<td>元素级重复</td>
+</tr>
+<tr>
+<td><code>torch.argsort</code></td>
+<td>返回排序索引</td>
+</tr>
+<tr>
+<td><code>torch.bincount</code></td>
+<td>计数统计</td>
+</tr>
+<tr>
+<td><code>torch.div</code></td>
+<td>逐元素除法</td>
+</tr>
+<tr>
+<td><code>torch.mean</code></td>
+<td>求平均</td>
+</tr>
+<tr>
+<td><code>torch.scatter_add_</code></td>
+<td>按索引累加</td>
+</tr>
+<tr>
+<td><code>tensor.transpose</code></td>
+<td>交换两个维度</td>
+</tr>
+<tr>
+<td><code>tensor.view</code></td>
+<td>连续内存上的重塑</td>
+</tr>
+<tr>
+<td><code>tensor.unsqueeze</code></td>
+<td>插入大小为 1 的维度</td>
+</tr>
+<tr>
+<td><code>nn.Parameter</code></td>
+<td>可训练参数</td>
+</tr>
+<tr>
+<td><code>nn.Module</code></td>
+<td>模型 &#x2F; 层的基类</td>
+</tr>
+<tr>
+<td><code>nn.Linear</code></td>
+<td>线性映射</td>
+</tr>
+<tr>
+<td><code>nn.Dropout</code></td>
+<td>随机丢弃</td>
+</tr>
+<tr>
+<td><code>nn.Embedding</code></td>
+<td>查表取向量</td>
+</tr>
+<tr>
+<td><code>nn.ModuleList</code></td>
+<td>可注册的模块列表</td>
+</tr>
+<tr>
+<td><code>register_buffer</code></td>
+<td>非训练但随模型保存的张量</td>
+</tr>
+<tr>
+<td><code>clip_grad_norm_</code></td>
+<td>梯度裁剪</td>
+</tr>
+<tr>
+<td><code>optimizer.param_groups</code></td>
+<td>调学习率 &#x2F; 参数组</td>
+</tr>
+<tr>
+<td><code>scaler.scale</code></td>
+<td>AMP 梯度缩放</td>
+</tr>
+</tbody></table>
 ]]></content>
       <categories>
-        <category>AI Infra</category>
+        <category>LLM</category>
       </categories>
       <tags>
-        <tag>AIInfra</tag>
-        <tag>vLLM</tag>
-        <tag>SGLang</tag>
+        <tag>LLM</tag>
+        <tag>PyTorch</tag>
+        <tag>Tensor</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MiniMind 架构图解析</title>
+    <url>/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/</url>
+    <content><![CDATA[<h3 id="1-整体流程"><a href="#1-整体流程" class="headerlink" title="1. 整体流程"></a>1. 整体流程</h3><p>这是模型处理信息的全过程：</p>
+<ul>
+<li><strong>Tokenizer Encoder（分词编码）</strong>：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。</li>
+<li><strong>Input Embedding（嵌入层）</strong>：把数字编号变成一串高维向量（数值列表），赋予单词语义特征</li>
+<li><strong>Transformer Layer k（核心加工层）</strong>：这是模型的大脑，图中显示它会重复 $K$ 次（循环叠加），每一层都会让模型对文本的理解更深一层。</li>
+<li><strong>RMSNorm &amp; Linear &amp; SoftMax</strong>：最后加工环节，将深层特征转换成概率，决定下一个词选什么的概率最大。</li>
+<li><strong>Tokenizer Decoder（分词解码）</strong>：把概率最高的数字变回人类语言，输出“world”。</li>
+</ul>
+<hr>
+<h3 id="2-单层结构"><a href="#2-单层结构" class="headerlink" title="2. 单层结构"></a>2. 单层结构</h3><p>这是每一个 Transformer 层内部的“两步走”战略：</p>
+<ul>
+<li><strong>GQA (Grouped Query Attention)</strong>：第一步，负责“注意力”。让模型在看当前词时，能注意到上下文里哪些词是重要的。</li>
+<li><strong>FFN (Feed Forward Network)</strong>：第二步，负责“知识记忆”。对注意力提取的信息进行非线性变换，提取更抽象的特征。</li>
+<li><strong>旁边的“+”号和箭头</strong>：这叫<strong>残差连接（Residual Connection）</strong>。简单说就是“保留原文，加上新学到的东西”，防止网络太深导致信息丢失。</li>
+</ul>
+<hr>
+<h3 id="3-核心组件细节（右侧-a-b）"><a href="#3-核心组件细节（右侧-a-b）" class="headerlink" title="3. 核心组件细节（右侧 a &amp; b）"></a>3. 核心组件细节（右侧 a &amp; b）</h3><h4 id="a-GQA-分组查询注意力（核心创新）"><a href="#a-GQA-分组查询注意力（核心创新）" class="headerlink" title="(a) GQA - 分组查询注意力（核心创新）"></a>(a) GQA - 分组查询注意力（核心创新）</h4><p>这是现代大模型节省显存、提高速度的关键：</p>
+<ul>
+<li><strong>Q, K, V</strong>：查询(Query)、键(Key)、值(Value)。就像在图书馆（K, V）用搜索词（Q）找书。</li>
+<li><strong>RoPE (Rotary Positional Embedding)</strong>：旋转位置编码。它告诉模型每个词在句子里的<strong>相对位置</strong>，没有它模型就分不清“人咬狗”和“狗咬人”。 </li>
+<li><strong>mask</strong>：掩码。确保模型在预测下一个词时，看不见后面的“标准答案”。</li>
+<li><strong>SoftMax</strong>：计算权重，决定要把多少注意力放在哪个词上。</li>
+</ul>
+<h4 id="b-FFN-前馈神经网络（SwiGLU结构）"><a href="#b-FFN-前馈神经网络（SwiGLU结构）" class="headerlink" title="(b) FFN - 前馈神经网络（SwiGLU结构）"></a>(b) FFN - 前馈神经网络（SwiGLU结构）</h4><p>MiniMind 使用了高效的 <strong>SwiGLU</strong> 激活函数：</p>
+<ul>
+<li><strong>RMSNorm</strong>：在进入加工前先做归一化，让数据分布更稳定。</li>
+<li><strong>SiLU</strong>：一种激活函数。你可以理解为一种“开关”，决定哪些信息可以通过。</li>
+<li><strong>三个 Linear 层</strong>：通过矩阵运算进行高维空间的映射。这里是模型存储“知识”的地方。</li>
+</ul>
+<hr>
+<p>在 MiniMind（以及所有类 Llama 架构）中，<strong>Linear 层（线性变换层）</strong> 本质上是矩阵乘法 $y &#x3D; xW$</p>
+<h3 id="1-核心层入口处的-Linear（位于-GQA-模块内部）"><a href="#1-核心层入口处的-Linear（位于-GQA-模块内部）" class="headerlink" title="1. 核心层入口处的 Linear（位于 GQA 模块内部）"></a>1. 核心层入口处的 Linear（位于 GQA 模块内部）</h3><p>在 <strong>(a) GQA</strong> 模块最下方的那个蓝色 <code>Linear</code> 框：</p>
+<ul>
+<li><p><strong>作用：生成 Q、K、V 向量</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：输入的词向量（Embedding）是原始的，它并不直接包含“谁是谁的宾语”这种关系。通过这个 Linear 层，模型将原始向量投影到三个不同的子空间：</p>
+<ul>
+<li><strong>Q (Query)</strong>：我想找什么信息？</li>
+<li><strong>K (Key)</strong>：我有多少信息可以提供？</li>
+<li><strong>V (Value)</strong>：我具体包含的内容是什么？</li>
+</ul>
+<p>   在Linear层里和QKV矩阵计算，获取对应向量，其中Q和K进行RoPE位置编码，然后点积，掩码处理后softmax，获得一个“相关性矩阵”，然后输入V点积，获得具体的上下文侧重信息</p>
+</li>
+</ul>
+<h3 id="2-注意力机制后的-Linear（位于-GQA-模块上方）"><a href="#2-注意力机制后的-Linear（位于-GQA-模块上方）" class="headerlink" title="2. 注意力机制后的 Linear（位于 GQA 模块上方）"></a>2. 注意力机制后的 Linear（位于 GQA 模块上方）</h3><p>在 <strong>(a) GQA</strong> 模块顶部的那个蓝色 <code>Linear</code> 框：</p>
+<ul>
+<li><p><strong>作用：特征融合与统一输出</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：经过注意力计算后，模型得到了很多分散的、加权后的上下文信息。这个 Linear 层的作用是把多头注意力整合，并映射回模型原本的维度，以便传给下一层。</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-FFN-模块中的三个-Linear（位于-b-模块中）"><a href="#3-FFN-模块中的三个-Linear（位于-b-模块中）" class="headerlink" title="3. FFN 模块中的三个 Linear（位于 b 模块中）"></a>3. FFN 模块中的三个 Linear（位于 b 模块中）</h3><p>这是模型存储“知识”的地方，图中 <strong>(b) FFN</strong> 展示了典型的 <strong>SwiGLU</strong> 结构，这里有三条线涉及 Linear：</p>
+<ul>
+<li><strong>左侧和右侧并行的两个 Linear</strong>：<ul>
+<li><strong>作用：空间扩张与门控控制</strong>。</li>
+<li><strong>原理</strong>：这两个 Linear 层通常会将向量的维度升得很高（比如从 512 升到 1408）。<ul>
+<li>右边的经过 <strong>SiLU</strong> 激活函数变成一个“门”；</li>
+<li>左边的提供原始特征；</li>
+<li>两者相乘，实现<strong>信息的筛选</strong>。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>顶部的 Linear</strong><ul>
+<li><strong>作用：维度还原</strong>。</li>
+<li><strong>原理</strong>：将刚才升高的维度重新压回到模型的标准维度。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4-模型最顶部的-Linear（输出层）"><a href="#4-模型最顶部的-Linear（输出层）" class="headerlink" title="4. 模型最顶部的 Linear（输出层）"></a>4. 模型最顶部的 Linear（输出层）</h3><p>在最左侧大图的 <strong>RMSNorm</strong> 之上、<strong>SoftMax</strong> 之下：</p>
+<ul>
+<li><p><strong>作用：预测词表概率</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：这是最后一步。它将模型处理了半天的深层特征，映射到整个<strong>词表</strong>的大小（比如 MiniMind 词表如果有 64000 个词，那输出维度就是 64000）。</p>
+</li>
+</ul>
+<hr>
+<p>架构设计：</p>
+<h3 id="1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？"><a href="#1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？" class="headerlink" title="1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？"></a>1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？</h3><p>传统的 Attention（MHA）每个“头”都有自己的 K 和 V，非常占显存。</p>
+<ul>
+<li><strong>设计目的：</strong> <strong>极致的推理速度和显存节省。</strong></li>
+<li><strong>原理：</strong> GQA 让多个 Q（查询）共享同一组 K 和 V。这大大减少了在生成文字时需要缓存的数据量（KV Cache）。</li>
+</ul>
+<hr>
+<h3 id="2-为什么选择-SwiGLU（FFN-里的那种设计）？"><a href="#2-为什么选择-SwiGLU（FFN-里的那种设计）？" class="headerlink" title="2. 为什么选择 SwiGLU（FFN 里的那种设计）？"></a>2. 为什么选择 SwiGLU（FFN 里的那种设计）？</h3><p>你在图中看到 FFN 模块分成了两条路，一条路走 SiLU 激活函数，然后两路相乘。</p>
+<ul>
+<li><strong>设计目的：</strong> <strong>提升模型的“理解深度”和“非线性表达能力”。</strong></li>
+<li><strong>原理：</strong> 传统的激活函数（如 ReLU）太死板，要么开要么关。SwiGLU 这种“门控”机制允许模型更精细地控制哪些信息该留下，哪些该丢弃。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>架构图组件</th>
+<th>对应类 &#x2F; 成员</th>
+<th>作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Input Embedding</strong></td>
+<td><code>MindModel.embed_tokens</code></td>
+<td>将 token id 映射成初始向量表示，相当于“查表取词向量”。</td>
+</tr>
+<tr>
+<td><strong>Layer k（堆叠 K 次）</strong></td>
+<td><code>MindModel.layers</code></td>
+<td>按层堆叠 Transformer Block；在推理阶段也负责串起整条计算链路和 KV Cache。</td>
+</tr>
+<tr>
+<td><strong>RMSNorm</strong></td>
+<td><code>RmsNorm</code></td>
+<td>稳定特征分布，减少深层网络中的数值爆炸或训练不稳定。</td>
+</tr>
+<tr>
+<td><strong>(a) GQA 模块</strong></td>
+<td><code>Attention</code><br><code>repeat_kv</code><br><code>apply_rotary_pos_emb</code><br><code>precompute_freqs</code></td>
+<td>完成分组查询注意力、RoPE 位置编码和 KV 复用，是注意力计算的核心部分。</td>
+</tr>
+<tr>
+<td><strong>(b) FFN 模块</strong></td>
+<td><code>FeedForward</code><br><code>MOEFeedForward</code></td>
+<td>通过 SwiGLU &#x2F; FFN 做非线性变换，提取更高层特征并增强表达能力。</td>
+</tr>
+<tr>
+<td><strong>$\oplus$（残差连接）</strong></td>
+<td><code>TransformerBlock</code> 内部的 <code>+</code></td>
+<td>保留输入并叠加子层输出，帮助梯度传播，缓解深层网络退化。</td>
+</tr>
+<tr>
+<td><strong>顶层 Linear &amp; SoftMax</strong></td>
+<td><code>MindForCausalLM</code></td>
+<td>将隐藏状态映射回词表 logits，并通过 <code>softmax / cross_entropy</code> 完成训练或生成时的选词。</td>
+</tr>
+</tbody></table>
+]]></content>
+      <categories>
+        <category>LLM</category>
+      </categories>
+      <tags>
+        <tag>LLM</tag>
+        <tag>MiniMind</tag>
+        <tag>架构解析</tag>
       </tags>
   </entry>
   <entry>
@@ -1319,199 +2175,6 @@
       </categories>
   </entry>
   <entry>
-    <title>从 OpenSpec、Superpowers 到 TRELLIS：AI 编码工作流的工程化演进</title>
-    <url>/my-blog/2026/04/01/03Agent-%E4%BB%8E%20OpenSpec%E3%80%81Superpowers%20%E5%88%B0%20TRELLIS%20%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%BC%94%E8%BF%9B/</url>
-    <content><![CDATA[<p>在 AI 编码助手越来越强的今天，<strong>“让模型写出代码”已经不是最难的问题，真正难的是让它在复杂项目里持续、稳定、低成本地写对代码。</strong></p>
-<p>很多人第一次接触 AI 编程时，都会被它的速度震撼：一句 Prompt，几百行代码立刻就出来了。但只要真正把 AI 拉进长期项目，你很快就会发现，真正麻烦的不是“生成”，而是<strong>对齐需求、约束行为、控制上下文、维持质量，以及让一次次会话形成连续的工程记忆</strong>。</p>
-<p>也正因为如此，社区对 AI 编码的探索，逐渐从“Prompt 怎么写更聪明”，演进到了“工作流和脚手架怎么设计更可靠”。沿着这条线去看，OpenSpec、Superpowers 和 TRELLIS 并不是三款互相替代的工具，而更像是三个阶段的代表性答案：</p>
-<ul>
-<li><strong>OpenSpec</strong> 回答的是：如何让 AI 在动手前先把需求和规范讲清楚。</li>
-<li><strong>Superpowers</strong> 回答的是：如何让 AI 不只是理解需求，还能像一支有纪律的工程团队那样执行。</li>
-<li><strong>TRELLIS</strong> 回答的是：如何把规范、执行、上下文治理、跨会话记忆和成本控制，真正收进同一套 Agent Harness 里。</li>
-</ul>
-<p>这篇文章想讲的，不只是三个工具分别做了什么，而是<strong>为什么社区会一步步从 OpenSpec 走到 Superpowers，再走到 TRELLIS。</strong></p>
-<h2 id="问题的起点：AI-会写代码，不等于-AI-能稳定交付"><a href="#问题的起点：AI-会写代码，不等于-AI-能稳定交付" class="headerlink" title="问题的起点：AI 会写代码，不等于 AI 能稳定交付"></a>问题的起点：AI 会写代码，不等于 AI 能稳定交付</h2><p>如果只把 AI 当成“更快的代码生成器”，软件开发会很快陷入一种奇怪的悖论：写代码的门槛降低了，但项目失控的速度也更快了。</p>
-<p>原因很简单。软件开发从来都不只是把语法拼对，它还包括一整套隐性但关键的工程约束：</p>
-<ul>
-<li>需求是否被充分澄清</li>
-<li>架构边界是否被遵守</li>
-<li>修改是否可追溯</li>
-<li>测试是否覆盖关键路径</li>
-<li>多个任务是否会互相污染上下文</li>
-<li>上一次会话的结论能不能在下一次继续沿用</li>
-</ul>
-<p>这些约束原本依靠开发者经验、团队流程和代码评审来维持。可一旦把大量工作交给 AI，如果没有新的机制把这些约束重新“装回去”，AI 的高速度就会直接放大混乱：需求没对齐就开始写、写完缺少验证、长会话上下文越来越脏、不同任务互相串味、最终留下大量技术债。</p>
-<p>所以，真正的挑战从来不是“让 AI 写”，而是<strong>让 AI 在工程纪律之内写</strong>。</p>
-<h2 id="第一阶段：OpenSpec-让-AI-先学会“按规范行动”"><a href="#第一阶段：OpenSpec-让-AI-先学会“按规范行动”" class="headerlink" title="第一阶段：OpenSpec 让 AI 先学会“按规范行动”"></a>第一阶段：OpenSpec 让 AI 先学会“按规范行动”</h2><p>在这条演进路径里，OpenSpec 的价值非常明确：它让社区第一次比较系统地意识到，<strong>AI 编码不能只靠即时对话，而要先把规范和变更设计成工件。</strong></p>
-<p>OpenSpec 的核心理念其实很朴素：<strong>先想清楚，再动手。</strong> 与其让模型在一段长对话里边猜边写，不如先把这次改动的提案、设计、需求说明和任务拆解沉淀下来，让人和 AI 对“要做什么、为什么做、做到什么算完成”形成一致理解。</p>
-<p>它最有代表性的，就是一整套 <code>/opsx</code> 工作流：</p>
-<ul>
-<li><code>/opsx:explore</code>：先讨论问题，不急着写代码</li>
-<li><code>/opsx:propose</code>：创建提案和变更目录</li>
-<li><code>/opsx:ff</code>：一次性生成 proposal、design、specs 和 tasks</li>
-<li><code>/opsx:apply</code>：按任务清单实施代码</li>
-<li><code>/opsx:verify</code>：根据前面的规范校验实现</li>
-<li><code>/opsx:archive</code>：把本次变更归档，沉淀为长期知识</li>
-</ul>
-<p>从工程视角看，OpenSpec 的突破点并不只是“命令设计得好”，而是它第一次把 AI 协作中的几个关键事实说透了：</p>
-<ol>
-<li><strong>需求不能只存在聊天记录里</strong>，而要转化成可以追溯的文档工件。</li>
-<li><strong>实现不能脱离规范单飞</strong>，而要和设计、任务拆解形成链路。</li>
-<li><strong>一次变更最好留下历史痕迹</strong>，否则项目会很快失去可解释性。</li>
-</ol>
-<p>这也是为什么 OpenSpec 对已有项目尤其有吸引力。对于 Brownfield 场景，它比“直接和 AI 聊着改”要稳得多，因为每次改动至少有提案、有设计、有验证，不至于一通生成之后谁也说不清这次到底改了什么、为什么这么改。</p>
-<p>但 OpenSpec 的问题也很快暴露出来了。</p>
-<p>它的强项在于<strong>规范驱动</strong>，但短板也恰恰来自这里：很多基础约束需要反复书写，长对话里依然要依赖全局上下文共享，模型的注意力还是可能漂移。换句话说，OpenSpec 解决了“先把图纸画清楚”的问题，却没有彻底解决“在执行阶段如何持续保持纪律”的问题。</p>
-<p>所以它更像第一代答案：<strong>让 AI 从“凭感觉写”进入“按规范写”。</strong> 这一步非常重要，但还不够。</p>
-<h2 id="第二阶段：Superpowers-让-AI-像一支有纪律的工程团队一样执行"><a href="#第二阶段：Superpowers-让-AI-像一支有纪律的工程团队一样执行" class="headerlink" title="第二阶段：Superpowers 让 AI 像一支有纪律的工程团队一样执行"></a>第二阶段：Superpowers 让 AI 像一支有纪律的工程团队一样执行</h2><p>如果说 OpenSpec 把焦点放在“规范先行”，那么 Superpowers 的出现，代表社区开始进一步追问：<strong>仅仅有规范还不够，能不能把执行过程本身也工程化？</strong></p>
-<p>这正是 Superpowers 最有意思的地方。它不是简单提供几个命令，而是试图把一整条高质量开发链路，用 Skills 的方式做成一个强约束工作流。它关心的不只是“你想让 AI 做什么”，还关心“AI 必须按什么顺序做、在哪些节点停下来、如何验证自己没有走偏”。</p>
-<p>它的典型链路大致是这样的：</p>
-<ol>
-<li><code>brainstorming</code>：先通过提问细化需求，形成被确认的设计</li>
-<li><code>using-git-worktrees</code>：在隔离工作区中执行，避免污染主线</li>
-<li><code>writing-plans</code>：把设计拆成短周期、可验证的微任务</li>
-<li><code>subagent-driven-development</code>：交给独立子代理实现，减少上下文串扰</li>
-<li><code>test-driven-development</code>：强制先写失败测试，再写实现</li>
-<li><code>requesting-code-review</code>：通过独立审查代理检查规范覆盖率与代码质量</li>
-<li><code>finishing-a-development-branch</code>：收尾、验证、合并或丢弃分支</li>
-</ol>
-<p>这套体系最大的进步，在于它把 AI 从“强模型 + 好 Prompt”的范式，往“多角色协作 + 明确边界 + 强制验证”的范式推进了一大步。</p>
-<p>也就是说，Superpowers 不再相信一个大而全的主对话就能稳定搞定一切，而是主动引入：</p>
-<ul>
-<li><strong>隔离</strong>：不同任务放在独立 worktree 和独立子代理里</li>
-<li><strong>拆解</strong>：把大任务切成可控的小步骤</li>
-<li><strong>验证</strong>：用 TDD 和审查流程限制“先写后想”</li>
-<li><strong>编排</strong>：把技能串成固定的执行顺序</li>
-</ul>
-<p>这使它看起来更像一支训练有素的工程团队，而不是一个坐在聊天框里的万能助手。</p>
-<p>但问题也随之升级了。</p>
-<p>Superpowers 的执行质量确实非常强，可它的代价也极其明显：<strong>系统编排变重了，Token 消耗和上下文压力迅速上升。</strong></p>
-<p>因为每完成一点点工作，系统都可能需要反复唤醒不同角色：设计者、计划拆解者、实现者、审查者、收尾代理……这些角色之间还要反复传递计划、约束和上下文。理论上这让流程更严密，实际上也意味着：</p>
-<ul>
-<li>任务链条更长</li>
-<li>编排成本更高</li>
-<li>上下文搬运更多</li>
-<li>长线项目更容易触发窗口拥挤和幻觉</li>
-<li>一旦某个环节失灵，人工接管成本也会更高</li>
-</ul>
-<p>所以，Superpowers 给出的第二代答案是：<strong>让 AI 不只是按规范理解问题，更要按工程纪律执行问题。</strong></p>
-<p>它把“执行质量”推到了一个很高的水平，但也把另一个矛盾暴露得更加彻底：<strong>如果为了工程纪律而付出过高的上下文与 Token 成本，这套体系就很难在长期项目中真正普及。</strong></p>
-<h2 id="第三阶段：TRELLIS-开始把工程纪律内建进-Harness"><a href="#第三阶段：TRELLIS-开始把工程纪律内建进-Harness" class="headerlink" title="第三阶段：TRELLIS 开始把工程纪律内建进 Harness"></a>第三阶段：TRELLIS 开始把工程纪律内建进 Harness</h2><p>到了这一步，社区其实已经积累了两个很重要的共识：</p>
-<p>第一，<strong>规范不能少。</strong> 没有规范，AI 只会在即时对话里凭局部上下文猜测需求。<br>第二，<strong>执行纪律也不能少。</strong> 没有拆解、隔离、验证和审查，AI 在复杂项目里很难稳定交付。</p>
-<p>但真正难的地方在于：<strong>怎么把规范驱动和技能驱动放进同一套可持续的系统里，同时又不把上下文和成本压到失控。</strong></p>
-<p>TRELLIS 的出现，正是在回答这个问题。</p>
-<p>它和前两者最大的不同，不只是“功能更全”，而是它开始把工程化约束往更底层的 Harness 层收。也就是说，很多原本需要在每次对话里反复提醒、在每个技能之间来回传递的内容，被转移到了系统性的结构里。</p>
-<p>这类结构主要体现在几个方面。</p>
-<h3 id="1-规范不再每次重写，而是常驻在系统里"><a href="#1-规范不再每次重写，而是常驻在系统里" class="headerlink" title="1. 规范不再每次重写，而是常驻在系统里"></a>1. 规范不再每次重写，而是常驻在系统里</h3><p>OpenSpec 最大的问题之一，是很多约束虽然重要，却要在不同任务里不断重复表达。TRELLIS 试图解决的，就是这种“规范存在，但总要反复搬运”的低效。</p>
-<p>通过 <code>.trellis/spec/</code>，开发约定、架构要求、工作方式可以更稳定地沉淀下来。任务执行时，系统再根据当前上下文做按需注入，而不是把所有历史背景一次性塞进会话。</p>
-<p>这件事非常关键。因为它意味着规范从“会话里的描述”变成了“脚手架里的资产”。一旦规范常驻，AI 的执行就不再严重依赖某次对话有没有把背景讲全。</p>
-<h3 id="2-项目记忆从聊天记录转向工作区记忆"><a href="#2-项目记忆从聊天记录转向工作区记忆" class="headerlink" title="2. 项目记忆从聊天记录转向工作区记忆"></a>2. 项目记忆从聊天记录转向工作区记忆</h3><p>另一个长期困扰 AI 编码的痛点，是跨会话延续。</p>
-<p>很多时候，真正有价值的不是某次生成的代码，而是过程中的判断：为什么当时选这个方案、某个坑是怎么踩出来的、还有哪些边界条件没处理。这些内容如果只存在聊天记录里，就很难在下一次会话中稳定被继承。</p>
-<p>TRELLIS 通过 <code>.trellis/workspace/</code> 一类工作区日志与记忆结构，把这类过程性知识从“对话残留”变成“项目状态的一部分”。这样一来，新的 AI 会话拿到的就不只是代码目录，而是带着一定历史判断和进度脉络的工作现场。</p>
-<p>这一步非常像软件工程里的文档化和状态管理，只不过对象从“人类协作者”变成了“未来的 AI 协作者”。</p>
-<h3 id="3-多代理仍然存在，但上下文治理变得更精细"><a href="#3-多代理仍然存在，但上下文治理变得更精细" class="headerlink" title="3. 多代理仍然存在，但上下文治理变得更精细"></a>3. 多代理仍然存在，但上下文治理变得更精细</h3><p>TRELLIS 并不是否定多代理、隔离执行和工作流编排。恰恰相反，它吸收了 Superpowers 的很多经验：复杂任务依然需要拆解，隔离依然重要，并行依然有价值。</p>
-<p>区别在于，TRELLIS 更强调<strong>按需注入、精准上下文控制和底层结构化治理</strong>。这使得它不是单纯依靠“更多角色 + 更长流程”来提升质量，而是通过更好的上下文组织方式，减少不必要的搬运和冗余。</p>
-<p>从结果上看，这让它更像是在做两件事：</p>
-<ul>
-<li>保留多代理工作流带来的纪律性</li>
-<li>避免多代理工作流带来的灾难性 Token 膨胀</li>
-</ul>
-<p>也正因为如此，TRELLIS 更容易被看作一种“Agent Harness”，而不是某个单点能力工具。它关注的不是某个技能是否强，而是整套系统能否<strong>长期稳定地承载 AI 开发行为。</strong></p>
-<hr>
-<p>这里我不想简单下一个“谁最强”的结论。因为不同团队、不同项目阶段，适合的工作方式本来就不一样。</p>
-<p>如果你面对的是短任务、单次改动、一次性原型，很多时候并不需要上到很重的脚手架，Prompt 加上基本规范就足够了。<br>如果你在已有项目里推进中等规模改动，OpenSpec 这种强调变更工件和设计对齐的方式，仍然有很高的实用价值。<br>如果你在追求极致执行质量，且能接受较高成本，Superpowers 所代表的那种强纪律流水线也依然很有参考意义。</p>
-<p>但如果你的目标是：</p>
-<ul>
-<li>服务长期项目</li>
-<li>支撑多人协作</li>
-<li>允许跨会话接力</li>
-<li>既要保持规范与审查，又不能让 Token 成本失控</li>
-</ul>
-<p>那么你最后大概率会走向一种更完整的 Agent Harness。而这正是 TRELLIS 现在最有吸引力的地方：它开始把过去分散在 Prompt、技能和人工习惯里的工程纪律，逐渐沉淀成系统能力。</p>
-<p>这也是为什么我更愿意把 TRELLIS 看成一种<strong>阶段性更成熟的工程化答案</strong>，而不只是一个新工具名字。</p>
-<h2 id="文末速览：OpenSpec、Superpowers-与-TRELLIS-如何选"><a href="#文末速览：OpenSpec、Superpowers-与-TRELLIS-如何选" class="headerlink" title="文末速览：OpenSpec、Superpowers 与 TRELLIS 如何选"></a>文末速览：OpenSpec、Superpowers 与 TRELLIS 如何选</h2><p>如果你是收藏型读者，或者准备转发给同样在折腾 Claude Code &#x2F; Agent 工作流的朋友，这张表可以直接当速览版来看。</p>
-<table>
-<thead>
-<tr>
-<th>维度</th>
-<th>OpenSpec</th>
-<th>Superpowers</th>
-<th>TRELLIS</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>核心定位</td>
-<td>规范驱动的变更工作流</td>
-<td>技能驱动的强纪律执行流水线</td>
-<td>面向长期项目的 Agent Harness</td>
-</tr>
-<tr>
-<td>主要解决的问题</td>
-<td>先把需求、设计和任务讲清楚</td>
-<td>让 AI 按拆解、测试、审查流程执行</td>
-<td>把规范、执行、记忆、上下文治理与成本控制整合进系统</td>
-</tr>
-<tr>
-<td>最适合的场景</td>
-<td>已有项目中的中等规模改动</td>
-<td>追求高质量交付、愿意接受重流程</td>
-<td>长期项目、多人协作、跨会话接力</td>
-</tr>
-<tr>
-<td>优势</td>
-<td>工件清晰、可追溯、容易建立规范意识</td>
-<td>执行纪律强、隔离彻底、验证完整</td>
-<td>规范常驻、按需注入、记忆沉淀、长期成本更可控</td>
-</tr>
-<tr>
-<td>主要代价</td>
-<td>约束容易重复书写，依赖长会话上下文</td>
-<td>Token 消耗高，系统编排重</td>
-<td>对脚手架设计和结构化治理要求更高</td>
-</tr>
-<tr>
-<td>上下文管理方式</td>
-<td>仍较依赖主会话与文档链路</td>
-<td>依赖多角色编排与上下文传递</td>
-<td>更强调按需注入与底层结构化治理</td>
-</tr>
-<tr>
-<td>跨会话延续能力</td>
-<td>有归档，但项目记忆能力有限</td>
-<td>依赖流程编排，延续成本较高</td>
-<td>更适合把历史决策沉淀成工作区记忆</td>
-</tr>
-<tr>
-<td>工程纪律强度</td>
-<td>中等，重在规范先行</td>
-<td>很强，重在执行过程控制</td>
-<td>很强，且更强调系统级长期稳定性</td>
-</tr>
-<tr>
-<td>更适合谁</td>
-<td>想把 AI 协作先做规范化的人</td>
-<td>想把 AI 当成严格工程团队来驱动的人</td>
-<td>想搭一套可持续 Agent 工程体系的人</td>
-</tr>
-</tbody></table>
-<h2 id="结语：纪律不只是写在流程里，更要长在脚手架里"><a href="#结语：纪律不只是写在流程里，更要长在脚手架里" class="headerlink" title="结语：纪律不只是写在流程里，更要长在脚手架里"></a>结语：纪律不只是写在流程里，更要长在脚手架里</h2><p>回头看这条演进线，社区其实一直在回答同一个问题：<strong>如何让 AI 在真实工程里，不只是会写代码，而是能稳定交付代码。</strong></p>
-<p>OpenSpec 的贡献，是让我们重新重视规范和工件；Superpowers 的贡献，是让我们看到多代理、TDD 和审查链路能把执行质量推到多高；而 TRELLIS 更进一步，它试图把这些经验收束进一套能长期运行的 Harness 结构里。</p>
-<p>所以，这篇文章真正想表达的结论不是“TRELLIS 赢了”，而是：</p>
-<blockquote>
-<p>当 AI 编码从演示走向生产，真正决定上限的，已经不再只是模型本身，而是你有没有一套足够好的工程化脚手架。</p>
-</blockquote>
-<p>从这个意义上说，从 OpenSpec 到 Superpowers，再到 TRELLIS，演进的从来不是某几个工具名，而是我们对 <strong>AI 工程纪律</strong> 的理解正在不断变深。</p>
-]]></content>
-      <categories>
-        <category>vibe coding</category>
-      </categories>
-      <tags>
-        <tag>工具指南</tag>
-        <tag>效率</tag>
-        <tag>生产力工具</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello Blog</title>
     <url>/my-blog/2026/02/28/hello-blog/</url>
     <content><![CDATA[<p>欢迎来到我的个人博客。</p>
@@ -1541,14 +2204,9 @@
 <li>个人项目的设计、实现和迭代过程</li>
 <li>值得长期保留的方法论、工作流与工程经验</li>
 </ul>
-<p>你也可以通过邮箱联系我：<a href="mailto:&#97;&#x72;&#105;&#x61;&#x73;&#x75;&#x5f;&#106;&#x74;&#x6c;&#101;&#64;&#x31;&#54;&#51;&#x2e;&#x63;&#x6f;&#109;">ariasu_jtle@163.com</a></p>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#x61;&#114;&#x69;&#x61;&#x73;&#117;&#95;&#106;&#116;&#x6c;&#101;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#x6f;&#109;">ariasu_jtle@163.com</a></p>
 <p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
 ]]></content>
-  </entry>
-  <entry>
-    <title>分类</title>
-    <url>/my-blog/categories/index.html</url>
-    <content><![CDATA[]]></content>
   </entry>
   <entry>
     <title>项目</title>
@@ -1576,6 +2234,11 @@
   </article>
 </div>
 ]]></content>
+  </entry>
+  <entry>
+    <title>分类</title>
+    <url>/my-blog/categories/index.html</url>
+    <content><![CDATA[]]></content>
   </entry>
   <entry>
     <title>标签</title>

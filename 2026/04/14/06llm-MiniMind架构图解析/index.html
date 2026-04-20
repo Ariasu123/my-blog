@@ -19,24 +19,26 @@
   <meta name="author" content="Ariasu">
   <meta name="keywords" content="">
   
-    <meta name="description" content="学习规划由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：底层 GPU 编程、模型量化压缩理论、以及系统级加速框架。 CUDA 编程与 GPU 架构AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。  《大规模并">
+    <meta name="description" content="1. 整体流程这是模型处理信息的全过程：  Tokenizer Encoder（分词编码）：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。 Input Embedding（嵌入层）：把数字编号变成一串高维向量（数值列表），赋予单词语义特征 Transformer Layer k（核心加工层）：这是模型的大脑，图中显示它会重复 $K$ 次（循环叠加），每一层都会让模型对">
 <meta property="og:type" content="article">
-<meta property="og:title" content="LLM 推理加速与算子优化学习路线">
-<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/03/14/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/index.html">
+<meta property="og:title" content="MiniMind 架构图解析">
+<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/index.html">
 <meta property="og:site_name" content="my-blog">
-<meta property="og:description" content="学习规划由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：底层 GPU 编程、模型量化压缩理论、以及系统级加速框架。 CUDA 编程与 GPU 架构AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。  《大规模并">
+<meta property="og:description" content="1. 整体流程这是模型处理信息的全过程：  Tokenizer Encoder（分词编码）：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。 Input Embedding（嵌入层）：把数字编号变成一串高维向量（数值列表），赋予单词语义特征 Transformer Layer k（核心加工层）：这是模型的大脑，图中显示它会重复 $K$ 次（循环叠加），每一层都会让模型对">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/images/default-cover.svg">
-<meta property="article:published_time" content="2026-03-14T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-04-20T08:15:54.363Z">
+<meta property="article:published_time" content="2026-04-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-20T08:15:54.375Z">
 <meta property="article:author" content="Ariasu">
-<meta property="article:tag" content="CPP&#x2F;LLM&#x2F;CUDA&#x2F;GPU">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="MiniMind">
+<meta property="article:tag" content="架构解析">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://ariasu123.github.io/my-blog/assets/images/default-cover.svg">
   
   
   
-  <title>LLM 推理加速与算子优化学习路线 - my-blog</title>
+  <title>MiniMind 架构图解析 - my-blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -309,7 +311,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle">LLM 推理加速与算子优化学习路线</span>
+            <span id="subtitle">MiniMind 架构图解析</span>
           
         </div>
 
@@ -320,8 +322,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-03-15 00:00" pubdate>
-          2026-03-15
+        <time datetime="2026-04-15 00:00" pubdate>
+          2026-04-15
         </time>
       </span>
     
@@ -333,7 +335,7 @@
         <i class="iconfont icon-chart"></i>
         
           <!-- compatible with older versions-->
-          1.5k 字
+          2.6k 字
         
       </span>
     
@@ -345,7 +347,7 @@
         
         
           <!-- compatible with older versions-->
-          13 分钟
+          22 分钟
         
       </span>
     
@@ -384,50 +386,146 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">LLM 推理加速与算子优化学习路线</h1>
+            <h1 id="seo-header">MiniMind 架构图解析</h1>
             
             
               <div class="markdown-body">
                 
-                <h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p>
-<h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p>
+                <h3 id="1-整体流程"><a href="#1-整体流程" class="headerlink" title="1. 整体流程"></a>1. 整体流程</h3><p>这是模型处理信息的全过程：</p>
 <ul>
-<li><p><strong>《大规模并行处理器编程实战 (PMPP)》</strong>： GPU 架构和并行计算。理解硬件是如何执行任务的（Warp 调度、内存合并访问等）。</p>
-</li>
-<li><p><strong>《CUDA 编程：基础与实践》 (樊哲勇)</strong>：相比 PMPP 更加注重代码实践和快速上手，适合作为进入 CUDA 世界的第一块敲门砖。</p>
-</li>
-<li><p><strong><a target="_blank" rel="noopener" href="https://docs.nvidia.cn/cuda/cuda-c-programming-guide/index.html#cuda-enabled-gpus">NVIDIA CUDA C++ Programming Guide</a></strong>：官方文档，遇到具体 API 或进阶特性（如 PTX, Tensor Cores）时的权威字典。</p>
-</li>
-<li><p><strong><a target="_blank" rel="noopener" href="https://leetgpu.com/">LeetGPU</a></strong>：实战刷题网站。巩固 Reduce、Scan、Matrix Multiplication 等基础算子的编写。</p>
-</li>
+<li><strong>Tokenizer Encoder（分词编码）</strong>：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。</li>
+<li><strong>Input Embedding（嵌入层）</strong>：把数字编号变成一串高维向量（数值列表），赋予单词语义特征</li>
+<li><strong>Transformer Layer k（核心加工层）</strong>：这是模型的大脑，图中显示它会重复 $K$ 次（循环叠加），每一层都会让模型对文本的理解更深一层。</li>
+<li><strong>RMSNorm &amp; Linear &amp; SoftMax</strong>：最后加工环节，将深层特征转换成概率，决定下一个词选什么的概率最大。</li>
+<li><strong>Tokenizer Decoder（分词解码）</strong>：把概率最高的数字变回人类语言，输出“world”。</li>
 </ul>
-<h1 id="LLM-模型量化-Quantization"><a href="#LLM-模型量化-Quantization" class="headerlink" title="LLM 模型量化 (Quantization)"></a>LLM 模型量化 (Quantization)</h1><p>大模型推理通常是 Memory-bound（访存密集型）而非 Compute-bound（计算密集型）。量化是通过降低权重或激活值的精度，来大幅减少显存占用和访存带宽的核心技术。</p>
+<hr>
+<h3 id="2-单层结构"><a href="#2-单层结构" class="headerlink" title="2. 单层结构"></a>2. 单层结构</h3><p>这是每一个 Transformer 层内部的“两步走”战略：</p>
 <ul>
-<li><p><strong>GPTQ</strong>: <em>Weight-Only 权重量化的代表作</em>。重点解决了如何高效地将模型权重压缩到 4-bit 或 3-bit，同时保持极高的精度。</p>
-</li>
-<li><ul>
-<li>论文：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li>
+<li><strong>GQA (Grouped Query Attention)</strong>：第一步，负责“注意力”。让模型在看当前词时，能注意到上下文里哪些词是重要的。</li>
+<li><strong>FFN (Feed Forward Network)</strong>：第二步，负责“知识记忆”。对注意力提取的信息进行非线性变换，提取更抽象的特征。</li>
+<li><strong>旁边的“+”号和箭头</strong>：这叫<strong>残差连接（Residual Connection）</strong>。简单说就是“保留原文，加上新学到的东西”，防止网络太深导致信息丢失。</li>
 </ul>
-</li>
-<li><p><strong>AWQ (Activation-aware Weight Quantization)</strong>: <em>端侧&#x2F;边缘计算友好的量化</em>。它发现并非所有权重都同等重要，通过观察激活值（Activation）的分布来保护那 1% 的显著权重（Salient Weights），量化效果极好且容易在硬件上实现。</p>
+<hr>
+<h3 id="3-核心组件细节（右侧-a-b）"><a href="#3-核心组件细节（右侧-a-b）" class="headerlink" title="3. 核心组件细节（右侧 a &amp; b）"></a>3. 核心组件细节（右侧 a &amp; b）</h3><h4 id="a-GQA-分组查询注意力（核心创新）"><a href="#a-GQA-分组查询注意力（核心创新）" class="headerlink" title="(a) GQA - 分组查询注意力（核心创新）"></a>(a) GQA - 分组查询注意力（核心创新）</h4><p>这是现代大模型节省显存、提高速度的关键：</p>
 <ul>
-<li>论文：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li>
+<li><strong>Q, K, V</strong>：查询(Query)、键(Key)、值(Value)。就像在图书馆（K, V）用搜索词（Q）找书。</li>
+<li><strong>RoPE (Rotary Positional Embedding)</strong>：旋转位置编码。它告诉模型每个词在句子里的<strong>相对位置</strong>，没有它模型就分不清“人咬狗”和“狗咬人”。 </li>
+<li><strong>mask</strong>：掩码。确保模型在预测下一个词时，看不见后面的“标准答案”。</li>
+<li><strong>SoftMax</strong>：计算权重，决定要把多少注意力放在哪个词上。</li>
+</ul>
+<h4 id="b-FFN-前馈神经网络（SwiGLU结构）"><a href="#b-FFN-前馈神经网络（SwiGLU结构）" class="headerlink" title="(b) FFN - 前馈神经网络（SwiGLU结构）"></a>(b) FFN - 前馈神经网络（SwiGLU结构）</h4><p>MiniMind 使用了高效的 <strong>SwiGLU</strong> 激活函数：</p>
+<ul>
+<li><strong>RMSNorm</strong>：在进入加工前先做归一化，让数据分布更稳定。</li>
+<li><strong>SiLU</strong>：一种激活函数。你可以理解为一种“开关”，决定哪些信息可以通过。</li>
+<li><strong>三个 Linear 层</strong>：通过矩阵运算进行高维空间的映射。这里是模型存储“知识”的地方。</li>
+</ul>
+<hr>
+<p>在 MiniMind（以及所有类 Llama 架构）中，<strong>Linear 层（线性变换层）</strong> 本质上是矩阵乘法 $y &#x3D; xW$</p>
+<h3 id="1-核心层入口处的-Linear（位于-GQA-模块内部）"><a href="#1-核心层入口处的-Linear（位于-GQA-模块内部）" class="headerlink" title="1. 核心层入口处的 Linear（位于 GQA 模块内部）"></a>1. 核心层入口处的 Linear（位于 GQA 模块内部）</h3><p>在 <strong>(a) GQA</strong> 模块最下方的那个蓝色 <code>Linear</code> 框：</p>
+<ul>
+<li><p><strong>作用：生成 Q、K、V 向量</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：输入的词向量（Embedding）是原始的，它并不直接包含“谁是谁的宾语”这种关系。通过这个 Linear 层，模型将原始向量投影到三个不同的子空间：</p>
+<ul>
+<li><strong>Q (Query)</strong>：我想找什么信息？</li>
+<li><strong>K (Key)</strong>：我有多少信息可以提供？</li>
+<li><strong>V (Value)</strong>：我具体包含的内容是什么？</li>
+</ul>
+<p>   在Linear层里和QKV矩阵计算，获取对应向量，其中Q和K进行RoPE位置编码，然后点积，掩码处理后softmax，获得一个“相关性矩阵”，然后输入V点积，获得具体的上下文侧重信息</p>
+</li>
+</ul>
+<h3 id="2-注意力机制后的-Linear（位于-GQA-模块上方）"><a href="#2-注意力机制后的-Linear（位于-GQA-模块上方）" class="headerlink" title="2. 注意力机制后的 Linear（位于 GQA 模块上方）"></a>2. 注意力机制后的 Linear（位于 GQA 模块上方）</h3><p>在 <strong>(a) GQA</strong> 模块顶部的那个蓝色 <code>Linear</code> 框：</p>
+<ul>
+<li><p><strong>作用：特征融合与统一输出</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：经过注意力计算后，模型得到了很多分散的、加权后的上下文信息。这个 Linear 层的作用是把多头注意力整合，并映射回模型原本的维度，以便传给下一层。</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-FFN-模块中的三个-Linear（位于-b-模块中）"><a href="#3-FFN-模块中的三个-Linear（位于-b-模块中）" class="headerlink" title="3. FFN 模块中的三个 Linear（位于 b 模块中）"></a>3. FFN 模块中的三个 Linear（位于 b 模块中）</h3><p>这是模型存储“知识”的地方，图中 <strong>(b) FFN</strong> 展示了典型的 <strong>SwiGLU</strong> 结构，这里有三条线涉及 Linear：</p>
+<ul>
+<li><strong>左侧和右侧并行的两个 Linear</strong>：<ul>
+<li><strong>作用：空间扩张与门控控制</strong>。</li>
+<li><strong>原理</strong>：这两个 Linear 层通常会将向量的维度升得很高（比如从 512 升到 1408）。<ul>
+<li>右边的经过 <strong>SiLU</strong> 激活函数变成一个“门”；</li>
+<li>左边的提供原始特征；</li>
+<li>两者相乘，实现<strong>信息的筛选</strong>。</li>
 </ul>
 </li>
-<li><p><strong>SmoothQuant</strong>: <em>W8A8 (权重和激活同时量化) 的里程碑</em>。大模型在超过 6.7B 参数后，激活值会出现极端的异常值（Outliers），导致传统量化崩溃。SmoothQuant 通过数学平滑手段解决了这个问题，是企业级部署的标配。</p>
-<ul>
-<li>论文：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li>
+</ul>
+</li>
+<li><strong>顶部的 Linear</strong><ul>
+<li><strong>作用：维度还原</strong>。</li>
+<li><strong>原理</strong>：将刚才升高的维度重新压回到模型的标准维度。</li>
 </ul>
 </li>
 </ul>
-<h1 id="算法级加速：打破自回归瓶颈与推理框架"><a href="#算法级加速：打破自回归瓶颈与推理框架" class="headerlink" title="算法级加速：打破自回归瓶颈与推理框架"></a>算法级加速：打破自回归瓶颈与推理框架</h1><p><strong>MEDUSA</strong>: <em>推测解码（Speculative Decoding）的进化版</em>。传统的 LLM 一次只能吐出一个词，速度极慢。Medusa 通过在模型头部增加多个“解码头”，一次预测多个后续 Token，然后并行验证，大幅提升了生成速度，且不需要额外部署一个“小草稿模型”。</p>
+<hr>
+<h3 id="4-模型最顶部的-Linear（输出层）"><a href="#4-模型最顶部的-Linear（输出层）" class="headerlink" title="4. 模型最顶部的 Linear（输出层）"></a>4. 模型最顶部的 Linear（输出层）</h3><p>在最左侧大图的 <strong>RMSNorm</strong> 之上、<strong>SoftMax</strong> 之下：</p>
 <ul>
-<li>论文&#x2F;项目：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2401.10774">Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></li>
+<li><p><strong>作用：预测词表概率</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：这是最后一步。它将模型处理了半天的深层特征，映射到整个<strong>词表</strong>的大小（比如 MiniMind 词表如果有 64000 个词，那输出维度就是 64000）。</p>
+</li>
 </ul>
-<p><strong>TensorRT-LLM</strong>: 它将上述的量化技术（AWQ, SmoothQuant）、算子优化（FlashAttention）、以及系统级调度（In-flight Batching）全部融合在了一起。</p>
+<hr>
+<p>架构设计：</p>
+<h3 id="1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？"><a href="#1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？" class="headerlink" title="1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？"></a>1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？</h3><p>传统的 Attention（MHA）每个“头”都有自己的 K 和 V，非常占显存。</p>
 <ul>
-<li>项目：<a target="_blank" rel="noopener" href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li>
+<li><strong>设计目的：</strong> <strong>极致的推理速度和显存节省。</strong></li>
+<li><strong>原理：</strong> GQA 让多个 Q（查询）共享同一组 K 和 V。这大大减少了在生成文字时需要缓存的数据量（KV Cache）。</li>
 </ul>
+<hr>
+<h3 id="2-为什么选择-SwiGLU（FFN-里的那种设计）？"><a href="#2-为什么选择-SwiGLU（FFN-里的那种设计）？" class="headerlink" title="2. 为什么选择 SwiGLU（FFN 里的那种设计）？"></a>2. 为什么选择 SwiGLU（FFN 里的那种设计）？</h3><p>你在图中看到 FFN 模块分成了两条路，一条路走 SiLU 激活函数，然后两路相乘。</p>
+<ul>
+<li><strong>设计目的：</strong> <strong>提升模型的“理解深度”和“非线性表达能力”。</strong></li>
+<li><strong>原理：</strong> 传统的激活函数（如 ReLU）太死板，要么开要么关。SwiGLU 这种“门控”机制允许模型更精细地控制哪些信息该留下，哪些该丢弃。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>架构图组件</th>
+<th>对应类 &#x2F; 成员</th>
+<th>作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Input Embedding</strong></td>
+<td><code>MindModel.embed_tokens</code></td>
+<td>将 token id 映射成初始向量表示，相当于“查表取词向量”。</td>
+</tr>
+<tr>
+<td><strong>Layer k（堆叠 K 次）</strong></td>
+<td><code>MindModel.layers</code></td>
+<td>按层堆叠 Transformer Block；在推理阶段也负责串起整条计算链路和 KV Cache。</td>
+</tr>
+<tr>
+<td><strong>RMSNorm</strong></td>
+<td><code>RmsNorm</code></td>
+<td>稳定特征分布，减少深层网络中的数值爆炸或训练不稳定。</td>
+</tr>
+<tr>
+<td><strong>(a) GQA 模块</strong></td>
+<td><code>Attention</code><br><code>repeat_kv</code><br><code>apply_rotary_pos_emb</code><br><code>precompute_freqs</code></td>
+<td>完成分组查询注意力、RoPE 位置编码和 KV 复用，是注意力计算的核心部分。</td>
+</tr>
+<tr>
+<td><strong>(b) FFN 模块</strong></td>
+<td><code>FeedForward</code><br><code>MOEFeedForward</code></td>
+<td>通过 SwiGLU &#x2F; FFN 做非线性变换，提取更高层特征并增强表达能力。</td>
+</tr>
+<tr>
+<td><strong>$\oplus$（残差连接）</strong></td>
+<td><code>TransformerBlock</code> 内部的 <code>+</code></td>
+<td>保留输入并叠加子层输出，帮助梯度传播，缓解深层网络退化。</td>
+</tr>
+<tr>
+<td><strong>顶层 Linear &amp; SoftMax</strong></td>
+<td><code>MindForCausalLM</code></td>
+<td>将隐藏状态映射回词表 logits，并通过 <code>softmax / cross_entropy</code> 完成训练或生成时的选词。</td>
+</tr>
+</tbody></table>
 
                 
               </div>
@@ -446,7 +544,7 @@
     
       <span class="category-chain">
         
-  <a href="/my-blog/categories/AI-Infra/" class="category-chain-item">AI Infra</a>
+  <a href="/my-blog/categories/LLM/" class="category-chain-item">LLM</a>
   
   
 
@@ -461,7 +559,11 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/my-blog/tags/CPP-LLM-CUDA-GPU/" class="print-no-link">#CPP/LLM/CUDA/GPU</a>
+        <a href="/my-blog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/my-blog/tags/MiniMind/" class="print-no-link">#MiniMind</a>
+      
+        <a href="/my-blog/tags/%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="print-no-link">#架构解析</a>
       
     </div>
   
@@ -473,7 +575,7 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>LLM 推理加速与算子优化学习路线</div>
+      <div>MiniMind 架构图解析</div>
     </div>
     <div class="license-meta">
       
@@ -485,7 +587,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2026年3月15日</div>
+          <div>2026年4月15日</div>
         </div>
       
       
@@ -517,9 +619,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/my-blog/2026/03/19/03Agent-CC%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/" title="Claude Code 使用心得">
+                      <a href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/" title="PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Claude Code 使用心得</span>
+                        <span class="hidden-mobile">PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -527,8 +629,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/" title="Claude Code实用生态工具">
-                        <span class="hidden-mobile">Claude Code实用生态工具</span>
+                      <a href="/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/" title="vLLM 与 SGLang 学习路线">
+                        <span class="hidden-mobile">vLLM 与 SGLang 学习路线</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

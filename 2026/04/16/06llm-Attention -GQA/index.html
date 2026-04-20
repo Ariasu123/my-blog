@@ -1,0 +1,926 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=light>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/my-blog/img/fluid.png">
+  <link rel="icon" href="/my-blog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#ffffffcc">
+  <meta name="author" content="Ariasu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. 注意力机制：数学公式$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$  $Q$ (Query): “我要找什么？”（当前词的查询向量）。 $K$ (Key): “我有什么标签？”（所有词的索引向量）。 $V$ (Value): “我包含什么信息？”（所有词的内容向量">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Attention 与 GQA：从 KV Cache 到多头共享">
+<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/04/16/06llm-Attention%20-GQA/index.html">
+<meta property="og:site_name" content="my-blog">
+<meta property="og:description" content="1. 注意力机制：数学公式$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$  $Q$ (Query): “我要找什么？”（当前词的查询向量）。 $K$ (Key): “我有什么标签？”（所有词的索引向量）。 $V$ (Value): “我包含什么信息？”（所有词的内容向量">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/images/default-cover.svg">
+<meta property="article:published_time" content="2026-04-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-20T08:15:54.374Z">
+<meta property="article:author" content="Ariasu">
+<meta property="article:tag" content="GQA">
+<meta property="article:tag" content="KVCache">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ariasu123.github.io/my-blog/assets/images/default-cover.svg">
+  
+  
+  
+  <title>Attention 与 GQA：从 KV Cache 到多头共享 - my-blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/my-blog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/my-blog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/my-blog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/my-blog/assets/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ariasu123.github.io","root":"/my-blog/","version":"1.9.9","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"expand_all":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"openkounter":{"server_url":"https://open-kounter.mintimate.cn","path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/my-blog/search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/my-blog/js/utils.js" ></script>
+  <script  src="/my-blog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 65vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/my-blog/">
+      <strong>Ariasu Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content (desktop) -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/projects/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile grid menu overlay -->
+<div id="mobile-grid-menu" class="d-lg-none">
+  <div class="mobile-grid-menu-inner">
+    <div class="container">
+      <div class="row">
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-home-fill"></i>
+                  <span>首页</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/categories/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-category-fill"></i>
+                  <span>分类</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/tags/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-tags-fill"></i>
+                  <span>标签</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/projects/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-link-fill"></i>
+                  <span>项目</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/about/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-user-fill"></i>
+                  <span>关于</span>
+                </div>
+              </a>
+            </div>
+          
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-search-btn">
+            <a href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-search"></i>
+                <span>搜索</span>
+              </div>
+            </a>
+          </div>
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-color-toggle-btn"
+               data-label-light="开灯"
+               data-label-dark="关灯">
+            <a href="javascript:;" aria-label="Color Toggle">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-dark" id="mobile-color-toggle-icon"></i>
+                <span id="mobile-color-toggle-label">关灯</span>
+              </div>
+            </a>
+          </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/my-blog/assets/images/default-banner.svg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.25)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">Attention 与 GQA：从 KV Cache 到多头共享</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-04-17 00:00" pubdate>
+          2026-04-17
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          5.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          47 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Attention 与 GQA：从 KV Cache 到多头共享</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-注意力机制："><a href="#1-注意力机制：" class="headerlink" title="1. 注意力机制："></a>1. 注意力机制：</h2><h3 id="数学公式"><a href="#数学公式" class="headerlink" title="数学公式"></a>数学公式</h3><p>$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
+<ul>
+<li><strong>$Q$ (Query)</strong>: “我要找什么？”（当前词的查询向量）。</li>
+<li><strong>$K$ (Key)</strong>: “我有什么标签？”（所有词的索引向量）。</li>
+<li><strong>$V$ (Value)</strong>: “我包含什么信息？”（所有词的内容向量）。</li>
+<li><strong>$\sqrt{d_k}$</strong>: 缩放因子，防止点积结果过大导致梯度消失。</li>
+<li><strong>$\text{softmax}$</strong>: 将得分转换为概率（权重），总和为 1。</li>
+</ul>
+<hr>
+<h2 id="2-KV-Cache：推理的加速器"><a href="#2-KV-Cache：推理的加速器" class="headerlink" title="2. KV Cache：推理的加速器"></a>2. KV Cache：推理的加速器</h2><p><strong>为什么需要它？</strong></p>
+<p>在生成模式（Decoding）下，模型是一个字一个字往外蹦的。如果不存缓存，生成第 100 个词时，需要重新计算前 99 个词的 $K$ 和 $V$，这会造成巨大的重复计算。</p>
+<ul>
+<li><strong>原理</strong>：在计算当前词时，把算好的 $K$ 和 $V$ 存入显存。下次计算只需算“新词”的 <code>QKV</code>，然后直接读取历史的 $K$ 和 $V$ 进行拼接。</li>
+<li><strong>代价</strong>：显存占用极高。显存容量限制了 Batch Size 和最大序列长度。</li>
+</ul>
+<hr>
+<h2 id="3-三大架构：MHA-vs-MQA-vs-GQA"><a href="#3-三大架构：MHA-vs-MQA-vs-GQA" class="headerlink" title="3. 三大架构：MHA vs MQA vs GQA"></a>3. 三大架构：MHA vs MQA vs GQA</h2><p>这三种架构的区别本质上是：<strong>Q 和 KV 的配对比例。</strong></p>
+<h3 id="A-MHA-Multi-Head-Attention-多头注意力"><a href="#A-MHA-Multi-Head-Attention-多头注意力" class="headerlink" title="A. MHA (Multi-Head Attention) - 多头注意力"></a>A. MHA (Multi-Head Attention) - 多头注意力</h3><ul>
+<li><strong>结构</strong>：$H$ 个 $Q$ 对应 $H$ 个 $K$ 和 $H$ 个 $V$（1:1 配对）。</li>
+<li><strong>优点</strong>：表达能力最强，精度最高。</li>
+<li><strong>缺点</strong>：<strong>KV Cache 巨大</strong>。每个头都要存一套 KV，显存压力极大。</li>
+</ul>
+<h3 id="B-MQA-Multi-Query-Attention-多查询注意力"><a href="#B-MQA-Multi-Query-Attention-多查询注意力" class="headerlink" title="B. MQA (Multi-Query Attention) - 多查询注意力"></a>B. MQA (Multi-Query Attention) - 多查询注意力</h3><ul>
+<li><strong>结构</strong>：$H$ 个 $Q$ 共享 <strong>1 个</strong> $K$ 和 <strong>1 个</strong> $V$（N:1 配对）。</li>
+<li><strong>优点</strong>：KV Cache 极小，推理速度极快。</li>
+<li><strong>缺点</strong>：精度损失大，模型容易变得“智力下降”。</li>
+</ul>
+<h3 id="C-GQA-Grouped-Query-Attention-分组查询注意力"><a href="#C-GQA-Grouped-Query-Attention-分组查询注意力" class="headerlink" title="C. GQA (Grouped-Query Attention) - 分组查询注意力"></a>C. GQA (Grouped-Query Attention) - 分组查询注意力</h3><ul>
+<li><strong>结构</strong>：将 $H$ 个 $Q$ 分成 $G$ 组，每组共享一对 $K$ 和 $V$（N:G 配对）。</li>
+<li><strong>特点</strong>：例如 32 个 Q，8 个 KV，每 4 个 Q 共用 1 对 KV。</li>
+<li><strong>意义</strong>：<strong>完美的折中</strong>。显存占用远低于 MHA，但模型表现几乎持平 MHA。</li>
+</ul>
+<hr>
+<h2 id="4-维度对比表-以-Llama-7B-为例"><a href="#4-维度对比表-以-Llama-7B-为例" class="headerlink" title="4. 维度对比表 (以 Llama-7B 为例)"></a>4. 维度对比表 (以 Llama-7B 为例)</h2><p>假设 $Batch&#x3D;1, Seq_len&#x3D;1, Head_dim&#x3D;128$：</p>
+<table>
+<thead>
+<tr>
+<th><strong>架构</strong></th>
+<th><strong>Q 的形状</strong></th>
+<th><strong>K&#x2F;V 的形状 (KV Cache)</strong></th>
+<th><strong>备注</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>MHA</strong></td>
+<td><code>[1, 32, 1, 128]</code></td>
+<td><code>[1, 32, Total, 128]</code></td>
+<td>每个头都有一份缓存</td>
+</tr>
+<tr>
+<td><strong>MQA</strong></td>
+<td><code>[1, 32, 1, 128]</code></td>
+<td><code>[1, 1, Total, 128]</code></td>
+<td>所有头共用一份缓存</td>
+</tr>
+<tr>
+<td><strong>GQA</strong></td>
+<td><code>[1, 32, 1, 128]</code></td>
+<td><code>[1, 8, Total, 128]</code></td>
+<td>4 个 Q 头共用一份缓存</td>
+</tr>
+</tbody></table>
+<h2 id="5-在-MiniMind-中-Attention-机制的具体实现"><a href="#5-在-MiniMind-中-Attention-机制的具体实现" class="headerlink" title="5. 在 MiniMind 中 Attention 机制的具体实现"></a>5. 在 MiniMind 中 Attention 机制的具体实现</h2><h3 id="1-输入-Tensor-x"><a href="#1-输入-Tensor-x" class="headerlink" title="1. 输入 Tensor x"></a>1. 输入 Tensor <code>x</code></h3><ul>
+<li>形状：<code>[bsz, seq_len, hidden_size]</code></li>
+</ul>
+<h3 id="2-Q、K、V-进行线性变换，扩展成多头（四维）"><a href="#2-Q、K、V-进行线性变换，扩展成多头（四维）" class="headerlink" title="2. Q、K、V 进行线性变换，扩展成多头（四维）"></a>2. Q、K、V 进行线性变换，扩展成多头（四维）</h3><ul>
+<li>使用 <code>nn.Linear</code> 分别对 <code>Q</code>、<code>K</code>、<code>V</code> 做线性投影。</li>
+<li>输入维度是 <code>hidden_size</code>，输出维度通常是 <code>num_head * head_dim</code>。</li>
+<li>再通过 <code>tensor.view（）</code> 扩展成多头所需的四维张量。</li>
+</ul>
+<h3 id="3-对-Q、K-进行-RoPE-位置编码"><a href="#3-对-Q、K-进行-RoPE-位置编码" class="headerlink" title="3. 对 Q、K 进行 RoPE 位置编码"></a>3. 对 Q、K 进行 RoPE 位置编码</h3><ul>
+<li><code>cos</code> 和 <code>sin</code> 的形状为 <code>[seq_len, head_dim]</code>。</li>
+<li>在 <code>apply_rotary_pos_emb</code> 的实现中，<code>cos</code> 和 <code>sin</code> 会在维度 1 上扩展，以匹配 <code>Q</code> 和 <code>K</code> 的形状：<code>[seq_len, 1, head_dim]</code>。</li>
+<li>PyTorch 的广播计算遵循从右往左对齐的规则。</li>
+</ul>
+<h3 id="4-KV-Cache-处理"><a href="#4-KV-Cache-处理" class="headerlink" title="4. KV Cache 处理"></a>4. KV Cache 处理</h3><ul>
+<li>如果提供了 <code>past_key_value</code>，就将新的 <code>K</code>、<code>V</code> 与缓存中的 <code>K</code>、<code>V</code> 连接起来。</li>
+<li>拼接发生在 <code>seq_len</code> 这个维度上，通常使用 <code>torch.cat</code>。</li>
+</ul>
+<h3 id="5-GQA：进行-KV-重复，以支持多头共享"><a href="#5-GQA：进行-KV-重复，以支持多头共享" class="headerlink" title="5. GQA：进行 KV 重复，以支持多头共享"></a>5. GQA：进行 KV 重复，以支持多头共享</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">repeat_kv</span>(<span class="hljs-params">x: torch.Tensor, n_rep: <span class="hljs-built_in">int</span></span>) -&gt; torch.Tensor:<br>    <span class="hljs-comment"># 提取张量的四个维度</span><br>    bs, slen, num_key_value_heads, head_dim = x.shape<br><br>    <span class="hljs-comment"># 防呆设计</span><br>    <span class="hljs-keyword">if</span> n_rep == <span class="hljs-number">1</span>:<br>        <span class="hljs-keyword">return</span> x<br><br>    <span class="hljs-comment"># 在 num_key_value_heads 维度上增加一个维度，再展开并 reshape</span><br>    <span class="hljs-keyword">return</span> (<br>        x[:, :, :, <span class="hljs-literal">None</span>, :]<br>        .expand(bs, slen, num_key_value_heads, n_rep, head_dim)<br>        .reshape(bs, slen, num_key_value_heads * n_rep, head_dim)<br>    )<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>之后通常会通过 <code>transpose(1, 2)</code> 交换 <code>seq_len</code> 和 <code>num_head</code>。</li>
+<li>这是因为 PyTorch 的注意力矩阵运算主要发生在最后两维。</li>
+</ul>
+<h3 id="6-Attention-计算"><a href="#6-Attention-计算" class="headerlink" title="6. Attention 计算"></a>6. Attention 计算</h3><ul>
+<li>满足条件时，优先使用 <code>flash_attention</code>，即调用 <code>torch</code> 的 <code>scaled_dot_product_attention</code>。</li>
+<li>否则走标准实现：<code>scores = QK^T / sqrt(d_k)</code>。</li>
+<li><code>scores</code> 的形状为 <code>[bsz, heads, seq_len, total_len]</code>。</li>
+</ul>
+<h4 id="注意力掩码"><a href="#注意力掩码" class="headerlink" title="注意力掩码"></a>注意力掩码</h4><ol>
+<li><p>内部掩码（因果掩码）</p>
+<ul>
+<li>作用：让模型无法看到后面的词向量信息。</li>
+<li>选中 <code>scores</code> 张量中最后 <code>seq_len</code> 个位置。</li>
+<li>使用 <code>torch.triu</code> 创建上三角矩阵。</li>
+<li>再通过填充把对应位置设为 <code>-inf</code>。</li>
+<li>这样右上角元素会被设置为 <code>-inf</code>，左下角元素保留为 <code>0</code>。</li>
+</ul>
+</li>
+<li><p>外部掩码</p>
+<ul>
+<li>作用：屏蔽 <code>[PAD]</code> 或逻辑上不该关注的块。</li>
+<li><code>attention_mask</code> 的形状为 <code>[bsz, total_len]</code>。</li>
+</ul>
+</li>
+</ol>
+<h3 id="7-归一化以及-Output-形状恢复（三维）"><a href="#7-归一化以及-Output-形状恢复（三维）" class="headerlink" title="7. 归一化以及 Output 形状恢复（三维）"></a>7. 归一化以及 Output 形状恢复（三维）</h3><ul>
+<li>对 <code>scores</code> 的 <code>total_len</code> 维度进行归一化，再做 <code>dropout</code>。</li>
+<li><code>output = scores @ V</code>，此时 <code>output</code> 的形状为 <code>[bsz, n_heads, seq_len, head_dim]</code>。</li>
+<li>之后先 <code>transpose(1, 2)</code>，再 <code>reshape</code> 为 <code>[bsz, seq_len, n_heads * head_dim]</code>。</li>
+<li>最后通过线性层投影（<code>Linear</code>）回 <code>hidden_size</code> 维度。</li>
+</ul>
+<h3 id="8-返回-output-和-past-kv"><a href="#8-返回-output-和-past-kv" class="headerlink" title="8. 返回 output 和 past_kv"></a>8. 返回 <code>output</code> 和 <code>past_kv</code></h3><ul>
+<li><code>output</code> 用于后续的残差连接。</li>
+<li><code>past_kv</code> 用于累积 KV 缓存，支持后续增量解码。</li>
+</ul>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 前向传播方法</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self,</span><br><span class="hljs-params">    x: torch.Tensor,</span><br><span class="hljs-params">    position_embeddings: <span class="hljs-type">Tuple</span>[torch.Tensor, torch.Tensor],</span><br><span class="hljs-params">    <span class="hljs-comment"># 过去词的 kv 缓存</span></span><br><span class="hljs-params">    past_key_value: <span class="hljs-type">Optional</span>[<span class="hljs-type">Tuple</span>[torch.Tensor, torch.Tensor]] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    use_cache=<span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    attention_mask: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params"></span>):<br>    <span class="hljs-comment"># 得到输入的 batch size 和序列长度</span><br>    bsz, seq_len, _ = x.shape<br><br>    <span class="hljs-comment"># 线性变换得到 q、k、v</span><br>    xq, xk, xv = <span class="hljs-variable language_">self</span>.q_proj(x), <span class="hljs-variable language_">self</span>.k_proj(x), <span class="hljs-variable language_">self</span>.v_proj(x)<br><br>    <span class="hljs-comment"># 将 q、k、v 重塑为多头格式</span><br>    xq = xq.view(bsz, seq_len, <span class="hljs-variable language_">self</span>.n_local_heads, <span class="hljs-variable language_">self</span>.head_dim)<br>    xk = xk.view(bsz, seq_len, <span class="hljs-variable language_">self</span>.n_local_kv_heads, <span class="hljs-variable language_">self</span>.head_dim)<br>    xv = xv.view(bsz, seq_len, <span class="hljs-variable language_">self</span>.n_local_kv_heads, <span class="hljs-variable language_">self</span>.head_dim)<br><br>    <span class="hljs-comment"># 取出 cos、sin 表</span><br>    cos, sin = position_embeddings<br><br>    <span class="hljs-comment"># 应用 Rope 位置编码，cos 和 sin 的形状为 [seq_len, head_dim]</span><br>    <span class="hljs-comment"># apply_rotary_pos_emb 的实现中，cos 和 sin 在维度 1 位置被扩展以匹配 q 和 k 的形状</span><br>    xq, xk = apply_rotary_pos_emb(xq, xk, cos, sin)<br><br>    <span class="hljs-comment"># ------------ kv cache 处理 -------------------</span><br>    <span class="hljs-comment"># 如果提供了 past_key_value，则将新的 k 和 v 与缓存的 k 和 v 连接起来</span><br>    <span class="hljs-keyword">if</span> past_key_value <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        xk = torch.cat([past_key_value[<span class="hljs-number">0</span>], xk], dim=<span class="hljs-number">1</span>)<br>        xv = torch.cat([past_key_value[<span class="hljs-number">1</span>], xv], dim=<span class="hljs-number">1</span>)<br><br>    <span class="hljs-comment"># 如果需要缓存，返回拼接的 k 和 v</span><br>    past_kv = (xk, xv) <span class="hljs-keyword">if</span> use_cache <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br><br>    <span class="hljs-comment"># ----------- GQA：进行 kv 重复以支持多头共享 ----------</span><br>    <span class="hljs-comment"># 进行矩阵旋转，torch 只支持最后两个维度进行矩阵乘法</span><br>    <span class="hljs-comment"># 所以需要先把 n_local_heads 和 head_dim 交换位置</span><br>    xq = xq.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)  <span class="hljs-comment"># [bsz, n_local_heads, seq_len, head_dim]</span><br>    xk = repeat_kv(xk, <span class="hljs-variable language_">self</span>.n_rep).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br>    xv = repeat_kv(xv, <span class="hljs-variable language_">self</span>.n_rep).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br><br>    <span class="hljs-comment"># ------------ Attention 计算 -------------------</span><br>    <span class="hljs-comment"># 优先使用 flash attention，如果满足条件则调用 torch 的 scaled_dot_product_attention</span><br>    <span class="hljs-comment"># 否则使用传统的点积注意力计算</span><br>    <span class="hljs-keyword">if</span> (<br>        <span class="hljs-variable language_">self</span>.flash  <span class="hljs-comment"># 条件一：初始化时启用了 flash attention</span><br>        <span class="hljs-keyword">and</span> (seq_len &gt; <span class="hljs-number">1</span>)  <span class="hljs-comment"># 条件二：序列长度大于 1（长度为 1 时不需要计算注意力）</span><br>        <span class="hljs-keyword">and</span> (past_key_value <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>)  <span class="hljs-comment"># 条件三：没有提供 past_key_value（全量计算模式 prefill）</span><br>        <span class="hljs-comment"># 条件四：没有提供 attention_mask，或者提供的 attention_mask 全为 1</span><br>        <span class="hljs-keyword">and</span> (attention_mask <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">or</span> torch.<span class="hljs-built_in">all</span>(attention_mask == <span class="hljs-number">1</span>))<br>    ):<br>        output = F.scaled_dot_product_attention(<br>            xq,<br>            xk,<br>            xv,<br>            dropout_p=<span class="hljs-variable language_">self</span>.dropout <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.training <span class="hljs-keyword">else</span> <span class="hljs-number">0.0</span>,<br>            is_causal=<span class="hljs-literal">True</span>,  <span class="hljs-comment"># 自动开启因果掩码</span><br>        )<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-comment"># 标准实现 scores = QK^T / sqrt(d_k)</span><br>        <span class="hljs-comment"># scores 的形状为 [bsz, heads, seq_len, total_len]</span><br>        scores = (xq @ xk.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)) / math.sqrt(<span class="hljs-variable language_">self</span>.head_dim)<br><br>        <span class="hljs-comment"># ------ 应用注意力掩码 ------</span><br>        <span class="hljs-comment"># 内部掩码（因果掩码）</span><br>        <span class="hljs-comment"># scores[:, :, :, -seq_len:] 选中了 scores 张量中最后 seq_len 个位置的所有分数</span><br>        <span class="hljs-comment"># torch.triu 创建一个上三角矩阵，用于生成因果掩码</span><br>        <span class="hljs-comment"># 右上角的元素被设置为 -inf，左下角的元素被设置为 0</span><br>        scores[:, :, :, -seq_len:] += torch.triu(<br>            torch.full((seq_len, seq_len), <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>), device=scores.device),<br>            diagonal=<span class="hljs-number">1</span>,<br>        )<br><br>        <span class="hljs-comment"># 外部掩码（屏蔽 [PAD] 或逻辑不关块）</span><br>        <span class="hljs-comment"># attention_mask 的形状为 [bsz, total_len]</span><br>        <span class="hljs-keyword">if</span> attention_mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            extended_attention_mask = attention_mask.unsqueeeze(<span class="hljs-number">1</span>).unsqueeze(<span class="hljs-number">2</span>)  <span class="hljs-comment"># [bsz, 1, 1, total_len]</span><br><br>            <span class="hljs-comment"># 原掩码 1 表示注意，0 表示不注意</span><br>            extended_attention_mask = (<span class="hljs-number">1.0</span> - extended_attention_mask) * -<span class="hljs-number">1e9</span><br>            scores += extended_attention_mask<br><br>        <span class="hljs-comment"># softmax 归一化得到注意力权重</span><br>        <span class="hljs-comment"># type_as(xq) 确保 scores 的 dtype 与 xq 相同，避免数值不稳定</span><br>        <span class="hljs-comment"># scores 的形状为 [bsz, heads, seq_len, total_len]</span><br>        scores = F.softmax(scores.<span class="hljs-built_in">float</span>(), dim=-<span class="hljs-number">1</span>).type_as(xq)<br>        scores = <span class="hljs-variable language_">self</span>.attn_dropout(scores)<br><br>        <span class="hljs-comment"># xv 的形状为 [bsz, n_k_v_heads, total_len, head_dim]</span><br>        output = scores @ xv  <span class="hljs-comment"># 此时 output 的形状为 [bsz, n_heads, seq_len, head_dim]</span><br><br>    <span class="hljs-comment"># 恢复形状 + 残差 dropout</span><br>    <span class="hljs-comment"># 先 reshape 为 [bsz, seq_len, n_heads * head_dim] 找回形状，再通过线性层投影回 hidden_size 维度</span><br>    output = output.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).reshape(bsz, seq_len, -<span class="hljs-number">1</span>)  <span class="hljs-comment"># [bsz, seq_len, hidden_size]</span><br>    output = <span class="hljs-variable language_">self</span>.resid_dropout(<span class="hljs-variable language_">self</span>.o_proj(output))<br><br>    <span class="hljs-comment"># output 输出用于后续的残差连接</span><br>    <span class="hljs-comment"># 累积的 kv 缓存</span><br>    <span class="hljs-keyword">return</span> output, past_kv<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/my-blog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/my-blog/tags/GQA/" class="print-no-link">#GQA</a>
+      
+        <a href="/my-blog/tags/KVCache/" class="print-no-link">#KVCache</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Attention 与 GQA：从 KV Cache 到多头共享</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Ariasu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年4月17日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/" title="Rope位置编码和YaRN">
+                        <span class="hidden-mobile">Rope位置编码和YaRN</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/my-blog/js/events.js" ></script>
+<script  src="/my-blog/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/my-blog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    function isExpandAllEnabled() {
+      return CONFIG.toc && CONFIG.toc.expand_all === true;
+    }
+    function expandAllToc() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .tocbot-is-collapsed').removeClass('tocbot-is-collapsed');
+    }
+    function updateTocToggle($li, $childList) {
+      var $toggle = $li.children('.toc-toggle');
+      if ($toggle.length === 0) { return; }
+      var collapsed = $childList.hasClass('tocbot-is-collapsed');
+      $toggle
+        .toggleClass('toc-toggle-collapsed', collapsed)
+        .toggleClass('toc-toggle-expanded', !collapsed);
+    }
+    function bindTocToggle() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .toc-list-item').each(function() {
+        var $li = jQuery(this);
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) {
+          if ($li.children('.toc-toggle').length === 0) {
+            $li.prepend('<span class="toc-toggle toc-toggle-placeholder" aria-hidden="true">›</span>');
+          }
+          return;
+        }
+
+        if ($li.children('.toc-toggle').length === 0) {
+          $li.prepend('<span class="toc-toggle toc-toggle-expanded" aria-hidden="true">›</span>');
+        }
+        updateTocToggle($li, $childList);
+      });
+      jQuery('#toc-body').off('click.tocToggle').on('click.tocToggle', '.toc-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $li = jQuery(this).parent('.toc-list-item');
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) { return; }
+        $childList.toggleClass('tocbot-is-collapsed');
+        updateTocToggle($li, $childList);
+      });
+      if (!window.__tocToggleObserver) {
+        window.__tocToggleObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') { return; }
+            var $list = jQuery(mutation.target);
+            var $li = $list.parent('.toc-list-item');
+            if ($li.length === 0) { return; }
+            updateTocToggle($li, $list);
+          });
+        });
+        jQuery('#toc-body ol').each(function() {
+          window.__tocToggleObserver.observe(this, { attributes: true });
+        });
+      }
+    }
+    var tocConfig = Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc);
+    if (isExpandAllEnabled()) {
+      tocConfig.collapseDepth = 6;
+    }
+    window.tocbot.init(tocConfig);
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+    expandAllToc();
+    bindTocToggle();
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+        expandAllToc();
+        bindTocToggle();
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/my-blog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/my-blog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
