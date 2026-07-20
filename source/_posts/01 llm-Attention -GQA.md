@@ -1,6 +1,6 @@
 ---
 title: Attention 与 GQA：从 KV Cache 到多头共享
-date: '2026-04-17 08:00:00'
+date: '2026-04-17 00:00:00'
 tags:
   - LLM
   - GQA
@@ -9,7 +9,7 @@ published: true
 categories:
   - LLM
 _sync_managed: repo-a
-_sync_source_path: 06llm/Attention -GQA.md
+_sync_source_path: 01 llm/Attention -GQA.md
 ---
 ## 1. 注意力机制：
 

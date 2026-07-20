@@ -1,10 +1,10 @@
 ---
-date: '2026-04-16 08:00:00'
+date: '2026-04-16 00:00:00'
 published: true
 categories: LLM
 title: Rope位置编码和YaRN
 _sync_managed: repo-a
-_sync_source_path: 06llm/Rope位置编码和YaRN.md
+_sync_source_path: 01 llm/Rope位置编码和YaRN.md
 ---
 **RoPE (Rotary Positional Embedding，旋转位置编码)** 是目前大模型（如 Llama, Qwen, MiniMind）的标配。
 

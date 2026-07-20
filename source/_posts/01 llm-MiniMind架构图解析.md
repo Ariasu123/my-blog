@@ -1,6 +1,6 @@
 ---
 title: MiniMind 架构图解析
-date: '2026-04-15 08:00:00'
+date: '2026-04-15 00:00:00'
 tags:
   - MiniMind
   - LLM
@@ -9,7 +9,7 @@ published: true
 categories:
   - LLM
 _sync_managed: repo-a
-_sync_source_path: 06llm/MiniMind架构图解析.md
+_sync_source_path: 01 llm/MiniMind架构图解析.md
 ---
 ### 1. 整体流程
 
