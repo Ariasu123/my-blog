@@ -23,11 +23,41 @@ stats:
 projects:
   - id: tinyllm
     title: tinyllm
-    intro: 从零实现的小型 LLM 训练与推理项目,覆盖分词、模型结构、训练循环与推理部署的完整链路。
+    intro: 复刻 MiniMind 项目,从 0 到 1 构建轻量级大语言模型。
     link: https://github.com/Ariasu123/tinyllm
     tech:
       - PyTorch
       - CUDA
+      - LLM
+    status: 已完成
+    cover: /assets/images/default-cover.svg
+
+  - id: ai-novel-generator
+    title: AI-Novel-Generator
+    intro: AI 小说生成器,探索大模型在创意写作中的应用。
+    link: https://github.com/Ariasu123/AI-Novel-Generator
+    tech:
+      - Python
+      - LLM
+    status: 进行中
+    cover: /assets/images/default-cover.svg
+
+  - id: handoff-skill
+    title: handoff-skill
+    intro: 会话交接管理 skill,用于多 Agent 协作中的上下文转移。
+    link: https://github.com/Ariasu123/handoff-skill
+    tech:
+      - Python
+      - Agent
+    status: 进行中
+    cover: /assets/images/default-cover.svg
+
+  - id: weekly-report-skill
+    title: Weekly-report-skill
+    intro: 科研周报 skill,基于 LLM 自动生成研究进展周报。
+    link: https://github.com/Ariasu123/Weekly-report-skill
+    tech:
+      - Python
       - LLM
     status: 进行中
     cover: /assets/images/default-cover.svg
@@ -40,24 +70,15 @@ projects:
       - Hexo
       - Fluid
       - GitHub Actions
-    status: 进行中
-    cover: /assets/images/default-cover.svg
-
-  - id: inkflow-novel-studio
-    title: inkflow-novel-studio
-    intro: 基于 Streamlit + CrewAI 的中文小说创作网页应用,支持续写、下一章扩写、段落重写与视角转换。
-    link: https://github.com/Ariasu123/inkflow-novel-studio
-    tech:
-      - Python
-      - Streamlit
-      - CrewAI
-    status: Demo 已完成
+    status: 持续迭代
     cover: /assets/images/default-cover.svg
 
 homepage:
   # 首页精选项目:只改 ID 列表即可自由选择展示哪些项目及其顺序
   featured_project_ids:
     - tinyllm
-    - my-blog
+    - ai-novel-generator
+    - handoff-skill
+    - weekly-report-skill
   # 首页最新文章数(固定为 6)
   latest_post_count: 6
