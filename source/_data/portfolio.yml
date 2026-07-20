@@ -38,7 +38,7 @@ projects:
     link: https://github.com/Ariasu123/AI-Novel-Generator
     tech:
       - Python
-      - Openai SDK
+      - OpenAI SDK
     status: 已完成
     cover: /assets/images/default-cover.svg
 
