@@ -7,7 +7,7 @@ tags:
 title: MoE (混合专家模型) 学习笔记
 categories:
   - LLM
-index_img: /assets/covers/MoE.JPG
+index_img: /assets/covers/MoE.png
 _sync_managed: repo-a
 _sync_source_path: 01 llm/MoE学习笔记.md
 ---
