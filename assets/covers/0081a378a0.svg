@@ -18,5 +18,5 @@
   <circle cx="1052" cy="292" r="292" fill="#ffffff" fill-opacity="0.07"/>
   <circle cx="352" cy="592" r="202" fill="#ffffff" fill-opacity="0.05"/>
   <text x="72" y="556" font-family="-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif" font-size="52" font-weight="700" fill="#f1f4ff">vLLM 与 SGLang 学习路线</text>
-  <text x="72" y="612" font-family="-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif" font-size="26" fill="#aab4d4">AI Infra · 2026-04-12</text>
+  <text x="72" y="612" font-family="-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif" font-size="26" fill="#aab4d4">AI Infra · 2026-04-13</text>
 </svg>

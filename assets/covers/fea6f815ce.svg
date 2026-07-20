@@ -18,5 +18,5 @@
   <circle cx="869" cy="209" r="209" fill="#ffffff" fill-opacity="0.07"/>
   <circle cx="269" cy="509" r="209" fill="#ffffff" fill-opacity="0.05"/>
   <text x="72" y="556" font-family="-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif" font-size="52" font-weight="700" fill="#f1f4ff">Rope位置编码和YaRN</text>
-  <text x="72" y="612" font-family="-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif" font-size="26" fill="#aab4d4">LLM · 2026-04-15</text>
+  <text x="72" y="612" font-family="-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif" font-size="26" fill="#aab4d4">LLM · 2026-04-16</text>
 </svg>
