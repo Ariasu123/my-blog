@@ -1,56 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>LLM 推理加速与算子优化学习路线</title>
-    <url>/my-blog/2026/03/14/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
-    <content><![CDATA[<h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p>
-<h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p>
-<ul>
-<li><p><strong>《大规模并行处理器编程实战 (PMPP)》</strong>： GPU 架构和并行计算。理解硬件是如何执行任务的（Warp 调度、内存合并访问等）。</p>
-</li>
-<li><p><strong>《CUDA 编程：基础与实践》 (樊哲勇)</strong>：相比 PMPP 更加注重代码实践和快速上手，适合作为进入 CUDA 世界的第一块敲门砖。</p>
-</li>
-<li><p><strong><a href="https://docs.nvidia.cn/cuda/cuda-c-programming-guide/index.html#cuda-enabled-gpus">NVIDIA CUDA C++ Programming Guide</a></strong>：官方文档，遇到具体 API 或进阶特性（如 PTX, Tensor Cores）时的权威字典。</p>
-</li>
-<li><p><strong><a href="https://leetgpu.com/">LeetGPU</a></strong>：实战刷题网站。巩固 Reduce、Scan、Matrix Multiplication 等基础算子的编写。</p>
-</li>
-</ul>
-<h1 id="LLM-模型量化-Quantization"><a href="#LLM-模型量化-Quantization" class="headerlink" title="LLM 模型量化 (Quantization)"></a>LLM 模型量化 (Quantization)</h1><p>大模型推理通常是 Memory-bound（访存密集型）而非 Compute-bound（计算密集型）。量化是通过降低权重或激活值的精度，来大幅减少显存占用和访存带宽的核心技术。</p>
-<ul>
-<li><p><strong>GPTQ</strong>: <em>Weight-Only 权重量化的代表作</em>。重点解决了如何高效地将模型权重压缩到 4-bit 或 3-bit，同时保持极高的精度。</p>
-</li>
-<li><ul>
-<li>论文：<a href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li>
-</ul>
-</li>
-<li><p><strong>AWQ (Activation-aware Weight Quantization)</strong>: <em>端侧&#x2F;边缘计算友好的量化</em>。它发现并非所有权重都同等重要，通过观察激活值（Activation）的分布来保护那 1% 的显著权重（Salient Weights），量化效果极好且容易在硬件上实现。</p>
-<ul>
-<li>论文：<a href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li>
-</ul>
-</li>
-<li><p><strong>SmoothQuant</strong>: <em>W8A8 (权重和激活同时量化) 的里程碑</em>。大模型在超过 6.7B 参数后，激活值会出现极端的异常值（Outliers），导致传统量化崩溃。SmoothQuant 通过数学平滑手段解决了这个问题，是企业级部署的标配。</p>
-<ul>
-<li>论文：<a href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li>
-</ul>
-</li>
-</ul>
-<h1 id="算法级加速：打破自回归瓶颈与推理框架"><a href="#算法级加速：打破自回归瓶颈与推理框架" class="headerlink" title="算法级加速：打破自回归瓶颈与推理框架"></a>算法级加速：打破自回归瓶颈与推理框架</h1><p><strong>MEDUSA</strong>: <em>推测解码（Speculative Decoding）的进化版</em>。传统的 LLM 一次只能吐出一个词，速度极慢。Medusa 通过在模型头部增加多个“解码头”，一次预测多个后续 Token，然后并行验证，大幅提升了生成速度，且不需要额外部署一个“小草稿模型”。</p>
-<ul>
-<li>论文&#x2F;项目：<a href="https://arxiv.org/abs/2401.10774">Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></li>
-</ul>
-<p><strong>TensorRT-LLM</strong>: 它将上述的量化技术（AWQ, SmoothQuant）、算子优化（FlashAttention）、以及系统级调度（In-flight Batching）全部融合在了一起。</p>
-<ul>
-<li>项目：<a href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li>
-</ul>
-]]></content>
-      <categories>
-        <category>AI Infra</category>
-      </categories>
-      <tags>
-        <tag>CPP/LLM/CUDA/GPU</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>vLLM 与 SGLang 学习路线</title>
     <url>/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
     <content><![CDATA[<blockquote>
@@ -287,6 +237,178 @@
         <tag>AIInfra</tag>
         <tag>vLLM</tag>
         <tag>SGLang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>LLM 推理加速与算子优化学习路线</title>
+    <url>/my-blog/2026/03/14/02AI%20infra-LLM%20%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/</url>
+    <content><![CDATA[<h2 id="学习规划"><a href="#学习规划" class="headerlink" title="学习规划"></a>学习规划</h2><p>由于大模型推理（Inference）天生受限于“内存带宽墙”（Memory Wall），且自回归（Auto-regressive）生成的特性导致计算效率低下，为了解决这些痛点的三大核心支柱：<strong>底层 GPU 编程、模型量化压缩理论、以及系统级加速框架</strong>。</p>
+<h1 id="CUDA-编程与-GPU-架构"><a href="#CUDA-编程与-GPU-架构" class="headerlink" title="CUDA 编程与 GPU 架构"></a>CUDA 编程与 GPU 架构</h1><p>AI Infra 的尽头是算子手写与显存优化。不理解 GPU 架构，就无法写出极致性能的推理代码。</p>
+<ul>
+<li><p><strong>《大规模并行处理器编程实战 (PMPP)》</strong>： GPU 架构和并行计算。理解硬件是如何执行任务的（Warp 调度、内存合并访问等）。</p>
+</li>
+<li><p><strong>《CUDA 编程：基础与实践》 (樊哲勇)</strong>：相比 PMPP 更加注重代码实践和快速上手，适合作为进入 CUDA 世界的第一块敲门砖。</p>
+</li>
+<li><p><strong><a href="https://docs.nvidia.cn/cuda/cuda-c-programming-guide/index.html#cuda-enabled-gpus">NVIDIA CUDA C++ Programming Guide</a></strong>：官方文档，遇到具体 API 或进阶特性（如 PTX, Tensor Cores）时的权威字典。</p>
+</li>
+<li><p><strong><a href="https://leetgpu.com/">LeetGPU</a></strong>：实战刷题网站。巩固 Reduce、Scan、Matrix Multiplication 等基础算子的编写。</p>
+</li>
+</ul>
+<h1 id="LLM-模型量化-Quantization"><a href="#LLM-模型量化-Quantization" class="headerlink" title="LLM 模型量化 (Quantization)"></a>LLM 模型量化 (Quantization)</h1><p>大模型推理通常是 Memory-bound（访存密集型）而非 Compute-bound（计算密集型）。量化是通过降低权重或激活值的精度，来大幅减少显存占用和访存带宽的核心技术。</p>
+<ul>
+<li><p><strong>GPTQ</strong>: <em>Weight-Only 权重量化的代表作</em>。重点解决了如何高效地将模型权重压缩到 4-bit 或 3-bit，同时保持极高的精度。</p>
+</li>
+<li><ul>
+<li>论文：<a href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li>
+</ul>
+</li>
+<li><p><strong>AWQ (Activation-aware Weight Quantization)</strong>: <em>端侧&#x2F;边缘计算友好的量化</em>。它发现并非所有权重都同等重要，通过观察激活值（Activation）的分布来保护那 1% 的显著权重（Salient Weights），量化效果极好且容易在硬件上实现。</p>
+<ul>
+<li>论文：<a href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li>
+</ul>
+</li>
+<li><p><strong>SmoothQuant</strong>: <em>W8A8 (权重和激活同时量化) 的里程碑</em>。大模型在超过 6.7B 参数后，激活值会出现极端的异常值（Outliers），导致传统量化崩溃。SmoothQuant 通过数学平滑手段解决了这个问题，是企业级部署的标配。</p>
+<ul>
+<li>论文：<a href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="算法级加速：打破自回归瓶颈与推理框架"><a href="#算法级加速：打破自回归瓶颈与推理框架" class="headerlink" title="算法级加速：打破自回归瓶颈与推理框架"></a>算法级加速：打破自回归瓶颈与推理框架</h1><p><strong>MEDUSA</strong>: <em>推测解码（Speculative Decoding）的进化版</em>。传统的 LLM 一次只能吐出一个词，速度极慢。Medusa 通过在模型头部增加多个“解码头”，一次预测多个后续 Token，然后并行验证，大幅提升了生成速度，且不需要额外部署一个“小草稿模型”。</p>
+<ul>
+<li>论文&#x2F;项目：<a href="https://arxiv.org/abs/2401.10774">Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></li>
+</ul>
+<p><strong>TensorRT-LLM</strong>: 它将上述的量化技术（AWQ, SmoothQuant）、算子优化（FlashAttention）、以及系统级调度（In-flight Batching）全部融合在了一起。</p>
+<ul>
+<li>项目：<a href="https://github.com/NVIDIA/TensorRT-LLM">NVIDIA&#x2F;TensorRT-LLM GitHub</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>AI Infra</category>
+      </categories>
+      <tags>
+        <tag>CPP/LLM/CUDA/GPU</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude Code实用生态工具</title>
+    <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
+    <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
+<p><strong>💡 写在前面的话：</strong><br>最近 AI 编程圈子（尤其是基于命令行的 CLI 工具）涌现了大量的开源项目。由于各大 AI 模型的 API 官方计费昂贵，且跨模型协作繁琐，开发者们“魔改”出了一个庞大的外围生态。</p>
+</blockquote>
+<hr>
+<h2 id="一、-核心底座"><a href="#一、-核心底座" class="headerlink" title="一、 核心底座"></a>一、 核心底座</h2><p>这部分是整个生态的基础，你不需要去配置它们，但需要知道它们是什么。</p>
+<ul>
+<li><p><strong>cc (Claude Code)</strong></p>
+<ul>
+<li>Anthropic 官方推出的基于命令行的 AI 编码助手。</li>
+</ul>
+</li>
+<li><p><strong>lsp (Language Server Protocol)</strong></p>
+<ul>
+<li><strong>是什么</strong>：语言服务器协议。</li>
+<li><strong>小白理解</strong>：编辑器（如 VS Code）和 AI 沟通的“标准普通话”，有了它，AI 才能看懂你的代码结构和上下文。</li>
+</ul>
+</li>
+<li><p><strong>ace (Augment Context Engine)</strong></p>
+<ul>
+<li>增强上下文引擎。</li>
+<li><strong>1. 实时语义索引 (Semantic Understanding)</strong> 它不是简单的关键字搜索，而是对你的整个代码库进行“向量化语义分析”。它能看懂文件之间的关系，知道“如果你修改了这个前端接口，后端哪个微服务也需要同步修改”。</li>
+</ul>
+<ul>
+<li><p><strong>2. 包含历史记忆 (Context Lineage)</strong> 这是它非常强大的一个点。ACE 不仅检索当前的代码，还会检索 Git 的 <strong>Commit 历史记录</strong>。当 AI 在修改一段祖传代码时，ACE 会告诉 AI：“两年前某人写这行代码是为了修复一个什么特殊的 Bug，你千万别瞎改。” 这极大地保留了团队的“部落知识”。</p>
+</li>
+<li><p><strong>3. 精准浓缩，只喂干货</strong> 当你在 Claude Code 里提问时，ACE 会在毫秒级内检索出最相关的几十行代码和背景信息，打包、浓缩后精准地喂给模型。这让大模型能以极低的 Token 消耗，给出极其准确的回答。</p>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="二、-代理与中转"><a href="#二、-代理与中转" class="headerlink" title="二、 代理与中转"></a>二、 代理与中转</h2><p>官方的 AI API 太贵了？这三个工具帮你把账单打下来。</p>
+<ul>
+<li><strong><a href="https://github.com/router-for-me/CLIProxyAPI">cpa (CLIProxyAPI)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>白嫖转换器</strong>。把你平时免费用的“网页版”AI（如 Gemini 2.5 Pro 免费版），伪装成标准的 API 给代码工具用。</li>
+<li><strong>适合谁</strong>：想零成本用顶级大模型的个人玩家。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/Wei-Shaw/claude-relay-service">crs (claude-relay-service)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>拼车记账管家</strong>。你和几个朋友凑钱买了一个昂贵的官方 API，它能把这个 API 切分成多个子账号，精确记录每个人花了多少钱。</li>
+<li><strong>适合谁</strong>：几个人合租 API 的“拼车党”。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/ding113/claude-code-hub">cch (claude-code-hub)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>团队级流量网关</strong>。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。</li>
+<li><strong>适合谁</strong>：需要统一管理几十个开发者的企业或小团队。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="left">工具对比</th>
+<th align="left">CPA</th>
+<th align="left">CRS</th>
+<th align="left">CCH</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>主打功能</strong></td>
+<td align="left">网页免费转 API</td>
+<td align="left">额度切分与账单 AA</td>
+<td align="left">高并发负载均衡与管理</td>
+</tr>
+<tr>
+<td align="left"><strong>目标用户</strong></td>
+<td align="left">个人白嫖党</td>
+<td align="left">几人合租小圈子</td>
+<td align="left">开发团队&#x2F;企业</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、-客户端与体验增强"><a href="#三、-客户端与体验增强" class="headerlink" title="三、 客户端与体验增强"></a>三、 客户端与体验增强</h2><p>觉得黑乎乎的命令行太难用？这些工具给你加上仪表盘和界面。</p>
+<ul>
+<li><strong><a href="https://github.com/musistudio/claude-code-router">ccr (claude-code-router)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>单机版智能路由</strong>。接管原生的 Claude Code，遇到简单的任务自动切给便宜模型（如 DeepSeek），遇到难的再切给原版 Claude，极致省钱。</li>
+<li>CCR使用流程</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/CooperJiang/coding-tool">cc-tool (coding-tool)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>本地数据大屏</strong>。它在你电脑本地跑一个网页后台，实时监控你发了多少请求、耗了多少 Token、精确估算花了多少美分，并在后台默默保活你的代理。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/farion1231/cc-switch">ccs (cc-switch)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>CLI 工具的桌面级聚合宿主。</strong> 通过图形化界面封装底层命令行进程，提供环境变量管理、多模型状态监控和统一的交互入口，实现 AI 辅助编程工作流的可视化降维。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="四、-多模型协作与工作流"><a href="#四、-多模型协作与工作流" class="headerlink" title="四、 多模型协作与工作流"></a>四、 多模型协作与工作流</h2><p>如何让不同的 AI 打配合，或者让 AI 自动完成繁琐的 Git 流程？</p>
+<ul>
+<li><strong><a href="https://github.com/bfly123/claude_code_bridge">ccb (claude_code_bridge)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>AI 联合会议室</strong>。让 Claude、Gemini 等多个模型在同一个项目里无缝切换，且<strong>共享上下文记忆</strong>。Gemini 读完的长代码，Claude 直接接着改，不用重复发代码浪费钱。</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/fengshao1227/ccg-workflow">ccg (ccg-workflow)</a></strong><ul>
+<li><strong>核心用处</strong>：<strong>17+ 一键自动化命令</strong>。不需要每次都打字对 AI 提要求，它内置了 <code>/review</code>（代码审查）、一键写 Git 提交等自动化指令，把聊天变成了标准化的工作流。</li>
+</ul>
+</li>
+<li><em>(注：还有另一个也叫 <strong>CCG (Coder-Codex-Gemini)</strong> 的概念，它是一个宏观的多模型协作双环境框架，强调几种特定模型的联合打法。)</em></li>
+</ul>
+<hr>
+<h2 id="🎯-总结建议：小白该从哪里下手？"><a href="#🎯-总结建议：小白该从哪里下手？" class="headerlink" title="🎯 总结建议：小白该从哪里下手？"></a>🎯 总结建议：小白该从哪里下手？</h2><p>如果你是一个刚刚接触 AI 辅助编程的新手，建议按照以下路线打怪升级：</p>
+<ol>
+<li><strong>第一步（先用起来）</strong>：先搞定 <strong>CPA</strong>，把免费额度接入你的开发环境，实现“Token 自由”。</li>
+<li><strong>第二步（体验升级）</strong>：安装 <strong>cc-tool</strong>，在本地看着可视化面板，清楚知道自己的调用情况。</li>
+<li><strong>第三步（进阶高玩）</strong>：尝试配置 <strong>ccr</strong> 或 <strong>ccb</strong>，体验让不同大模型在你电脑里无缝协作的快感。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>vibe coding</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>ClaudeCode</tag>
+        <tag>工具指南</tag>
+        <tag>效率</tag>
       </tags>
   </entry>
   <entry>
@@ -551,128 +673,6 @@
         <tag>vLLM</tag>
         <tag>SGLang</tag>
         <tag>LLMServing</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Claude Code实用生态工具</title>
-    <url>/my-blog/2026/03/08/03Agent-AI%20%E8%BE%85%E5%8A%A9%E7%BC%96%E7%A8%8B%E7%94%9F%E6%80%81%E5%B7%A5%E5%85%B7(Claude%20Code%20%E7%AF%87)/</url>
-    <content><![CDATA[<h1 id="🛠️-AI-辅助编程生态工具完全指南"><a href="#🛠️-AI-辅助编程生态工具完全指南" class="headerlink" title="🛠️ AI 辅助编程生态工具完全指南"></a>🛠️ AI 辅助编程生态工具完全指南</h1><blockquote>
-<p><strong>💡 写在前面的话：</strong><br>最近 AI 编程圈子（尤其是基于命令行的 CLI 工具）涌现了大量的开源项目。由于各大 AI 模型的 API 官方计费昂贵，且跨模型协作繁琐，开发者们“魔改”出了一个庞大的外围生态。</p>
-</blockquote>
-<hr>
-<h2 id="一、-核心底座"><a href="#一、-核心底座" class="headerlink" title="一、 核心底座"></a>一、 核心底座</h2><p>这部分是整个生态的基础，你不需要去配置它们，但需要知道它们是什么。</p>
-<ul>
-<li><p><strong>cc (Claude Code)</strong></p>
-<ul>
-<li>Anthropic 官方推出的基于命令行的 AI 编码助手。</li>
-</ul>
-</li>
-<li><p><strong>lsp (Language Server Protocol)</strong></p>
-<ul>
-<li><strong>是什么</strong>：语言服务器协议。</li>
-<li><strong>小白理解</strong>：编辑器（如 VS Code）和 AI 沟通的“标准普通话”，有了它，AI 才能看懂你的代码结构和上下文。</li>
-</ul>
-</li>
-<li><p><strong>ace (Augment Context Engine)</strong></p>
-<ul>
-<li>增强上下文引擎。</li>
-<li><strong>1. 实时语义索引 (Semantic Understanding)</strong> 它不是简单的关键字搜索，而是对你的整个代码库进行“向量化语义分析”。它能看懂文件之间的关系，知道“如果你修改了这个前端接口，后端哪个微服务也需要同步修改”。</li>
-</ul>
-<ul>
-<li><p><strong>2. 包含历史记忆 (Context Lineage)</strong> 这是它非常强大的一个点。ACE 不仅检索当前的代码，还会检索 Git 的 <strong>Commit 历史记录</strong>。当 AI 在修改一段祖传代码时，ACE 会告诉 AI：“两年前某人写这行代码是为了修复一个什么特殊的 Bug，你千万别瞎改。” 这极大地保留了团队的“部落知识”。</p>
-</li>
-<li><p><strong>3. 精准浓缩，只喂干货</strong> 当你在 Claude Code 里提问时，ACE 会在毫秒级内检索出最相关的几十行代码和背景信息，打包、浓缩后精准地喂给模型。这让大模型能以极低的 Token 消耗，给出极其准确的回答。</p>
-</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="二、-代理与中转"><a href="#二、-代理与中转" class="headerlink" title="二、 代理与中转"></a>二、 代理与中转</h2><p>官方的 AI API 太贵了？这三个工具帮你把账单打下来。</p>
-<ul>
-<li><strong><a href="https://github.com/router-for-me/CLIProxyAPI">cpa (CLIProxyAPI)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>白嫖转换器</strong>。把你平时免费用的“网页版”AI（如 Gemini 2.5 Pro 免费版），伪装成标准的 API 给代码工具用。</li>
-<li><strong>适合谁</strong>：想零成本用顶级大模型的个人玩家。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/Wei-Shaw/claude-relay-service">crs (claude-relay-service)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>拼车记账管家</strong>。你和几个朋友凑钱买了一个昂贵的官方 API，它能把这个 API 切分成多个子账号，精确记录每个人花了多少钱。</li>
-<li><strong>适合谁</strong>：几个人合租 API 的“拼车党”。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/ding113/claude-code-hub">cch (claude-code-hub)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>团队级流量网关</strong>。把好几个 API 账号放进一个池子里，谁空闲就用谁（负载均衡），还带有一套可视化的员工管理后台。</li>
-<li><strong>适合谁</strong>：需要统一管理几十个开发者的企业或小团队。</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th align="left">工具对比</th>
-<th align="left">CPA</th>
-<th align="left">CRS</th>
-<th align="left">CCH</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left"><strong>主打功能</strong></td>
-<td align="left">网页免费转 API</td>
-<td align="left">额度切分与账单 AA</td>
-<td align="left">高并发负载均衡与管理</td>
-</tr>
-<tr>
-<td align="left"><strong>目标用户</strong></td>
-<td align="left">个人白嫖党</td>
-<td align="left">几人合租小圈子</td>
-<td align="left">开发团队&#x2F;企业</td>
-</tr>
-</tbody></table>
-<hr>
-<h2 id="三、-客户端与体验增强"><a href="#三、-客户端与体验增强" class="headerlink" title="三、 客户端与体验增强"></a>三、 客户端与体验增强</h2><p>觉得黑乎乎的命令行太难用？这些工具给你加上仪表盘和界面。</p>
-<ul>
-<li><strong><a href="https://github.com/musistudio/claude-code-router">ccr (claude-code-router)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>单机版智能路由</strong>。接管原生的 Claude Code，遇到简单的任务自动切给便宜模型（如 DeepSeek），遇到难的再切给原版 Claude，极致省钱。</li>
-<li>CCR使用流程</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/CooperJiang/coding-tool">cc-tool (coding-tool)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>本地数据大屏</strong>。它在你电脑本地跑一个网页后台，实时监控你发了多少请求、耗了多少 Token、精确估算花了多少美分，并在后台默默保活你的代理。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/farion1231/cc-switch">ccs (cc-switch)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>CLI 工具的桌面级聚合宿主。</strong> 通过图形化界面封装底层命令行进程，提供环境变量管理、多模型状态监控和统一的交互入口，实现 AI 辅助编程工作流的可视化降维。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="四、-多模型协作与工作流"><a href="#四、-多模型协作与工作流" class="headerlink" title="四、 多模型协作与工作流"></a>四、 多模型协作与工作流</h2><p>如何让不同的 AI 打配合，或者让 AI 自动完成繁琐的 Git 流程？</p>
-<ul>
-<li><strong><a href="https://github.com/bfly123/claude_code_bridge">ccb (claude_code_bridge)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>AI 联合会议室</strong>。让 Claude、Gemini 等多个模型在同一个项目里无缝切换，且<strong>共享上下文记忆</strong>。Gemini 读完的长代码，Claude 直接接着改，不用重复发代码浪费钱。</li>
-</ul>
-</li>
-<li><strong><a href="https://github.com/fengshao1227/ccg-workflow">ccg (ccg-workflow)</a></strong><ul>
-<li><strong>核心用处</strong>：<strong>17+ 一键自动化命令</strong>。不需要每次都打字对 AI 提要求，它内置了 <code>/review</code>（代码审查）、一键写 Git 提交等自动化指令，把聊天变成了标准化的工作流。</li>
-</ul>
-</li>
-<li><em>(注：还有另一个也叫 <strong>CCG (Coder-Codex-Gemini)</strong> 的概念，它是一个宏观的多模型协作双环境框架，强调几种特定模型的联合打法。)</em></li>
-</ul>
-<hr>
-<h2 id="🎯-总结建议：小白该从哪里下手？"><a href="#🎯-总结建议：小白该从哪里下手？" class="headerlink" title="🎯 总结建议：小白该从哪里下手？"></a>🎯 总结建议：小白该从哪里下手？</h2><p>如果你是一个刚刚接触 AI 辅助编程的新手，建议按照以下路线打怪升级：</p>
-<ol>
-<li><strong>第一步（先用起来）</strong>：先搞定 <strong>CPA</strong>，把免费额度接入你的开发环境，实现“Token 自由”。</li>
-<li><strong>第二步（体验升级）</strong>：安装 <strong>cc-tool</strong>，在本地看着可视化面板，清楚知道自己的调用情况。</li>
-<li><strong>第三步（进阶高玩）</strong>：尝试配置 <strong>ccr</strong> 或 <strong>ccb</strong>，体验让不同大模型在你电脑里无缝协作的快感。</li>
-</ol>
-]]></content>
-      <categories>
-        <category>vibe coding</category>
-      </categories>
-      <tags>
-        <tag>AI编程</tag>
-        <tag>ClaudeCode</tag>
-        <tag>工具指南</tag>
-        <tag>效率</tag>
       </tags>
   </entry>
   <entry>
@@ -1173,185 +1173,6 @@
       </tags>
   </entry>
   <entry>
-    <title>AI 辅助文献精读调研</title>
-    <url>/my-blog/2026/04/06/05%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86-%E6%96%87%E7%8C%AE%E7%B2%BE%E8%AF%BB%E8%B0%83%E7%A0%94/</url>
-    <content><![CDATA[<h1 id="AI-辅助文献精读调研"><a href="#AI-辅助文献精读调研" class="headerlink" title="AI 辅助文献精读调研"></a>AI 辅助文献精读调研</h1><blockquote>
-<p>[!summary]<br>AI 辅助文献精读，核心不是“替你读完”，而是帮你完成 5 件事：</p>
-<ul>
-<li>快速筛选</li>
-<li>辅助理解</li>
-<li>结构化提炼</li>
-<li>多篇比较</li>
-<li>笔记沉淀</li>
-</ul>
-<p>最实用的组合通常是：<br><strong>找文献工具 + 单篇精读工具 + 多篇对比工具 + Zotero + 笔记系统</strong></p>
-</blockquote>
-<h2 id="一、工具速览"><a href="#一、工具速览" class="headerlink" title="一、工具速览"></a>一、工具速览</h2><table>
-<thead>
-<tr>
-<th>场景</th>
-<th>推荐工具</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>找相关文献</td>
-<td>ResearchRabbit &#x2F; Connected Papers &#x2F; Elicit</td>
-<td>建立文献地图、扩展种子论文、初筛</td>
-</tr>
-<tr>
-<td>单篇精读</td>
-<td>SciSpace &#x2F; Explainpaper &#x2F; ChatPDF</td>
-<td>解释难句、理解方法、定位信息</td>
-</tr>
-<tr>
-<td>多篇比较</td>
-<td>NotebookLM &#x2F; Elicit</td>
-<td>做对比、分组、归纳争议点</td>
-</tr>
-<tr>
-<td>判断论文可信度</td>
-<td>scite</td>
-<td>看后续研究是支持、质疑还是仅提及</td>
-</tr>
-<tr>
-<td>长期沉淀</td>
-<td>Zotero + PDF Translate + Better BibTeX</td>
-<td>管理 PDF、翻译、引用、回收笔记</td>
-</tr>
-</tbody></table>
-<h2 id="二、怎么选工具"><a href="#二、怎么选工具" class="headerlink" title="二、怎么选工具"></a>二、怎么选工具</h2><h3 id="1-找文献-建立地图"><a href="#1-找文献-建立地图" class="headerlink" title="1. 找文献 &#x2F; 建立地图"></a>1. 找文献 &#x2F; 建立地图</h3><ul>
-<li><strong>ResearchRabbit</strong>：适合看引用关系和研究脉络</li>
-<li><strong>Connected Papers</strong>：适合从种子论文快速扩展</li>
-<li><strong>Elicit</strong>：适合问题驱动检索和初步表格整理</li>
-</ul>
-<h3 id="2-单篇精读-看不懂就问"><a href="#2-单篇精读-看不懂就问" class="headerlink" title="2. 单篇精读 &#x2F; 看不懂就问"></a>2. 单篇精读 &#x2F; 看不懂就问</h3><ul>
-<li><strong>SciSpace</strong>：最适合“边读边问”</li>
-<li><strong>Explainpaper</strong>：适合逐句解释</li>
-<li><strong>ChatPDF &#x2F; Humata</strong>：适合快速问答和定位内容</li>
-<li><strong>Scholarcy</strong>：适合批量初读和论文卡片，不适合替代精读</li>
-</ul>
-<h3 id="3-多篇比较-写综述"><a href="#3-多篇比较-写综述" class="headerlink" title="3. 多篇比较 &#x2F; 写综述"></a>3. 多篇比较 &#x2F; 写综述</h3><ul>
-<li><strong>NotebookLM</strong>：适合把多篇论文放在一起比较</li>
-<li><strong>Elicit</strong>：适合抽取研究问题、方法、结论并做表格</li>
-</ul>
-<h3 id="4-判断靠不靠谱"><a href="#4-判断靠不靠谱" class="headerlink" title="4. 判断靠不靠谱"></a>4. 判断靠不靠谱</h3><ul>
-<li><strong>scite</strong>：非常关键，能把“读懂”升级成“会评价”</li>
-</ul>
-<h3 id="5-长期管理"><a href="#5-长期管理" class="headerlink" title="5. 长期管理"></a>5. 长期管理</h3><ul>
-<li><strong>Zotero</strong>：文献工作流底座</li>
-<li><strong>PDF Translate</strong>：中英对照阅读更高效</li>
-<li><strong>Better BibTeX</strong>：写作和引用管理更顺</li>
-</ul>
-<blockquote>
-<p>[!important]<br>所有 AI 精读结果，最后最好都回收到 Zotero 或 Obsidian &#x2F; Notion。<br>否则后面很难复用。</p>
-</blockquote>
-<h2 id="三、最实用的-3-套工作流"><a href="#三、最实用的-3-套工作流" class="headerlink" title="三、最实用的 3 套工作流"></a>三、最实用的 3 套工作流</h2><h3 id="方案-A：入门型"><a href="#方案-A：入门型" class="headerlink" title="方案 A：入门型"></a>方案 A：入门型</h3><p><strong>适合</strong>：刚开始读论文，英文阅读有压力</p>
-<p><strong>组合</strong></p>
-<ul>
-<li>Connected Papers &#x2F; ResearchRabbit</li>
-<li>SciSpace &#x2F; Explainpaper</li>
-<li>Zotero + PDF Translate</li>
-<li>Obsidian &#x2F; Notion</li>
-</ul>
-<p><strong>流程</strong></p>
-<ol>
-<li>找核心论文</li>
-<li>存入 Zotero</li>
-<li>用 PDF Translate 辅助理解</li>
-<li>用 SciSpace &#x2F; Explainpaper 问方法、术语、难句</li>
-<li>手动写精读卡：问题 &#x2F; 方法 &#x2F; 结果 &#x2F; 局限 &#x2F; 自己评价</li>
-</ol>
-<h3 id="方案-B：综述型"><a href="#方案-B：综述型" class="headerlink" title="方案 B：综述型"></a>方案 B：综述型</h3><p><strong>适合</strong>：写综述、开题报告</p>
-<p><strong>组合</strong></p>
-<ul>
-<li>Elicit</li>
-<li>ResearchRabbit</li>
-<li>NotebookLM</li>
-<li>scite</li>
-<li>Zotero</li>
-</ul>
-<p><strong>流程</strong></p>
-<ol>
-<li>用 Elicit 按问题找论文</li>
-<li>用 ResearchRabbit 看文献网络</li>
-<li>把核心论文放进 NotebookLM 比较</li>
-<li>用 scite 看关键论文是否被支持或质疑</li>
-<li>回写到 Zotero &#x2F; Obsidian</li>
-</ol>
-<h3 id="方案-C：深度精读型"><a href="#方案-C：深度精读型" class="headerlink" title="方案 C：深度精读型"></a>方案 C：深度精读型</h3><p><strong>适合</strong>：已经锁定核心论文，要真正读透</p>
-<p><strong>组合</strong></p>
-<ul>
-<li>Zotero</li>
-<li>SciSpace &#x2F; Humata</li>
-<li>scite</li>
-<li>NotebookLM</li>
-</ul>
-<p><strong>流程</strong></p>
-<ol>
-<li>选 1 篇核心论文</li>
-<li>用 SciSpace 逐段问：研究问题、方法流程、实验设计、结果支撑链</li>
-<li>用 scite 看后续影响</li>
-<li>再用 NotebookLM 和相关论文做横向比较</li>
-<li>输出自己的批判性笔记</li>
-</ol>
-<blockquote>
-<p>[!tip]<br>AI 负责解释、提炼、对比；你负责判断、批评、形成观点。</p>
-</blockquote>
-<h2 id="四、最值得保存的提示词"><a href="#四、最值得保存的提示词" class="headerlink" title="四、最值得保存的提示词"></a>四、最值得保存的提示词</h2><h3 id="单篇精读"><a href="#单篇精读" class="headerlink" title="单篇精读"></a>单篇精读</h3><ul>
-<li><strong>抽结构</strong>：提取研究问题、方法、数据、结果、结论、局限</li>
-<li><strong>讲人话</strong>：把一段学术表达重写成通俗中文，并解释术语</li>
-<li><strong>看论证链</strong>：作者如何从问题一步步推到结论</li>
-<li><strong>做批判</strong>：从研究设计、数据、方法、外推性四个角度分析</li>
-<li><strong>找创新点</strong>：指出相对已有研究的新意到底在哪里</li>
-</ul>
-<h3 id="多篇比较"><a href="#多篇比较" class="headerlink" title="多篇比较"></a>多篇比较</h3><ul>
-<li><strong>对比方法</strong>：比较研究问题、方法、数据、指标、局限，并生成表格</li>
-<li><strong>找分歧</strong>：哪些结论一致，哪些地方冲突，原因可能是什么</li>
-<li><strong>为综述服务</strong>：按研究问题或方法路线分组</li>
-</ul>
-<h2 id="五、AI-精读最容易踩的坑"><a href="#五、AI-精读最容易踩的坑" class="headerlink" title="五、AI 精读最容易踩的坑"></a>五、AI 精读最容易踩的坑</h2><h3 id="1-不能只看-AI-总结"><a href="#1-不能只看-AI-总结" class="headerlink" title="1. 不能只看 AI 总结"></a>1. 不能只看 AI 总结</h3><p>方法部分、结果图表、局限性一定要回原文确认。</p>
-<h3 id="2-不要让-AI-替你理解"><a href="#2-不要让-AI-替你理解" class="headerlink" title="2. 不要让 AI 替你理解"></a>2. 不要让 AI 替你理解</h3><p>不要只问“结论是什么”，还要问：</p>
-<ul>
-<li>证据是什么？</li>
-<li>图表如何支持结论？</li>
-<li>有没有别的解释？</li>
-</ul>
-<h3 id="3-要防幻觉和过度概括"><a href="#3-要防幻觉和过度概括" class="headerlink" title="3. 要防幻觉和过度概括"></a>3. 要防幻觉和过度概括</h3><p>相对更稳的工具：</p>
-<ul>
-<li>NotebookLM</li>
-<li>SciSpace</li>
-<li>ChatPDF &#x2F; Humata</li>
-<li>scite</li>
-</ul>
-<h3 id="4-不要让笔记散落在各个平台"><a href="#4-不要让笔记散落在各个平台" class="headerlink" title="4. 不要让笔记散落在各个平台"></a>4. 不要让笔记散落在各个平台</h3><p>AI 负责处理，Zotero &#x2F; Obsidian &#x2F; Notion 负责沉淀。</p>
-<h2 id="六、最终建议"><a href="#六、最终建议" class="headerlink" title="六、最终建议"></a>六、最终建议</h2><h3 id="轻量版"><a href="#轻量版" class="headerlink" title="轻量版"></a>轻量版</h3><ul>
-<li>Zotero</li>
-<li>Zotero PDF Translate</li>
-<li>SciSpace</li>
-<li>NotebookLM</li>
-</ul>
-<h3 id="进阶版"><a href="#进阶版" class="headerlink" title="进阶版"></a>进阶版</h3><ul>
-<li>Zotero</li>
-<li>PDF Translate</li>
-<li>ResearchRabbit</li>
-<li>Elicit</li>
-<li>SciSpace</li>
-<li>scite</li>
-<li>NotebookLM</li>
-</ul>
-<blockquote>
-<p>[!abstract]<br>一句话总结：<br>用 ResearchRabbit &#x2F; Elicit 找文献，<br>用 SciSpace &#x2F; Explainpaper 精读单篇，<br>用 NotebookLM 做多篇比较，<br>用 scite 做可信度验证，<br>最后把结果沉淀回 Zotero。</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>文献管理</tag>
-        <tag>AI</tag>
-        <tag>Zotero</tag>
-        <tag>学术研究</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Attention 与 GQA：从 KV Cache 到多头共享</title>
     <url>/my-blog/2026/04/16/06llm-Attention%20-GQA/</url>
     <content><![CDATA[<h2 id="1-注意力机制："><a href="#1-注意力机制：" class="headerlink" title="1. 注意力机制："></a>1. 注意力机制：</h2><h3 id="数学公式"><a href="#数学公式" class="headerlink" title="数学公式"></a>数学公式</h3><p>$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
@@ -1481,334 +1302,6 @@
         <tag>GQA</tag>
         <tag>KVCache</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>Hello Blog</title>
-    <url>/my-blog/2026/02/28/hello-blog/</url>
-    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
-<p>这篇文章用于验证：</p>
-<ul>
-<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
-<li>文章详情页是否展示阅读时长和字数统计</li>
-<li>搜索索引是否正常生成</li>
-<li>GitHub Pages 项目路径下的资源是否正常加载</li>
-</ul>
-]]></content>
-      <categories>
-        <category>博客搭建</category>
-      </categories>
-      <tags>
-        <tag>Hexo</tag>
-        <tag>GitHub Pages</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>MiniMind 架构图解析</title>
-    <url>/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/</url>
-    <content><![CDATA[<h3 id="1-整体流程"><a href="#1-整体流程" class="headerlink" title="1. 整体流程"></a>1. 整体流程</h3><p>这是模型处理信息的全过程：</p>
-<ul>
-<li><strong>Tokenizer Encoder（分词编码）</strong>：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。</li>
-<li><strong>Input Embedding（嵌入层）</strong>：把数字编号变成一串高维向量（数值列表），赋予单词语义特征</li>
-<li><strong>Transformer Layer k（核心加工层）</strong>：这是模型的大脑，图中显示它会重复 $K$ 次（循环叠加），每一层都会让模型对文本的理解更深一层。</li>
-<li><strong>RMSNorm &amp; Linear &amp; SoftMax</strong>：最后加工环节，将深层特征转换成概率，决定下一个词选什么的概率最大。</li>
-<li><strong>Tokenizer Decoder（分词解码）</strong>：把概率最高的数字变回人类语言，输出“world”。</li>
-</ul>
-<hr>
-<h3 id="2-单层结构"><a href="#2-单层结构" class="headerlink" title="2. 单层结构"></a>2. 单层结构</h3><p>这是每一个 Transformer 层内部的“两步走”战略：</p>
-<ul>
-<li><strong>GQA (Grouped Query Attention)</strong>：第一步，负责“注意力”。让模型在看当前词时，能注意到上下文里哪些词是重要的。</li>
-<li><strong>FFN (Feed Forward Network)</strong>：第二步，负责“知识记忆”。对注意力提取的信息进行非线性变换，提取更抽象的特征。</li>
-<li><strong>旁边的“+”号和箭头</strong>：这叫<strong>残差连接（Residual Connection）</strong>。简单说就是“保留原文，加上新学到的东西”，防止网络太深导致信息丢失。</li>
-</ul>
-<hr>
-<h3 id="3-核心组件细节（右侧-a-b）"><a href="#3-核心组件细节（右侧-a-b）" class="headerlink" title="3. 核心组件细节（右侧 a &amp; b）"></a>3. 核心组件细节（右侧 a &amp; b）</h3><h4 id="a-GQA-分组查询注意力（核心创新）"><a href="#a-GQA-分组查询注意力（核心创新）" class="headerlink" title="(a) GQA - 分组查询注意力（核心创新）"></a>(a) GQA - 分组查询注意力（核心创新）</h4><p>这是现代大模型节省显存、提高速度的关键：</p>
-<ul>
-<li><strong>Q, K, V</strong>：查询(Query)、键(Key)、值(Value)。就像在图书馆（K, V）用搜索词（Q）找书。</li>
-<li><strong>RoPE (Rotary Positional Embedding)</strong>：旋转位置编码。它告诉模型每个词在句子里的<strong>相对位置</strong>，没有它模型就分不清“人咬狗”和“狗咬人”。 </li>
-<li><strong>mask</strong>：掩码。确保模型在预测下一个词时，看不见后面的“标准答案”。</li>
-<li><strong>SoftMax</strong>：计算权重，决定要把多少注意力放在哪个词上。</li>
-</ul>
-<h4 id="b-FFN-前馈神经网络（SwiGLU结构）"><a href="#b-FFN-前馈神经网络（SwiGLU结构）" class="headerlink" title="(b) FFN - 前馈神经网络（SwiGLU结构）"></a>(b) FFN - 前馈神经网络（SwiGLU结构）</h4><p>MiniMind 使用了高效的 <strong>SwiGLU</strong> 激活函数：</p>
-<ul>
-<li><strong>RMSNorm</strong>：在进入加工前先做归一化，让数据分布更稳定。</li>
-<li><strong>SiLU</strong>：一种激活函数。你可以理解为一种“开关”，决定哪些信息可以通过。</li>
-<li><strong>三个 Linear 层</strong>：通过矩阵运算进行高维空间的映射。这里是模型存储“知识”的地方。</li>
-</ul>
-<hr>
-<p>在 MiniMind（以及所有类 Llama 架构）中，<strong>Linear 层（线性变换层）</strong> 本质上是矩阵乘法 $y &#x3D; xW$</p>
-<h3 id="1-核心层入口处的-Linear（位于-GQA-模块内部）"><a href="#1-核心层入口处的-Linear（位于-GQA-模块内部）" class="headerlink" title="1. 核心层入口处的 Linear（位于 GQA 模块内部）"></a>1. 核心层入口处的 Linear（位于 GQA 模块内部）</h3><p>在 <strong>(a) GQA</strong> 模块最下方的那个蓝色 <code>Linear</code> 框：</p>
-<ul>
-<li><p><strong>作用：生成 Q、K、V 向量</strong>。</p>
-</li>
-<li><p><strong>原理</strong>：输入的词向量（Embedding）是原始的，它并不直接包含“谁是谁的宾语”这种关系。通过这个 Linear 层，模型将原始向量投影到三个不同的子空间：</p>
-<ul>
-<li><strong>Q (Query)</strong>：我想找什么信息？</li>
-<li><strong>K (Key)</strong>：我有多少信息可以提供？</li>
-<li><strong>V (Value)</strong>：我具体包含的内容是什么？</li>
-</ul>
-<p>   在Linear层里和QKV矩阵计算，获取对应向量，其中Q和K进行RoPE位置编码，然后点积，掩码处理后softmax，获得一个“相关性矩阵”，然后输入V点积，获得具体的上下文侧重信息</p>
-</li>
-</ul>
-<h3 id="2-注意力机制后的-Linear（位于-GQA-模块上方）"><a href="#2-注意力机制后的-Linear（位于-GQA-模块上方）" class="headerlink" title="2. 注意力机制后的 Linear（位于 GQA 模块上方）"></a>2. 注意力机制后的 Linear（位于 GQA 模块上方）</h3><p>在 <strong>(a) GQA</strong> 模块顶部的那个蓝色 <code>Linear</code> 框：</p>
-<ul>
-<li><p><strong>作用：特征融合与统一输出</strong>。</p>
-</li>
-<li><p><strong>原理</strong>：经过注意力计算后，模型得到了很多分散的、加权后的上下文信息。这个 Linear 层的作用是把多头注意力整合，并映射回模型原本的维度，以便传给下一层。</p>
-</li>
-</ul>
-<hr>
-<h3 id="3-FFN-模块中的三个-Linear（位于-b-模块中）"><a href="#3-FFN-模块中的三个-Linear（位于-b-模块中）" class="headerlink" title="3. FFN 模块中的三个 Linear（位于 b 模块中）"></a>3. FFN 模块中的三个 Linear（位于 b 模块中）</h3><p>这是模型存储“知识”的地方，图中 <strong>(b) FFN</strong> 展示了典型的 <strong>SwiGLU</strong> 结构，这里有三条线涉及 Linear：</p>
-<ul>
-<li><strong>左侧和右侧并行的两个 Linear</strong>：<ul>
-<li><strong>作用：空间扩张与门控控制</strong>。</li>
-<li><strong>原理</strong>：这两个 Linear 层通常会将向量的维度升得很高（比如从 512 升到 1408）。<ul>
-<li>右边的经过 <strong>SiLU</strong> 激活函数变成一个“门”；</li>
-<li>左边的提供原始特征；</li>
-<li>两者相乘，实现<strong>信息的筛选</strong>。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>顶部的 Linear</strong><ul>
-<li><strong>作用：维度还原</strong>。</li>
-<li><strong>原理</strong>：将刚才升高的维度重新压回到模型的标准维度。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h3 id="4-模型最顶部的-Linear（输出层）"><a href="#4-模型最顶部的-Linear（输出层）" class="headerlink" title="4. 模型最顶部的 Linear（输出层）"></a>4. 模型最顶部的 Linear（输出层）</h3><p>在最左侧大图的 <strong>RMSNorm</strong> 之上、<strong>SoftMax</strong> 之下：</p>
-<ul>
-<li><p><strong>作用：预测词表概率</strong>。</p>
-</li>
-<li><p><strong>原理</strong>：这是最后一步。它将模型处理了半天的深层特征，映射到整个<strong>词表</strong>的大小（比如 MiniMind 词表如果有 64000 个词，那输出维度就是 64000）。</p>
-</li>
-</ul>
-<hr>
-<p>架构设计：</p>
-<h3 id="1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？"><a href="#1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？" class="headerlink" title="1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？"></a>1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？</h3><p>传统的 Attention（MHA）每个“头”都有自己的 K 和 V，非常占显存。</p>
-<ul>
-<li><strong>设计目的：</strong> <strong>极致的推理速度和显存节省。</strong></li>
-<li><strong>原理：</strong> GQA 让多个 Q（查询）共享同一组 K 和 V。这大大减少了在生成文字时需要缓存的数据量（KV Cache）。</li>
-</ul>
-<hr>
-<h3 id="2-为什么选择-SwiGLU（FFN-里的那种设计）？"><a href="#2-为什么选择-SwiGLU（FFN-里的那种设计）？" class="headerlink" title="2. 为什么选择 SwiGLU（FFN 里的那种设计）？"></a>2. 为什么选择 SwiGLU（FFN 里的那种设计）？</h3><p>你在图中看到 FFN 模块分成了两条路，一条路走 SiLU 激活函数，然后两路相乘。</p>
-<ul>
-<li><strong>设计目的：</strong> <strong>提升模型的“理解深度”和“非线性表达能力”。</strong></li>
-<li><strong>原理：</strong> 传统的激活函数（如 ReLU）太死板，要么开要么关。SwiGLU 这种“门控”机制允许模型更精细地控制哪些信息该留下，哪些该丢弃。</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>架构图组件</th>
-<th>对应类 &#x2F; 成员</th>
-<th>作用说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Input Embedding</strong></td>
-<td><code>MindModel.embed_tokens</code></td>
-<td>将 token id 映射成初始向量表示，相当于“查表取词向量”。</td>
-</tr>
-<tr>
-<td><strong>Layer k（堆叠 K 次）</strong></td>
-<td><code>MindModel.layers</code></td>
-<td>按层堆叠 Transformer Block；在推理阶段也负责串起整条计算链路和 KV Cache。</td>
-</tr>
-<tr>
-<td><strong>RMSNorm</strong></td>
-<td><code>RmsNorm</code></td>
-<td>稳定特征分布，减少深层网络中的数值爆炸或训练不稳定。</td>
-</tr>
-<tr>
-<td><strong>(a) GQA 模块</strong></td>
-<td><code>Attention</code><br><code>repeat_kv</code><br><code>apply_rotary_pos_emb</code><br><code>precompute_freqs</code></td>
-<td>完成分组查询注意力、RoPE 位置编码和 KV 复用，是注意力计算的核心部分。</td>
-</tr>
-<tr>
-<td><strong>(b) FFN 模块</strong></td>
-<td><code>FeedForward</code><br><code>MOEFeedForward</code></td>
-<td>通过 SwiGLU &#x2F; FFN 做非线性变换，提取更高层特征并增强表达能力。</td>
-</tr>
-<tr>
-<td><strong>$\oplus$（残差连接）</strong></td>
-<td><code>TransformerBlock</code> 内部的 <code>+</code></td>
-<td>保留输入并叠加子层输出，帮助梯度传播，缓解深层网络退化。</td>
-</tr>
-<tr>
-<td><strong>顶层 Linear &amp; SoftMax</strong></td>
-<td><code>MindForCausalLM</code></td>
-<td>将隐藏状态映射回词表 logits，并通过 <code>softmax / cross_entropy</code> 完成训练或生成时的选词。</td>
-</tr>
-</tbody></table>
-]]></content>
-      <categories>
-        <category>LLM</category>
-      </categories>
-      <tags>
-        <tag>LLM</tag>
-        <tag>MiniMind</tag>
-        <tag>架构解析</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Rope位置编码和YaRN</title>
-    <url>/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/</url>
-    <content><![CDATA[<p><strong>RoPE (Rotary Positional Embedding，旋转位置编码)</strong> 是目前大模型（如 Llama, Qwen, MiniMind）的标配。</p>
-<p>在它出现之前，模型很难处理超长的句子。RoPE 的核心天才之处在于：<strong>它利用复数旋转的数学特性，把“绝对位置”变成了“相对位置”。</strong></p>
-<hr>
-<h3 id="1-为什么要有-RoPE？（痛点）"><a href="#1-为什么要有-RoPE？（痛点）" class="headerlink" title="1. 为什么要有 RoPE？（痛点）"></a>1. 为什么要有 RoPE？（痛点）</h3><p>在 Transformer 中，如果不加位置编码，模型看“我爱吃蝉”和“吃我爱蝉”是一样的。</p>
-<ul>
-<li><strong>早期的做法（绝对位置）</strong>：给每个位置一个固定的标签（比如第 1 个词加 0.1，第 2 个加 0.2）。</li>
-<li><strong>缺点</strong>：如果训练时只见过 512 长度的句子，碰到 1024 长度时，模型就不知道 512 之后的标签是什么意思了，外推性很差。</li>
-</ul>
-<hr>
-<h3 id="2-RoPE-的数学直觉：旋转"><a href="#2-RoPE-的数学直觉：旋转" class="headerlink" title="2. RoPE 的数学直觉：旋转"></a>2. RoPE 的数学直觉：旋转</h3><p>RoPE 的做法是：<strong>根据词所在的位置 $m$，把这个指针旋转一个特定的角度 $m\theta$。</strong></p>
-<ul>
-<li>第 1 个词：旋转 $\theta$ 度。</li>
-<li>第 2 个词：旋转 $2\theta$ 度。</li>
-<li>第 $m$ 个词：旋转 $m\theta$ 度。</li>
-</ul>
-<hr>
-<h3 id="3-核心数学推导"><a href="#3-核心数学推导" class="headerlink" title="3. 核心数学推导"></a>3. 核心数学推导</h3><p>RoPE 想要实现一个目标：当模型计算两个词 $q_m$（位置 $m$）和 $k_n$（位置 $n$）的注意力分数时，结果只和它们的<strong>相对距离 $m-n$</strong> 有关。</p>
-<h4 id="复数表示"><a href="#复数表示" class="headerlink" title="复数表示"></a>复数表示</h4><p>在二维平面上，我们可以把词向量 $(x, y)$ 看作一个复数 $x + iy$。旋转操作可以写成：</p>
-<p>$$f(x, m) &#x3D; x \cdot e^{im\theta}$$</p>
-<p>这里 $e^{im\theta}$ 就是旋转算子。</p>
-<h4 id="为什么有效？"><a href="#为什么有效？" class="headerlink" title="为什么有效？"></a>为什么有效？</h4><p>当你计算 $q$ 和 $k$ 的点积（即注意力）时：</p>
-<p>$$Score \propto \text{Re}[q_m \cdot k_n^<em>] &#x3D; \text{Re}[(q e^{im\theta}) \cdot (k e^{in\theta})^</em>] &#x3D; \text{Re}[q \cdot k^* \cdot e^{i(m-n)\theta}]$$</p>
-<p>注意力最终与 $(m-n)\theta$有关。</p>
-<p><strong>结论</strong>：模型不再死记硬背“我在第 5 个位置”，而是通过向量之间的<strong>夹角</strong>，直接感知到“你离我 3 个单位远”。</p>
-<hr>
-<h3 id="4-具体的计算实现"><a href="#4-具体的计算实现" class="headerlink" title="4. 具体的计算实现"></a>4. 具体的计算实现</h3><p>在代码实现中，我们不会真的用复数，而是使用一个<strong>旋转矩阵</strong>。</p>
-<p>对于一个高维向量，RoPE 会把它两两成对，每两个维度组成一个二维平面进行旋转：</p>
-<p>$$\begin{pmatrix} q_0 \ q_1 \end{pmatrix} \rightarrow \begin{pmatrix} \cos m\theta &amp; -\sin m\theta \ \sin m\theta &amp; \cos m\theta \end{pmatrix} \begin{pmatrix} q_0 \ q_1 \end{pmatrix}$$</p>
-<h4 id="1-数学本质：复数旋转的等价变换"><a href="#1-数学本质：复数旋转的等价变换" class="headerlink" title="1. 数学本质：复数旋转的等价变换"></a>1. 数学本质：复数旋转的等价变换</h4><p>RoPE 利用复数乘法 $(a + bi) \cdot e^{i\theta}$ 来实现向量旋转。其展开结果为：</p>
-<ul>
-<li><strong>新实部</strong>：$a\cos\theta - b\sin\theta$</li>
-<li><strong>新虚部</strong>：$b\cos\theta + a\sin\theta$</li>
-</ul>
-<h4 id="2-代码：rotate-half-实数模拟复数"><a href="#2-代码：rotate-half-实数模拟复数" class="headerlink" title="2. 代码：rotate_half (实数模拟复数)"></a>2. 代码：<code>rotate_half</code> (实数模拟复数)</h4><p>为了避免昂贵的复数运算，代码将 512 维向量平分为<strong>左半段 (实部 $a$)</strong> 和<strong>右半段 (虚部 $b$)</strong>。</p>
-<ul>
-<li><strong>原始向量 $q$</strong>：$[a, b]$</li>
-<li><strong><code>rotate_half(q)</code></strong>：$[-b, a]$ （等效于复数乘以虚数单位 $i$）</li>
-</ul>
-<h4 id="3-最终组合公式"><a href="#3-最终组合公式" class="headerlink" title="3. 最终组合公式"></a>3. 最终组合公式</h4><h2 id="代码通过一次性矩阵运算还原复数旋转：-q-embed-q-cdot-cos-text-rotate-half-q-cdot-sin"><a href="#代码通过一次性矩阵运算还原复数旋转：-q-embed-q-cdot-cos-text-rotate-half-q-cdot-sin" class="headerlink" title="代码通过一次性矩阵运算还原复数旋转：$$q_{embed} &#x3D; (q \cdot \cos) + (\text{rotate_half}(q) \cdot \sin)$$"></a>代码通过一次性矩阵运算还原复数旋转：<br>$$q_{embed} &#x3D; (q \cdot \cos) + (\text{rotate_half}(q) \cdot \sin)$$</h2><p>为了覆盖不同频率的信息，每个维度的旋转速度 $\theta$ 是不一样的：<br>$$\theta_i &#x3D; \text{base}^{-2i&#x2F;d}$$</p>
-<h4 id="1-数学定义：从频率到波长"><a href="#1-数学定义：从频率到波长" class="headerlink" title="1. 数学定义：从频率到波长"></a>1. 数学定义：从频率到波长</h4><p>在 RoPE 公式中，第 $i$ 组维度的旋转频率是 $\theta_i$。</p>
-<p>数学上，旋转一圈（$2\pi$ 弧度）所需的距离 $L$ 就是波长：</p>
-<p>$$L_i &#x3D; \frac{2\pi}{\theta_i}$$</p>
-<p>由于 $\theta_i &#x3D; \text{base}^{-2i&#x2F;d}$，代入后得到波长公式：</p>
-<p>$$L_i &#x3D; 2\pi \cdot \text{base}^{\frac{2i}{d}}$$</p>
-<hr>
-<h4 id="2-直观理解：快表与慢表"><a href="#2-直观理解：快表与慢表" class="headerlink" title="2. 直观理解：快表与慢表"></a>2. 直观理解：快表与慢表</h4><p>模型里有成百上千个维度，它们的波长各不相同：</p>
-<ul>
-<li><p><strong>高频维度（$i$ 较小）</strong>：</p>
-<ul>
-<li><strong>波长短</strong>：比如波长为 10。</li>
-<li><strong>含义</strong>：每走 10 个字，指针就转满一圈。</li>
-<li><strong>作用</strong>：它对位置极其敏感。只要词稍微挪动一个位置，角度就会变很大。这让模型能看清<strong>微观语法</strong>（比如“的”字后面必须跟着名词）。</li>
-</ul>
-</li>
-<li><p><strong>低频维度（$i$ 较大）</strong>：</p>
-<ul>
-<li><strong>波长长</strong>：比如波长为 10000。</li>
-<li><strong>含义</strong>：走完 1 万个字，指针才勉强转完一圈。</li>
-<li><strong>作用</strong>：它对位置极其不敏感。即使两个词隔了几百个字，它们的角度差也很小。这让模型能感知<strong>宏观语义</strong>（比如文章开头提到了一个“伏笔”，结尾能接上）。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h4 id="3-波长如何决定-YaRN-的逻辑？"><a href="#3-波长如何决定-YaRN-的逻辑？" class="headerlink" title="3. 波长如何决定 YaRN 的逻辑？"></a>3. 波长如何决定 YaRN 的逻辑？</h4><p>YaRN 论文之所以引入波长，是因为它发现：<strong>如果波长相对于“训练长度”太短，模型就不需要插值。</strong></p>
-<p>假设模型是在 $L_{\text{train}} &#x3D; 2048$ 的长度下训练的：</p>
-<ul>
-<li><p><strong>情况 A：波长 $L_i &lt; L_{\text{train}}$（高频区）</strong></p>
-<ul>
-<li>比如波长只有 50。在 2048 的训练长度内，这个指针已经足足转了 40 多圈了。</li>
-<li>模型已经见过这个指针转到任何角度的样子。所以当你扩展到 32768 时，这个维度的旋转角度依然在模型见过的“老圈子”里打转。</li>
-<li><strong>YaRN 处理：</strong> 别动它（$ramp &#x3D; 0$），保持原速。</li>
-</ul>
-</li>
-<li><p><strong>情况 B：波长 $L_i &gt; L_{\text{train}}$（低频区）</strong></p>
-<ul>
-<li>比如波长是 10000。在 2048 的长度内，指针只转了 1&#x2F;5 圈。</li>
-<li>模型只见过这 1&#x2F;5 圈的角度。如果你不改频率，直接读到 8000 位，指针会转到 4&#x2F;5 圈的位置。</li>
-<li>模型惊呼：“这是什么新角度？我受训时没见过！”</li>
-<li><strong>YaRN 处理：</strong> 减速（$ramp &#x3D; 1$）。把它的旋转速度调慢，让它在 8192 位时，正好才转完那见过的 1&#x2F;5 圈。</li>
-</ul>
-</li>
-</ul>
-<h5 id="1-d-代表什么？（总体长度）"><a href="#1-d-代表什么？（总体长度）" class="headerlink" title="1. $d$ 代表什么？（总体长度）"></a>1. $d$ 代表什么？（总体长度）</h5><ul>
-<li><strong>含义</strong>：<strong>Model Dimension</strong>（模型的总维度）</li>
-</ul>
-<h5 id="2-i-代表什么？（当前位置）"><a href="#2-i-代表什么？（当前位置）" class="headerlink" title="2. $i$ 代表什么？（当前位置）"></a>2. $i$ 代表什么？（当前位置）</h5><ul>
-<li><strong>含义</strong>：<strong>Dimension Index</strong>（维度索引&#x2F;下标）。</li>
-<li><strong>解释</strong>：由于 RoPE 是把高维向量“两两成对”进行旋转的（就像图中 $q_0, q_1$ 组成一对），$i$ 的取值范围是从 $0$ 到 $d&#x2F;2 - 1$。</li>
-<li>当 $i&#x3D;0$ 时，计算的是向量最开始的那两个维度。</li>
-<li>当 $i$ 变大时，计算的是向量靠后的那些维度。</li>
-</ul>
-<hr>
-<h2 id="YaRN"><a href="#YaRN" class="headerlink" title="YaRN"></a>YaRN</h2><p>简单来说，RoPE 虽然优雅，但它有一个致命弱点：<strong>训练时模型只见过旋转 0 到 512 度的向量，如果你突然给它一个旋转了 2048 度的向量（长文本），模型就会彻底“晕车”，输出乱码。</strong></p>
-<p><strong>YaRN</strong> 的出现就是为了解决这个问题，让模型在不增加（或极少增加）微调成本的情况下，处理比训练时<strong>长 10 倍甚至百倍</strong>的文本。</p>
-<hr>
-<h3 id="1-核心矛盾：分子的“挤压”与“丢失”"><a href="#1-核心矛盾：分子的“挤压”与“丢失”" class="headerlink" title="1. 核心矛盾：分子的“挤压”与“丢失”"></a>1. 核心矛盾：分子的“挤压”与“丢失”</h3><p>当我们要把长度从 2048 扩展到 8192 时，最简单的办法是把旋转角度“压缩”：原来第 8192 个位置的角度，现在强行缩放回第 2048 个位置的角度。</p>
-<ul>
-<li><strong>问题：</strong> 这样做会导致原本清晰的“相对距离”变得模糊。就像把原本 1 米一个的刻度，强行挤成 25 厘米一个，模型分不清两个邻近的词了。</li>
-</ul>
-<hr>
-<h3 id="2-YaRN-的三个天才改进"><a href="#2-YaRN-的三个天才改进" class="headerlink" title="2. YaRN 的三个天才改进"></a>2. YaRN 的三个天才改进</h3><p>YaRN 的数学理论核心是<strong>分频治之</strong>。它意识到：RoPE 中不同维度的旋转频率（$\theta$）代表了不同的语义信息。</p>
-<h4 id="1-高频不插值（保持精细度）"><a href="#1-高频不插值（保持精细度）" class="headerlink" title="(1) 高频不插值（保持精细度）"></a>(1) 高频不插值（保持精细度）</h4><ul>
-<li><strong>理论：</strong> 旋转非常快的维度（高频），负责捕捉<strong>相邻词</strong>的关系。</li>
-<li><strong>做法：</strong> 对于这些维度，YaRN <strong>完全不动它</strong>。因为相邻词的关系在长短文本中是一样的，动了反而会毁掉模型最基础的语言能力。</li>
-</ul>
-<h4 id="2-低频全插值（扩展范围）"><a href="#2-低频全插值（扩展范围）" class="headerlink" title="(2) 低频全插值（扩展范围）"></a>(2) 低频全插值（扩展范围）</h4><ul>
-<li><strong>理论：</strong> 旋转非常慢的维度（低频），负责捕捉<strong>长距离</strong>的宏观关系。</li>
-<li><strong>做法：</strong> 对于这些维度，进行平滑的线性缩放。因为长距离信息比较“粗放”，缩放一点点不影响大局，却能让模型感知到更远的位置。</li>
-</ul>
-<h4 id="3-中频混合（波浪式过渡）"><a href="#3-中频混合（波浪式过渡）" class="headerlink" title="(3) 中频混合（波浪式过渡）"></a>(3) 中频混合（波浪式过渡）</h4><ul>
-<li><strong>做法：</strong> 在高频和低频之间，YaRN 使用了一个平滑的函数进行过渡，确保模型在处理不同距离的信息时不会出现“断层”。</li>
-</ul>
-<hr>
-<p>划分高低维度的索引 $i$，我们需要从 <strong>“波长比例 $b$”</strong> 的定义出发，一步步反推出它在向量维度中的位置。这个推导过程的核心逻辑是：<strong>找到一个临界点，在这个点上，维度的波长正好是训练长度 $L$ 的若干分之一。</strong></p>
-<h3 id="1-基础公式准备"><a href="#1-基础公式准备" class="headerlink" title="1. 基础公式准备"></a>1. 基础公式准备</h3><p>首先，我们已知 RoPE 的波长公式（即旋转一圈所需的距离）：</p>
-<p>$$L_i &#x3D; 2\pi \cdot \text{base}^{\frac{2i}{d}}$$</p>
-<p>论文中定义的波长比例 $b$（即在训练长度 $L$ 内转了多少圈）：</p>
-<p>$$b &#x3D; \frac{L}{L_i}$$</p>
-<hr>
-<h3 id="2-推导划分高低纬度的索引-i-步骤"><a href="#2-推导划分高低纬度的索引-i-步骤" class="headerlink" title="2. 推导划分高低纬度的索引 i 步骤"></a>2. 推导划分高低纬度的索引 i 步骤</h3><p>我们的目标是：已知一个比例 $b$（比如 $\beta_{fast}$ 或 $\beta_{slow}$），求出它对应的维度索引 $i$。</p>
-<h4 id="第一步：代入波长公式"><a href="#第一步：代入波长公式" class="headerlink" title="第一步：代入波长公式"></a>第一步：代入波长公式</h4><p>将 $L_i$ 的表达式代入 $b$ 的定义中：</p>
-<p>$$b &#x3D; \frac{L}{2\pi \cdot \text{base}^{\frac{2i}{d}}}$$</p>
-<h4 id="第二步：移项，隔离底数部分"><a href="#第二步：移项，隔离底数部分" class="headerlink" title="第二步：移项，隔离底数部分"></a>第二步：移项，隔离底数部分</h4><p>我们要把带 $i$ 的部分挪到一边：</p>
-<p>$$\text{base}^{\frac{2i}{d}} &#x3D; \frac{L}{b \cdot 2\pi}$$</p>
-<h4 id="第三步：左右两边取对数（-ln-）"><a href="#第三步：左右两边取对数（-ln-）" class="headerlink" title="第三步：左右两边取对数（$\ln$）"></a>第三步：左右两边取对数（$\ln$）</h4><p>为了把指数上的 $i$ 降下来，我们取自然对数：</p>
-<p>$$\ln\left(\text{base}^{\frac{2i}{d}}\right) &#x3D; \ln\left(\frac{L}{b \cdot 2\pi}\right)$$</p>
-<p>利用对数性质 $\ln(x^n) &#x3D; n \ln(x)$：</p>
-<p>$$\frac{2i}{d} \cdot \ln(\text{base}) &#x3D; \ln\left(\frac{L}{b \cdot 2\pi}\right)$$</p>
-<h4 id="第四步：解出-i"><a href="#第四步：解出-i" class="headerlink" title="第四步：解出 $i$"></a>第四步：解出 $i$</h4><p>最后，把左边的系数移到右边：</p>
-<h2 id="i-frac-d-cdot-ln-left-frac-L-b-cdot-2-pi-right-2-ln-text-base"><a href="#i-frac-d-cdot-ln-left-frac-L-b-cdot-2-pi-right-2-ln-text-base" class="headerlink" title="$$i &#x3D; \frac{d \cdot \ln\left(\frac{L}{b \cdot 2\pi}\right)}{2 \ln(\text{base})}$$"></a>$$i &#x3D; \frac{d \cdot \ln\left(\frac{L}{b \cdot 2\pi}\right)}{2 \ln(\text{base})}$$</h2><p>我们要计算一个新的频率 $f’(i)$。</p>
-<p>$$f’(i) &#x3D; (1 - \gamma)f(i) + \gamma \frac{f(i)}{s}$$</p>
-<p>提取公因子 $f(i)$ 后得到：</p>
-<p>$$f’(i) &#x3D; f(i) \cdot \left( 1 - \gamma + \frac{\gamma}{s} \right)$$</p>
-<ul>
-<li><strong>当 $\gamma&#x3D;0$（高频区）</strong>：系数是 1，频率不变。</li>
-<li><strong>当 $\gamma&#x3D;1$（低频区）</strong>：频率变为 $1&#x2F;s$。这意味着旋转速度变慢了 $s$ 倍，原本要在 8192 位转完的角度，现在要在 32768 位才转完。</li>
-</ul>
-<h3 id="3-关键绝招：注意力重缩放-Attention-Scaling"><a href="#3-关键绝招：注意力重缩放-Attention-Scaling" class="headerlink" title="3. 关键绝招：注意力重缩放 (Attention Scaling)"></a>3. 关键绝招：注意力重缩放 (Attention Scaling)</h3><p>$$\text{cos}’ &#x3D; \cos \cdot \text{attn_factor}$$</p>
-<p><strong>推导逻辑：</strong></p>
-<ol>
-<li><strong>点积膨胀</strong>：在长文本中，由于参与计算的词变多了，$Q \cdot K$ 的平均值会发生偏移。</li>
-<li><strong>熵的流失</strong>：数值变大导致 Softmax 后的分布变得太“尖”，模型只关注极少数词。</li>
-<li><strong>补偿</strong>：YaRN 通过 <code>attn_factor</code>（通常是基于 $\sqrt{t}$ 算出的一个大于 1 的系数）直接给 $\cos$ 和 $\sin$ “加成”。</li>
-<li><strong>最终效果</strong>：在计算 $Q \cdot K$ 时，这个系数会平方（因为 $Q$ 和 $K$ 都带了），从而拉大或缩小得分的差距，起到类似“降温”的作用，让注意力重新分布均匀。</li>
-</ol>
-<p>当你强行拉长文本长度时，Softmax 的分布会变得非常集中（熵值降低），导致模型变得“呆滞”。YaRN 引入了一个 <strong>温度因子 $\sqrt{t}$</strong>：</p>
-<p>$$Score &#x3D; \text{Softmax}\left(\frac{Q \cdot K}{\sqrt{d} \cdot \mathbf{scale}}\right)$$</p>
-<ul>
-<li><strong>作用：</strong> 通过引入随长度扩展而增大的缩放因子（scale），抵消长序列导致的注意力点积膨胀，恢复 Softmax 分布的平滑度，确保模型对全局信息的敏锐度。</li>
-</ul>
-<hr>
-<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">precompute_freqs</span>(<span class="hljs-params"></span><br><span class="hljs-params">    dim: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">    end: <span class="hljs-built_in">int</span> = <span class="hljs-built_in">int</span>(<span class="hljs-params"><span class="hljs-number">32</span> * <span class="hljs-number">1024</span></span>),</span><br><span class="hljs-params">    rope_base: <span class="hljs-built_in">float</span> = <span class="hljs-number">1e6</span>,</span><br><span class="hljs-params">    rope_scaling: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">dict</span>] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params"></span>):<br>    <span class="hljs-comment"># 1. 初始化标准 RoPE 频率。</span><br>    <span class="hljs-comment"># torch.arange(0, dim, 2) 生成 [0, 2, 4, ... dim-2]</span><br>    <span class="hljs-comment"># 计算出的 freqs 就是标准的 1 / (base ** (2i / d))</span><br>    freqs, attn_factor = (<br>        <span class="hljs-number">1.0</span> / (rope_base ** (torch.arange(<span class="hljs-number">0</span>, dim, <span class="hljs-number">2</span>)[: (dim // <span class="hljs-number">2</span>)].<span class="hljs-built_in">float</span>() / dim)),<br>        <span class="hljs-number">1.0</span>,<br>    )<br><br>    <span class="hljs-keyword">if</span> rope_scaling <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        <span class="hljs-comment"># 2. 从配置字典中提取 YaRN 的超参数</span><br>        <span class="hljs-comment"># orig_max: 模型预训练时的原始最大长度（例如 Llama-2 是 2048 或 4096）</span><br>        <span class="hljs-comment"># factor: 要扩展的倍数 s (比如从 2k 扩展到 32k，factor 就是 16)</span><br>        <span class="hljs-comment"># beta_fast (对应论文中的 α): 高频边界，波长比例大于此值的维度不缩放</span><br>        <span class="hljs-comment"># beta_slow (对应论文中的 β): 低频边界，波长比例小于此值的维度全量缩放</span><br>        <span class="hljs-comment"># attn_factor: 注意力温度补偿，由于距离拉长导致注意力分布发散（变平缓），需要乘上一个系数让注意力重新“聚焦”</span><br>        orig_max, factor, beta_fast, beta_slow, attn_factor = (<br>            rope_scaling.get(<span class="hljs-string">&quot;original_max_position_embeddings&quot;</span>, <span class="hljs-number">2048</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;factor&quot;</span>, <span class="hljs-number">16</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;beta_fast&quot;</span>, <span class="hljs-number">32.0</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;beta_slow&quot;</span>, <span class="hljs-number">1.0</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;attention_factor&quot;</span>, <span class="hljs-number">1.0</span>),<br>        )<br><br>        <span class="hljs-comment"># 只有当要推断的长度大于原始训练长度时，才应用缩放</span><br>        <span class="hljs-keyword">if</span> end / orig_max &gt; <span class="hljs-number">1.0</span>:<br>            <span class="hljs-comment"># 3. 使用前文推导的公式，定义波长比例 b 到维度索引 i 的映射函数</span><br>            inv_dim = <span class="hljs-keyword">lambda</span> b: (dim * math.log(orig_max / (b * <span class="hljs-number">2</span> * math.pi))) / (<br>                <span class="hljs-number">2</span> * math.log(rope_base)<br>            )<br><br>            <span class="hljs-comment"># 4. 计算高频区和低频区的维度切分点</span><br>            <span class="hljs-comment"># low: 不需要缩放的高频部分的最高索引</span><br>            <span class="hljs-comment"># high: 需要完全缩放的低频部分的最低索引</span><br>            low, high = (<br>                <span class="hljs-built_in">max</span>(math.floor(inv_dim(beta_fast)), <span class="hljs-number">0</span>),<br>                <span class="hljs-built_in">min</span>(math.ceil(inv_dim(beta_slow)), dim // <span class="hljs-number">2</span> - <span class="hljs-number">1</span>),<br>            )<br><br>            <span class="hljs-comment"># 5. 计算混合因子 γ (Ramp)</span><br>            <span class="hljs-comment"># 在 low 之前，ramp 为 0；在 high 之后，ramp 为 1；在 low 和 high 之间，线性过渡。</span><br>            <span class="hljs-comment"># clamp 函数限制了数值只能在 [0, 1] 之间。</span><br>            ramp = torch.clamp(<br>                (torch.arange(dim // <span class="hljs-number">2</span>, device=freqs.device).<span class="hljs-built_in">float</span>() - low)<br>                / <span class="hljs-built_in">max</span>(high - low, <span class="hljs-number">0.001</span>),<br>                <span class="hljs-number">0</span>,<br>                <span class="hljs-number">1</span>,<br>            )<br><br>            <span class="hljs-comment"># 6. 频率融合公式：f&#x27;(i) = f(i) * ((1-γ) + γ/s)</span><br>            <span class="hljs-comment"># 当 ramp=0 时（高频）：系数为 1，保持原频率不变。</span><br>            <span class="hljs-comment"># 当 ramp=1 时（低频）：系数为 1/factor，即对频率进行线性插值缩放。</span><br>            <span class="hljs-comment"># ramp在0-1之间时：平滑过渡。</span><br>            freqs = freqs * (<span class="hljs-number">1</span> - ramp + ramp / factor)<br><br>    <span class="hljs-comment"># 7. 根据目标长度 end，生成位置索引向量 t</span><br>    t = torch.arange(end, device=freqs.device)<br><br>    <span class="hljs-comment"># 8. 计算外积：将位置 t 与处理好的频率 freqs 相乘，得到每个位置的旋转角度 θ</span><br>    freqs = torch.outer(t, freqs).<span class="hljs-built_in">float</span>()<br><br>    <span class="hljs-comment"># 9. 计算 Cos 和 Sin，并应用注意力补偿系数 (attn_factor)</span><br>    freqs_cos = torch.cat([torch.cos(freqs), torch.cos(freqs)], dim=-<span class="hljs-number">1</span>) * attn_factor<br>    freqs_sin = torch.cat([torch.sin(freqs), torch.sin(freqs)], dim=-<span class="hljs-number">1</span>) * attn_factor<br><br>    <span class="hljs-keyword">return</span> freqs_cos, freqs_sin<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">apply_rotary_pos_emb</span>(<span class="hljs-params">q, k, cos, sin, position_ids=<span class="hljs-literal">None</span>, unsqueeze_dim=<span class="hljs-number">1</span></span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">rotate_half</span>(<span class="hljs-params">x</span>):<br>        <span class="hljs-keyword">return</span> torch.cat(<br>            (-x[..., x.shape[-<span class="hljs-number">1</span>] // <span class="hljs-number">2</span> :], x[..., : x.shape[-<span class="hljs-number">1</span>] // <span class="hljs-number">2</span>]), dim=-<span class="hljs-number">1</span><br>        )<br><br>    q_embed = (q * cos.unsqueeze(unsqueeze_dim)) + (<br>        rotate_half(q) * sin.unsqueeze(unsqueeze_dim)<br>    )<br>    k_embed = (k * cos.unsqueeze(unsqueeze_dim)) + (<br>        rotate_half(k) * sin.unsqueeze(unsqueeze_dim)<br>    )<br>    <span class="hljs-keyword">return</span> q_embed, k_embed<br></code></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>LLM</category>
-      </categories>
   </entry>
   <entry>
     <title>PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</title>
@@ -2195,6 +1688,513 @@
       </tags>
   </entry>
   <entry>
+    <title>Rope位置编码和YaRN</title>
+    <url>/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/</url>
+    <content><![CDATA[<p><strong>RoPE (Rotary Positional Embedding，旋转位置编码)</strong> 是目前大模型（如 Llama, Qwen, MiniMind）的标配。</p>
+<p>在它出现之前，模型很难处理超长的句子。RoPE 的核心天才之处在于：<strong>它利用复数旋转的数学特性，把“绝对位置”变成了“相对位置”。</strong></p>
+<hr>
+<h3 id="1-为什么要有-RoPE？（痛点）"><a href="#1-为什么要有-RoPE？（痛点）" class="headerlink" title="1. 为什么要有 RoPE？（痛点）"></a>1. 为什么要有 RoPE？（痛点）</h3><p>在 Transformer 中，如果不加位置编码，模型看“我爱吃蝉”和“吃我爱蝉”是一样的。</p>
+<ul>
+<li><strong>早期的做法（绝对位置）</strong>：给每个位置一个固定的标签（比如第 1 个词加 0.1，第 2 个加 0.2）。</li>
+<li><strong>缺点</strong>：如果训练时只见过 512 长度的句子，碰到 1024 长度时，模型就不知道 512 之后的标签是什么意思了，外推性很差。</li>
+</ul>
+<hr>
+<h3 id="2-RoPE-的数学直觉：旋转"><a href="#2-RoPE-的数学直觉：旋转" class="headerlink" title="2. RoPE 的数学直觉：旋转"></a>2. RoPE 的数学直觉：旋转</h3><p>RoPE 的做法是：<strong>根据词所在的位置 $m$，把这个指针旋转一个特定的角度 $m\theta$。</strong></p>
+<ul>
+<li>第 1 个词：旋转 $\theta$ 度。</li>
+<li>第 2 个词：旋转 $2\theta$ 度。</li>
+<li>第 $m$ 个词：旋转 $m\theta$ 度。</li>
+</ul>
+<hr>
+<h3 id="3-核心数学推导"><a href="#3-核心数学推导" class="headerlink" title="3. 核心数学推导"></a>3. 核心数学推导</h3><p>RoPE 想要实现一个目标：当模型计算两个词 $q_m$（位置 $m$）和 $k_n$（位置 $n$）的注意力分数时，结果只和它们的<strong>相对距离 $m-n$</strong> 有关。</p>
+<h4 id="复数表示"><a href="#复数表示" class="headerlink" title="复数表示"></a>复数表示</h4><p>在二维平面上，我们可以把词向量 $(x, y)$ 看作一个复数 $x + iy$。旋转操作可以写成：</p>
+<p>$$f(x, m) &#x3D; x \cdot e^{im\theta}$$</p>
+<p>这里 $e^{im\theta}$ 就是旋转算子。</p>
+<h4 id="为什么有效？"><a href="#为什么有效？" class="headerlink" title="为什么有效？"></a>为什么有效？</h4><p>当你计算 $q$ 和 $k$ 的点积（即注意力）时：</p>
+<p>$$Score \propto \text{Re}[q_m \cdot k_n^<em>] &#x3D; \text{Re}[(q e^{im\theta}) \cdot (k e^{in\theta})^</em>] &#x3D; \text{Re}[q \cdot k^* \cdot e^{i(m-n)\theta}]$$</p>
+<p>注意力最终与 $(m-n)\theta$有关。</p>
+<p><strong>结论</strong>：模型不再死记硬背“我在第 5 个位置”，而是通过向量之间的<strong>夹角</strong>，直接感知到“你离我 3 个单位远”。</p>
+<hr>
+<h3 id="4-具体的计算实现"><a href="#4-具体的计算实现" class="headerlink" title="4. 具体的计算实现"></a>4. 具体的计算实现</h3><p>在代码实现中，我们不会真的用复数，而是使用一个<strong>旋转矩阵</strong>。</p>
+<p>对于一个高维向量，RoPE 会把它两两成对，每两个维度组成一个二维平面进行旋转：</p>
+<p>$$\begin{pmatrix} q_0 \ q_1 \end{pmatrix} \rightarrow \begin{pmatrix} \cos m\theta &amp; -\sin m\theta \ \sin m\theta &amp; \cos m\theta \end{pmatrix} \begin{pmatrix} q_0 \ q_1 \end{pmatrix}$$</p>
+<h4 id="1-数学本质：复数旋转的等价变换"><a href="#1-数学本质：复数旋转的等价变换" class="headerlink" title="1. 数学本质：复数旋转的等价变换"></a>1. 数学本质：复数旋转的等价变换</h4><p>RoPE 利用复数乘法 $(a + bi) \cdot e^{i\theta}$ 来实现向量旋转。其展开结果为：</p>
+<ul>
+<li><strong>新实部</strong>：$a\cos\theta - b\sin\theta$</li>
+<li><strong>新虚部</strong>：$b\cos\theta + a\sin\theta$</li>
+</ul>
+<h4 id="2-代码：rotate-half-实数模拟复数"><a href="#2-代码：rotate-half-实数模拟复数" class="headerlink" title="2. 代码：rotate_half (实数模拟复数)"></a>2. 代码：<code>rotate_half</code> (实数模拟复数)</h4><p>为了避免昂贵的复数运算，代码将 512 维向量平分为<strong>左半段 (实部 $a$)</strong> 和<strong>右半段 (虚部 $b$)</strong>。</p>
+<ul>
+<li><strong>原始向量 $q$</strong>：$[a, b]$</li>
+<li><strong><code>rotate_half(q)</code></strong>：$[-b, a]$ （等效于复数乘以虚数单位 $i$）</li>
+</ul>
+<h4 id="3-最终组合公式"><a href="#3-最终组合公式" class="headerlink" title="3. 最终组合公式"></a>3. 最终组合公式</h4><h2 id="代码通过一次性矩阵运算还原复数旋转：-q-embed-q-cdot-cos-text-rotate-half-q-cdot-sin"><a href="#代码通过一次性矩阵运算还原复数旋转：-q-embed-q-cdot-cos-text-rotate-half-q-cdot-sin" class="headerlink" title="代码通过一次性矩阵运算还原复数旋转：$$q_{embed} &#x3D; (q \cdot \cos) + (\text{rotate_half}(q) \cdot \sin)$$"></a>代码通过一次性矩阵运算还原复数旋转：<br>$$q_{embed} &#x3D; (q \cdot \cos) + (\text{rotate_half}(q) \cdot \sin)$$</h2><p>为了覆盖不同频率的信息，每个维度的旋转速度 $\theta$ 是不一样的：<br>$$\theta_i &#x3D; \text{base}^{-2i&#x2F;d}$$</p>
+<h4 id="1-数学定义：从频率到波长"><a href="#1-数学定义：从频率到波长" class="headerlink" title="1. 数学定义：从频率到波长"></a>1. 数学定义：从频率到波长</h4><p>在 RoPE 公式中，第 $i$ 组维度的旋转频率是 $\theta_i$。</p>
+<p>数学上，旋转一圈（$2\pi$ 弧度）所需的距离 $L$ 就是波长：</p>
+<p>$$L_i &#x3D; \frac{2\pi}{\theta_i}$$</p>
+<p>由于 $\theta_i &#x3D; \text{base}^{-2i&#x2F;d}$，代入后得到波长公式：</p>
+<p>$$L_i &#x3D; 2\pi \cdot \text{base}^{\frac{2i}{d}}$$</p>
+<hr>
+<h4 id="2-直观理解：快表与慢表"><a href="#2-直观理解：快表与慢表" class="headerlink" title="2. 直观理解：快表与慢表"></a>2. 直观理解：快表与慢表</h4><p>模型里有成百上千个维度，它们的波长各不相同：</p>
+<ul>
+<li><p><strong>高频维度（$i$ 较小）</strong>：</p>
+<ul>
+<li><strong>波长短</strong>：比如波长为 10。</li>
+<li><strong>含义</strong>：每走 10 个字，指针就转满一圈。</li>
+<li><strong>作用</strong>：它对位置极其敏感。只要词稍微挪动一个位置，角度就会变很大。这让模型能看清<strong>微观语法</strong>（比如“的”字后面必须跟着名词）。</li>
+</ul>
+</li>
+<li><p><strong>低频维度（$i$ 较大）</strong>：</p>
+<ul>
+<li><strong>波长长</strong>：比如波长为 10000。</li>
+<li><strong>含义</strong>：走完 1 万个字，指针才勉强转完一圈。</li>
+<li><strong>作用</strong>：它对位置极其不敏感。即使两个词隔了几百个字，它们的角度差也很小。这让模型能感知<strong>宏观语义</strong>（比如文章开头提到了一个“伏笔”，结尾能接上）。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h4 id="3-波长如何决定-YaRN-的逻辑？"><a href="#3-波长如何决定-YaRN-的逻辑？" class="headerlink" title="3. 波长如何决定 YaRN 的逻辑？"></a>3. 波长如何决定 YaRN 的逻辑？</h4><p>YaRN 论文之所以引入波长，是因为它发现：<strong>如果波长相对于“训练长度”太短，模型就不需要插值。</strong></p>
+<p>假设模型是在 $L_{\text{train}} &#x3D; 2048$ 的长度下训练的：</p>
+<ul>
+<li><p><strong>情况 A：波长 $L_i &lt; L_{\text{train}}$（高频区）</strong></p>
+<ul>
+<li>比如波长只有 50。在 2048 的训练长度内，这个指针已经足足转了 40 多圈了。</li>
+<li>模型已经见过这个指针转到任何角度的样子。所以当你扩展到 32768 时，这个维度的旋转角度依然在模型见过的“老圈子”里打转。</li>
+<li><strong>YaRN 处理：</strong> 别动它（$ramp &#x3D; 0$），保持原速。</li>
+</ul>
+</li>
+<li><p><strong>情况 B：波长 $L_i &gt; L_{\text{train}}$（低频区）</strong></p>
+<ul>
+<li>比如波长是 10000。在 2048 的长度内，指针只转了 1&#x2F;5 圈。</li>
+<li>模型只见过这 1&#x2F;5 圈的角度。如果你不改频率，直接读到 8000 位，指针会转到 4&#x2F;5 圈的位置。</li>
+<li>模型惊呼：“这是什么新角度？我受训时没见过！”</li>
+<li><strong>YaRN 处理：</strong> 减速（$ramp &#x3D; 1$）。把它的旋转速度调慢，让它在 8192 位时，正好才转完那见过的 1&#x2F;5 圈。</li>
+</ul>
+</li>
+</ul>
+<h5 id="1-d-代表什么？（总体长度）"><a href="#1-d-代表什么？（总体长度）" class="headerlink" title="1. $d$ 代表什么？（总体长度）"></a>1. $d$ 代表什么？（总体长度）</h5><ul>
+<li><strong>含义</strong>：<strong>Model Dimension</strong>（模型的总维度）</li>
+</ul>
+<h5 id="2-i-代表什么？（当前位置）"><a href="#2-i-代表什么？（当前位置）" class="headerlink" title="2. $i$ 代表什么？（当前位置）"></a>2. $i$ 代表什么？（当前位置）</h5><ul>
+<li><strong>含义</strong>：<strong>Dimension Index</strong>（维度索引&#x2F;下标）。</li>
+<li><strong>解释</strong>：由于 RoPE 是把高维向量“两两成对”进行旋转的（就像图中 $q_0, q_1$ 组成一对），$i$ 的取值范围是从 $0$ 到 $d&#x2F;2 - 1$。</li>
+<li>当 $i&#x3D;0$ 时，计算的是向量最开始的那两个维度。</li>
+<li>当 $i$ 变大时，计算的是向量靠后的那些维度。</li>
+</ul>
+<hr>
+<h2 id="YaRN"><a href="#YaRN" class="headerlink" title="YaRN"></a>YaRN</h2><p>简单来说，RoPE 虽然优雅，但它有一个致命弱点：<strong>训练时模型只见过旋转 0 到 512 度的向量，如果你突然给它一个旋转了 2048 度的向量（长文本），模型就会彻底“晕车”，输出乱码。</strong></p>
+<p><strong>YaRN</strong> 的出现就是为了解决这个问题，让模型在不增加（或极少增加）微调成本的情况下，处理比训练时<strong>长 10 倍甚至百倍</strong>的文本。</p>
+<hr>
+<h3 id="1-核心矛盾：分子的“挤压”与“丢失”"><a href="#1-核心矛盾：分子的“挤压”与“丢失”" class="headerlink" title="1. 核心矛盾：分子的“挤压”与“丢失”"></a>1. 核心矛盾：分子的“挤压”与“丢失”</h3><p>当我们要把长度从 2048 扩展到 8192 时，最简单的办法是把旋转角度“压缩”：原来第 8192 个位置的角度，现在强行缩放回第 2048 个位置的角度。</p>
+<ul>
+<li><strong>问题：</strong> 这样做会导致原本清晰的“相对距离”变得模糊。就像把原本 1 米一个的刻度，强行挤成 25 厘米一个，模型分不清两个邻近的词了。</li>
+</ul>
+<hr>
+<h3 id="2-YaRN-的三个天才改进"><a href="#2-YaRN-的三个天才改进" class="headerlink" title="2. YaRN 的三个天才改进"></a>2. YaRN 的三个天才改进</h3><p>YaRN 的数学理论核心是<strong>分频治之</strong>。它意识到：RoPE 中不同维度的旋转频率（$\theta$）代表了不同的语义信息。</p>
+<h4 id="1-高频不插值（保持精细度）"><a href="#1-高频不插值（保持精细度）" class="headerlink" title="(1) 高频不插值（保持精细度）"></a>(1) 高频不插值（保持精细度）</h4><ul>
+<li><strong>理论：</strong> 旋转非常快的维度（高频），负责捕捉<strong>相邻词</strong>的关系。</li>
+<li><strong>做法：</strong> 对于这些维度，YaRN <strong>完全不动它</strong>。因为相邻词的关系在长短文本中是一样的，动了反而会毁掉模型最基础的语言能力。</li>
+</ul>
+<h4 id="2-低频全插值（扩展范围）"><a href="#2-低频全插值（扩展范围）" class="headerlink" title="(2) 低频全插值（扩展范围）"></a>(2) 低频全插值（扩展范围）</h4><ul>
+<li><strong>理论：</strong> 旋转非常慢的维度（低频），负责捕捉<strong>长距离</strong>的宏观关系。</li>
+<li><strong>做法：</strong> 对于这些维度，进行平滑的线性缩放。因为长距离信息比较“粗放”，缩放一点点不影响大局，却能让模型感知到更远的位置。</li>
+</ul>
+<h4 id="3-中频混合（波浪式过渡）"><a href="#3-中频混合（波浪式过渡）" class="headerlink" title="(3) 中频混合（波浪式过渡）"></a>(3) 中频混合（波浪式过渡）</h4><ul>
+<li><strong>做法：</strong> 在高频和低频之间，YaRN 使用了一个平滑的函数进行过渡，确保模型在处理不同距离的信息时不会出现“断层”。</li>
+</ul>
+<hr>
+<p>划分高低维度的索引 $i$，我们需要从 <strong>“波长比例 $b$”</strong> 的定义出发，一步步反推出它在向量维度中的位置。这个推导过程的核心逻辑是：<strong>找到一个临界点，在这个点上，维度的波长正好是训练长度 $L$ 的若干分之一。</strong></p>
+<h3 id="1-基础公式准备"><a href="#1-基础公式准备" class="headerlink" title="1. 基础公式准备"></a>1. 基础公式准备</h3><p>首先，我们已知 RoPE 的波长公式（即旋转一圈所需的距离）：</p>
+<p>$$L_i &#x3D; 2\pi \cdot \text{base}^{\frac{2i}{d}}$$</p>
+<p>论文中定义的波长比例 $b$（即在训练长度 $L$ 内转了多少圈）：</p>
+<p>$$b &#x3D; \frac{L}{L_i}$$</p>
+<hr>
+<h3 id="2-推导划分高低纬度的索引-i-步骤"><a href="#2-推导划分高低纬度的索引-i-步骤" class="headerlink" title="2. 推导划分高低纬度的索引 i 步骤"></a>2. 推导划分高低纬度的索引 i 步骤</h3><p>我们的目标是：已知一个比例 $b$（比如 $\beta_{fast}$ 或 $\beta_{slow}$），求出它对应的维度索引 $i$。</p>
+<h4 id="第一步：代入波长公式"><a href="#第一步：代入波长公式" class="headerlink" title="第一步：代入波长公式"></a>第一步：代入波长公式</h4><p>将 $L_i$ 的表达式代入 $b$ 的定义中：</p>
+<p>$$b &#x3D; \frac{L}{2\pi \cdot \text{base}^{\frac{2i}{d}}}$$</p>
+<h4 id="第二步：移项，隔离底数部分"><a href="#第二步：移项，隔离底数部分" class="headerlink" title="第二步：移项，隔离底数部分"></a>第二步：移项，隔离底数部分</h4><p>我们要把带 $i$ 的部分挪到一边：</p>
+<p>$$\text{base}^{\frac{2i}{d}} &#x3D; \frac{L}{b \cdot 2\pi}$$</p>
+<h4 id="第三步：左右两边取对数（-ln-）"><a href="#第三步：左右两边取对数（-ln-）" class="headerlink" title="第三步：左右两边取对数（$\ln$）"></a>第三步：左右两边取对数（$\ln$）</h4><p>为了把指数上的 $i$ 降下来，我们取自然对数：</p>
+<p>$$\ln\left(\text{base}^{\frac{2i}{d}}\right) &#x3D; \ln\left(\frac{L}{b \cdot 2\pi}\right)$$</p>
+<p>利用对数性质 $\ln(x^n) &#x3D; n \ln(x)$：</p>
+<p>$$\frac{2i}{d} \cdot \ln(\text{base}) &#x3D; \ln\left(\frac{L}{b \cdot 2\pi}\right)$$</p>
+<h4 id="第四步：解出-i"><a href="#第四步：解出-i" class="headerlink" title="第四步：解出 $i$"></a>第四步：解出 $i$</h4><p>最后，把左边的系数移到右边：</p>
+<h2 id="i-frac-d-cdot-ln-left-frac-L-b-cdot-2-pi-right-2-ln-text-base"><a href="#i-frac-d-cdot-ln-left-frac-L-b-cdot-2-pi-right-2-ln-text-base" class="headerlink" title="$$i &#x3D; \frac{d \cdot \ln\left(\frac{L}{b \cdot 2\pi}\right)}{2 \ln(\text{base})}$$"></a>$$i &#x3D; \frac{d \cdot \ln\left(\frac{L}{b \cdot 2\pi}\right)}{2 \ln(\text{base})}$$</h2><p>我们要计算一个新的频率 $f’(i)$。</p>
+<p>$$f’(i) &#x3D; (1 - \gamma)f(i) + \gamma \frac{f(i)}{s}$$</p>
+<p>提取公因子 $f(i)$ 后得到：</p>
+<p>$$f’(i) &#x3D; f(i) \cdot \left( 1 - \gamma + \frac{\gamma}{s} \right)$$</p>
+<ul>
+<li><strong>当 $\gamma&#x3D;0$（高频区）</strong>：系数是 1，频率不变。</li>
+<li><strong>当 $\gamma&#x3D;1$（低频区）</strong>：频率变为 $1&#x2F;s$。这意味着旋转速度变慢了 $s$ 倍，原本要在 8192 位转完的角度，现在要在 32768 位才转完。</li>
+</ul>
+<h3 id="3-关键绝招：注意力重缩放-Attention-Scaling"><a href="#3-关键绝招：注意力重缩放-Attention-Scaling" class="headerlink" title="3. 关键绝招：注意力重缩放 (Attention Scaling)"></a>3. 关键绝招：注意力重缩放 (Attention Scaling)</h3><p>$$\text{cos}’ &#x3D; \cos \cdot \text{attn_factor}$$</p>
+<p><strong>推导逻辑：</strong></p>
+<ol>
+<li><strong>点积膨胀</strong>：在长文本中，由于参与计算的词变多了，$Q \cdot K$ 的平均值会发生偏移。</li>
+<li><strong>熵的流失</strong>：数值变大导致 Softmax 后的分布变得太“尖”，模型只关注极少数词。</li>
+<li><strong>补偿</strong>：YaRN 通过 <code>attn_factor</code>（通常是基于 $\sqrt{t}$ 算出的一个大于 1 的系数）直接给 $\cos$ 和 $\sin$ “加成”。</li>
+<li><strong>最终效果</strong>：在计算 $Q \cdot K$ 时，这个系数会平方（因为 $Q$ 和 $K$ 都带了），从而拉大或缩小得分的差距，起到类似“降温”的作用，让注意力重新分布均匀。</li>
+</ol>
+<p>当你强行拉长文本长度时，Softmax 的分布会变得非常集中（熵值降低），导致模型变得“呆滞”。YaRN 引入了一个 <strong>温度因子 $\sqrt{t}$</strong>：</p>
+<p>$$Score &#x3D; \text{Softmax}\left(\frac{Q \cdot K}{\sqrt{d} \cdot \mathbf{scale}}\right)$$</p>
+<ul>
+<li><strong>作用：</strong> 通过引入随长度扩展而增大的缩放因子（scale），抵消长序列导致的注意力点积膨胀，恢复 Softmax 分布的平滑度，确保模型对全局信息的敏锐度。</li>
+</ul>
+<hr>
+<figure class="highlight python"><table><tr><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">precompute_freqs</span>(<span class="hljs-params"></span><br><span class="hljs-params">    dim: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">    end: <span class="hljs-built_in">int</span> = <span class="hljs-built_in">int</span>(<span class="hljs-params"><span class="hljs-number">32</span> * <span class="hljs-number">1024</span></span>),</span><br><span class="hljs-params">    rope_base: <span class="hljs-built_in">float</span> = <span class="hljs-number">1e6</span>,</span><br><span class="hljs-params">    rope_scaling: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">dict</span>] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params"></span>):<br>    <span class="hljs-comment"># 1. 初始化标准 RoPE 频率。</span><br>    <span class="hljs-comment"># torch.arange(0, dim, 2) 生成 [0, 2, 4, ... dim-2]</span><br>    <span class="hljs-comment"># 计算出的 freqs 就是标准的 1 / (base ** (2i / d))</span><br>    freqs, attn_factor = (<br>        <span class="hljs-number">1.0</span> / (rope_base ** (torch.arange(<span class="hljs-number">0</span>, dim, <span class="hljs-number">2</span>)[: (dim // <span class="hljs-number">2</span>)].<span class="hljs-built_in">float</span>() / dim)),<br>        <span class="hljs-number">1.0</span>,<br>    )<br><br>    <span class="hljs-keyword">if</span> rope_scaling <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        <span class="hljs-comment"># 2. 从配置字典中提取 YaRN 的超参数</span><br>        <span class="hljs-comment"># orig_max: 模型预训练时的原始最大长度（例如 Llama-2 是 2048 或 4096）</span><br>        <span class="hljs-comment"># factor: 要扩展的倍数 s (比如从 2k 扩展到 32k，factor 就是 16)</span><br>        <span class="hljs-comment"># beta_fast (对应论文中的 α): 高频边界，波长比例大于此值的维度不缩放</span><br>        <span class="hljs-comment"># beta_slow (对应论文中的 β): 低频边界，波长比例小于此值的维度全量缩放</span><br>        <span class="hljs-comment"># attn_factor: 注意力温度补偿，由于距离拉长导致注意力分布发散（变平缓），需要乘上一个系数让注意力重新“聚焦”</span><br>        orig_max, factor, beta_fast, beta_slow, attn_factor = (<br>            rope_scaling.get(<span class="hljs-string">&quot;original_max_position_embeddings&quot;</span>, <span class="hljs-number">2048</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;factor&quot;</span>, <span class="hljs-number">16</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;beta_fast&quot;</span>, <span class="hljs-number">32.0</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;beta_slow&quot;</span>, <span class="hljs-number">1.0</span>),<br>            rope_scaling.get(<span class="hljs-string">&quot;attention_factor&quot;</span>, <span class="hljs-number">1.0</span>),<br>        )<br><br>        <span class="hljs-comment"># 只有当要推断的长度大于原始训练长度时，才应用缩放</span><br>        <span class="hljs-keyword">if</span> end / orig_max &gt; <span class="hljs-number">1.0</span>:<br>            <span class="hljs-comment"># 3. 使用前文推导的公式，定义波长比例 b 到维度索引 i 的映射函数</span><br>            inv_dim = <span class="hljs-keyword">lambda</span> b: (dim * math.log(orig_max / (b * <span class="hljs-number">2</span> * math.pi))) / (<br>                <span class="hljs-number">2</span> * math.log(rope_base)<br>            )<br><br>            <span class="hljs-comment"># 4. 计算高频区和低频区的维度切分点</span><br>            <span class="hljs-comment"># low: 不需要缩放的高频部分的最高索引</span><br>            <span class="hljs-comment"># high: 需要完全缩放的低频部分的最低索引</span><br>            low, high = (<br>                <span class="hljs-built_in">max</span>(math.floor(inv_dim(beta_fast)), <span class="hljs-number">0</span>),<br>                <span class="hljs-built_in">min</span>(math.ceil(inv_dim(beta_slow)), dim // <span class="hljs-number">2</span> - <span class="hljs-number">1</span>),<br>            )<br><br>            <span class="hljs-comment"># 5. 计算混合因子 γ (Ramp)</span><br>            <span class="hljs-comment"># 在 low 之前，ramp 为 0；在 high 之后，ramp 为 1；在 low 和 high 之间，线性过渡。</span><br>            <span class="hljs-comment"># clamp 函数限制了数值只能在 [0, 1] 之间。</span><br>            ramp = torch.clamp(<br>                (torch.arange(dim // <span class="hljs-number">2</span>, device=freqs.device).<span class="hljs-built_in">float</span>() - low)<br>                / <span class="hljs-built_in">max</span>(high - low, <span class="hljs-number">0.001</span>),<br>                <span class="hljs-number">0</span>,<br>                <span class="hljs-number">1</span>,<br>            )<br><br>            <span class="hljs-comment"># 6. 频率融合公式：f&#x27;(i) = f(i) * ((1-γ) + γ/s)</span><br>            <span class="hljs-comment"># 当 ramp=0 时（高频）：系数为 1，保持原频率不变。</span><br>            <span class="hljs-comment"># 当 ramp=1 时（低频）：系数为 1/factor，即对频率进行线性插值缩放。</span><br>            <span class="hljs-comment"># ramp在0-1之间时：平滑过渡。</span><br>            freqs = freqs * (<span class="hljs-number">1</span> - ramp + ramp / factor)<br><br>    <span class="hljs-comment"># 7. 根据目标长度 end，生成位置索引向量 t</span><br>    t = torch.arange(end, device=freqs.device)<br><br>    <span class="hljs-comment"># 8. 计算外积：将位置 t 与处理好的频率 freqs 相乘，得到每个位置的旋转角度 θ</span><br>    freqs = torch.outer(t, freqs).<span class="hljs-built_in">float</span>()<br><br>    <span class="hljs-comment"># 9. 计算 Cos 和 Sin，并应用注意力补偿系数 (attn_factor)</span><br>    freqs_cos = torch.cat([torch.cos(freqs), torch.cos(freqs)], dim=-<span class="hljs-number">1</span>) * attn_factor<br>    freqs_sin = torch.cat([torch.sin(freqs), torch.sin(freqs)], dim=-<span class="hljs-number">1</span>) * attn_factor<br><br>    <span class="hljs-keyword">return</span> freqs_cos, freqs_sin<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">apply_rotary_pos_emb</span>(<span class="hljs-params">q, k, cos, sin, position_ids=<span class="hljs-literal">None</span>, unsqueeze_dim=<span class="hljs-number">1</span></span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">rotate_half</span>(<span class="hljs-params">x</span>):<br>        <span class="hljs-keyword">return</span> torch.cat(<br>            (-x[..., x.shape[-<span class="hljs-number">1</span>] // <span class="hljs-number">2</span> :], x[..., : x.shape[-<span class="hljs-number">1</span>] // <span class="hljs-number">2</span>]), dim=-<span class="hljs-number">1</span><br>        )<br><br>    q_embed = (q * cos.unsqueeze(unsqueeze_dim)) + (<br>        rotate_half(q) * sin.unsqueeze(unsqueeze_dim)<br>    )<br>    k_embed = (k * cos.unsqueeze(unsqueeze_dim)) + (<br>        rotate_half(k) * sin.unsqueeze(unsqueeze_dim)<br>    )<br>    <span class="hljs-keyword">return</span> q_embed, k_embed<br></code></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>LLM</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Hello Blog</title>
+    <url>/my-blog/2026/02/28/hello-blog/</url>
+    <content><![CDATA[<p>欢迎来到我的个人博客。</p>
+<p>这篇文章用于验证：</p>
+<ul>
+<li>首页文章列表是否展示封面、摘要、日期、分类和标签</li>
+<li>文章详情页是否展示阅读时长和字数统计</li>
+<li>搜索索引是否正常生成</li>
+<li>GitHub Pages 项目路径下的资源是否正常加载</li>
+</ul>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>Hexo</tag>
+        <tag>GitHub Pages</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>AI 辅助文献精读调研</title>
+    <url>/my-blog/2026/04/06/05%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86-%E6%96%87%E7%8C%AE%E7%B2%BE%E8%AF%BB%E8%B0%83%E7%A0%94/</url>
+    <content><![CDATA[<h1 id="AI-辅助文献精读调研"><a href="#AI-辅助文献精读调研" class="headerlink" title="AI 辅助文献精读调研"></a>AI 辅助文献精读调研</h1><blockquote>
+<p>[!summary]<br>AI 辅助文献精读，核心不是“替你读完”，而是帮你完成 5 件事：</p>
+<ul>
+<li>快速筛选</li>
+<li>辅助理解</li>
+<li>结构化提炼</li>
+<li>多篇比较</li>
+<li>笔记沉淀</li>
+</ul>
+<p>最实用的组合通常是：<br><strong>找文献工具 + 单篇精读工具 + 多篇对比工具 + Zotero + 笔记系统</strong></p>
+</blockquote>
+<h2 id="一、工具速览"><a href="#一、工具速览" class="headerlink" title="一、工具速览"></a>一、工具速览</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐工具</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>找相关文献</td>
+<td>ResearchRabbit &#x2F; Connected Papers &#x2F; Elicit</td>
+<td>建立文献地图、扩展种子论文、初筛</td>
+</tr>
+<tr>
+<td>单篇精读</td>
+<td>SciSpace &#x2F; Explainpaper &#x2F; ChatPDF</td>
+<td>解释难句、理解方法、定位信息</td>
+</tr>
+<tr>
+<td>多篇比较</td>
+<td>NotebookLM &#x2F; Elicit</td>
+<td>做对比、分组、归纳争议点</td>
+</tr>
+<tr>
+<td>判断论文可信度</td>
+<td>scite</td>
+<td>看后续研究是支持、质疑还是仅提及</td>
+</tr>
+<tr>
+<td>长期沉淀</td>
+<td>Zotero + PDF Translate + Better BibTeX</td>
+<td>管理 PDF、翻译、引用、回收笔记</td>
+</tr>
+</tbody></table>
+<h2 id="二、怎么选工具"><a href="#二、怎么选工具" class="headerlink" title="二、怎么选工具"></a>二、怎么选工具</h2><h3 id="1-找文献-建立地图"><a href="#1-找文献-建立地图" class="headerlink" title="1. 找文献 &#x2F; 建立地图"></a>1. 找文献 &#x2F; 建立地图</h3><ul>
+<li><strong>ResearchRabbit</strong>：适合看引用关系和研究脉络</li>
+<li><strong>Connected Papers</strong>：适合从种子论文快速扩展</li>
+<li><strong>Elicit</strong>：适合问题驱动检索和初步表格整理</li>
+</ul>
+<h3 id="2-单篇精读-看不懂就问"><a href="#2-单篇精读-看不懂就问" class="headerlink" title="2. 单篇精读 &#x2F; 看不懂就问"></a>2. 单篇精读 &#x2F; 看不懂就问</h3><ul>
+<li><strong>SciSpace</strong>：最适合“边读边问”</li>
+<li><strong>Explainpaper</strong>：适合逐句解释</li>
+<li><strong>ChatPDF &#x2F; Humata</strong>：适合快速问答和定位内容</li>
+<li><strong>Scholarcy</strong>：适合批量初读和论文卡片，不适合替代精读</li>
+</ul>
+<h3 id="3-多篇比较-写综述"><a href="#3-多篇比较-写综述" class="headerlink" title="3. 多篇比较 &#x2F; 写综述"></a>3. 多篇比较 &#x2F; 写综述</h3><ul>
+<li><strong>NotebookLM</strong>：适合把多篇论文放在一起比较</li>
+<li><strong>Elicit</strong>：适合抽取研究问题、方法、结论并做表格</li>
+</ul>
+<h3 id="4-判断靠不靠谱"><a href="#4-判断靠不靠谱" class="headerlink" title="4. 判断靠不靠谱"></a>4. 判断靠不靠谱</h3><ul>
+<li><strong>scite</strong>：非常关键，能把“读懂”升级成“会评价”</li>
+</ul>
+<h3 id="5-长期管理"><a href="#5-长期管理" class="headerlink" title="5. 长期管理"></a>5. 长期管理</h3><ul>
+<li><strong>Zotero</strong>：文献工作流底座</li>
+<li><strong>PDF Translate</strong>：中英对照阅读更高效</li>
+<li><strong>Better BibTeX</strong>：写作和引用管理更顺</li>
+</ul>
+<blockquote>
+<p>[!important]<br>所有 AI 精读结果，最后最好都回收到 Zotero 或 Obsidian &#x2F; Notion。<br>否则后面很难复用。</p>
+</blockquote>
+<h2 id="三、最实用的-3-套工作流"><a href="#三、最实用的-3-套工作流" class="headerlink" title="三、最实用的 3 套工作流"></a>三、最实用的 3 套工作流</h2><h3 id="方案-A：入门型"><a href="#方案-A：入门型" class="headerlink" title="方案 A：入门型"></a>方案 A：入门型</h3><p><strong>适合</strong>：刚开始读论文，英文阅读有压力</p>
+<p><strong>组合</strong></p>
+<ul>
+<li>Connected Papers &#x2F; ResearchRabbit</li>
+<li>SciSpace &#x2F; Explainpaper</li>
+<li>Zotero + PDF Translate</li>
+<li>Obsidian &#x2F; Notion</li>
+</ul>
+<p><strong>流程</strong></p>
+<ol>
+<li>找核心论文</li>
+<li>存入 Zotero</li>
+<li>用 PDF Translate 辅助理解</li>
+<li>用 SciSpace &#x2F; Explainpaper 问方法、术语、难句</li>
+<li>手动写精读卡：问题 &#x2F; 方法 &#x2F; 结果 &#x2F; 局限 &#x2F; 自己评价</li>
+</ol>
+<h3 id="方案-B：综述型"><a href="#方案-B：综述型" class="headerlink" title="方案 B：综述型"></a>方案 B：综述型</h3><p><strong>适合</strong>：写综述、开题报告</p>
+<p><strong>组合</strong></p>
+<ul>
+<li>Elicit</li>
+<li>ResearchRabbit</li>
+<li>NotebookLM</li>
+<li>scite</li>
+<li>Zotero</li>
+</ul>
+<p><strong>流程</strong></p>
+<ol>
+<li>用 Elicit 按问题找论文</li>
+<li>用 ResearchRabbit 看文献网络</li>
+<li>把核心论文放进 NotebookLM 比较</li>
+<li>用 scite 看关键论文是否被支持或质疑</li>
+<li>回写到 Zotero &#x2F; Obsidian</li>
+</ol>
+<h3 id="方案-C：深度精读型"><a href="#方案-C：深度精读型" class="headerlink" title="方案 C：深度精读型"></a>方案 C：深度精读型</h3><p><strong>适合</strong>：已经锁定核心论文，要真正读透</p>
+<p><strong>组合</strong></p>
+<ul>
+<li>Zotero</li>
+<li>SciSpace &#x2F; Humata</li>
+<li>scite</li>
+<li>NotebookLM</li>
+</ul>
+<p><strong>流程</strong></p>
+<ol>
+<li>选 1 篇核心论文</li>
+<li>用 SciSpace 逐段问：研究问题、方法流程、实验设计、结果支撑链</li>
+<li>用 scite 看后续影响</li>
+<li>再用 NotebookLM 和相关论文做横向比较</li>
+<li>输出自己的批判性笔记</li>
+</ol>
+<blockquote>
+<p>[!tip]<br>AI 负责解释、提炼、对比；你负责判断、批评、形成观点。</p>
+</blockquote>
+<h2 id="四、最值得保存的提示词"><a href="#四、最值得保存的提示词" class="headerlink" title="四、最值得保存的提示词"></a>四、最值得保存的提示词</h2><h3 id="单篇精读"><a href="#单篇精读" class="headerlink" title="单篇精读"></a>单篇精读</h3><ul>
+<li><strong>抽结构</strong>：提取研究问题、方法、数据、结果、结论、局限</li>
+<li><strong>讲人话</strong>：把一段学术表达重写成通俗中文，并解释术语</li>
+<li><strong>看论证链</strong>：作者如何从问题一步步推到结论</li>
+<li><strong>做批判</strong>：从研究设计、数据、方法、外推性四个角度分析</li>
+<li><strong>找创新点</strong>：指出相对已有研究的新意到底在哪里</li>
+</ul>
+<h3 id="多篇比较"><a href="#多篇比较" class="headerlink" title="多篇比较"></a>多篇比较</h3><ul>
+<li><strong>对比方法</strong>：比较研究问题、方法、数据、指标、局限，并生成表格</li>
+<li><strong>找分歧</strong>：哪些结论一致，哪些地方冲突，原因可能是什么</li>
+<li><strong>为综述服务</strong>：按研究问题或方法路线分组</li>
+</ul>
+<h2 id="五、AI-精读最容易踩的坑"><a href="#五、AI-精读最容易踩的坑" class="headerlink" title="五、AI 精读最容易踩的坑"></a>五、AI 精读最容易踩的坑</h2><h3 id="1-不能只看-AI-总结"><a href="#1-不能只看-AI-总结" class="headerlink" title="1. 不能只看 AI 总结"></a>1. 不能只看 AI 总结</h3><p>方法部分、结果图表、局限性一定要回原文确认。</p>
+<h3 id="2-不要让-AI-替你理解"><a href="#2-不要让-AI-替你理解" class="headerlink" title="2. 不要让 AI 替你理解"></a>2. 不要让 AI 替你理解</h3><p>不要只问“结论是什么”，还要问：</p>
+<ul>
+<li>证据是什么？</li>
+<li>图表如何支持结论？</li>
+<li>有没有别的解释？</li>
+</ul>
+<h3 id="3-要防幻觉和过度概括"><a href="#3-要防幻觉和过度概括" class="headerlink" title="3. 要防幻觉和过度概括"></a>3. 要防幻觉和过度概括</h3><p>相对更稳的工具：</p>
+<ul>
+<li>NotebookLM</li>
+<li>SciSpace</li>
+<li>ChatPDF &#x2F; Humata</li>
+<li>scite</li>
+</ul>
+<h3 id="4-不要让笔记散落在各个平台"><a href="#4-不要让笔记散落在各个平台" class="headerlink" title="4. 不要让笔记散落在各个平台"></a>4. 不要让笔记散落在各个平台</h3><p>AI 负责处理，Zotero &#x2F; Obsidian &#x2F; Notion 负责沉淀。</p>
+<h2 id="六、最终建议"><a href="#六、最终建议" class="headerlink" title="六、最终建议"></a>六、最终建议</h2><h3 id="轻量版"><a href="#轻量版" class="headerlink" title="轻量版"></a>轻量版</h3><ul>
+<li>Zotero</li>
+<li>Zotero PDF Translate</li>
+<li>SciSpace</li>
+<li>NotebookLM</li>
+</ul>
+<h3 id="进阶版"><a href="#进阶版" class="headerlink" title="进阶版"></a>进阶版</h3><ul>
+<li>Zotero</li>
+<li>PDF Translate</li>
+<li>ResearchRabbit</li>
+<li>Elicit</li>
+<li>SciSpace</li>
+<li>scite</li>
+<li>NotebookLM</li>
+</ul>
+<blockquote>
+<p>[!abstract]<br>一句话总结：<br>用 ResearchRabbit &#x2F; Elicit 找文献，<br>用 SciSpace &#x2F; Explainpaper 精读单篇，<br>用 NotebookLM 做多篇比较，<br>用 scite 做可信度验证，<br>最后把结果沉淀回 Zotero。</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>文献管理</tag>
+        <tag>AI</tag>
+        <tag>Zotero</tag>
+        <tag>学术研究</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MiniMind 架构图解析</title>
+    <url>/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/</url>
+    <content><![CDATA[<h3 id="1-整体流程"><a href="#1-整体流程" class="headerlink" title="1. 整体流程"></a>1. 整体流程</h3><p>这是模型处理信息的全过程：</p>
+<ul>
+<li><strong>Tokenizer Encoder（分词编码）</strong>：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。</li>
+<li><strong>Input Embedding（嵌入层）</strong>：把数字编号变成一串高维向量（数值列表），赋予单词语义特征</li>
+<li><strong>Transformer Layer k（核心加工层）</strong>：这是模型的大脑，图中显示它会重复 $K$ 次（循环叠加），每一层都会让模型对文本的理解更深一层。</li>
+<li><strong>RMSNorm &amp; Linear &amp; SoftMax</strong>：最后加工环节，将深层特征转换成概率，决定下一个词选什么的概率最大。</li>
+<li><strong>Tokenizer Decoder（分词解码）</strong>：把概率最高的数字变回人类语言，输出“world”。</li>
+</ul>
+<hr>
+<h3 id="2-单层结构"><a href="#2-单层结构" class="headerlink" title="2. 单层结构"></a>2. 单层结构</h3><p>这是每一个 Transformer 层内部的“两步走”战略：</p>
+<ul>
+<li><strong>GQA (Grouped Query Attention)</strong>：第一步，负责“注意力”。让模型在看当前词时，能注意到上下文里哪些词是重要的。</li>
+<li><strong>FFN (Feed Forward Network)</strong>：第二步，负责“知识记忆”。对注意力提取的信息进行非线性变换，提取更抽象的特征。</li>
+<li><strong>旁边的“+”号和箭头</strong>：这叫<strong>残差连接（Residual Connection）</strong>。简单说就是“保留原文，加上新学到的东西”，防止网络太深导致信息丢失。</li>
+</ul>
+<hr>
+<h3 id="3-核心组件细节（右侧-a-b）"><a href="#3-核心组件细节（右侧-a-b）" class="headerlink" title="3. 核心组件细节（右侧 a &amp; b）"></a>3. 核心组件细节（右侧 a &amp; b）</h3><h4 id="a-GQA-分组查询注意力（核心创新）"><a href="#a-GQA-分组查询注意力（核心创新）" class="headerlink" title="(a) GQA - 分组查询注意力（核心创新）"></a>(a) GQA - 分组查询注意力（核心创新）</h4><p>这是现代大模型节省显存、提高速度的关键：</p>
+<ul>
+<li><strong>Q, K, V</strong>：查询(Query)、键(Key)、值(Value)。就像在图书馆（K, V）用搜索词（Q）找书。</li>
+<li><strong>RoPE (Rotary Positional Embedding)</strong>：旋转位置编码。它告诉模型每个词在句子里的<strong>相对位置</strong>，没有它模型就分不清“人咬狗”和“狗咬人”。 </li>
+<li><strong>mask</strong>：掩码。确保模型在预测下一个词时，看不见后面的“标准答案”。</li>
+<li><strong>SoftMax</strong>：计算权重，决定要把多少注意力放在哪个词上。</li>
+</ul>
+<h4 id="b-FFN-前馈神经网络（SwiGLU结构）"><a href="#b-FFN-前馈神经网络（SwiGLU结构）" class="headerlink" title="(b) FFN - 前馈神经网络（SwiGLU结构）"></a>(b) FFN - 前馈神经网络（SwiGLU结构）</h4><p>MiniMind 使用了高效的 <strong>SwiGLU</strong> 激活函数：</p>
+<ul>
+<li><strong>RMSNorm</strong>：在进入加工前先做归一化，让数据分布更稳定。</li>
+<li><strong>SiLU</strong>：一种激活函数。你可以理解为一种“开关”，决定哪些信息可以通过。</li>
+<li><strong>三个 Linear 层</strong>：通过矩阵运算进行高维空间的映射。这里是模型存储“知识”的地方。</li>
+</ul>
+<hr>
+<p>在 MiniMind（以及所有类 Llama 架构）中，<strong>Linear 层（线性变换层）</strong> 本质上是矩阵乘法 $y &#x3D; xW$</p>
+<h3 id="1-核心层入口处的-Linear（位于-GQA-模块内部）"><a href="#1-核心层入口处的-Linear（位于-GQA-模块内部）" class="headerlink" title="1. 核心层入口处的 Linear（位于 GQA 模块内部）"></a>1. 核心层入口处的 Linear（位于 GQA 模块内部）</h3><p>在 <strong>(a) GQA</strong> 模块最下方的那个蓝色 <code>Linear</code> 框：</p>
+<ul>
+<li><p><strong>作用：生成 Q、K、V 向量</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：输入的词向量（Embedding）是原始的，它并不直接包含“谁是谁的宾语”这种关系。通过这个 Linear 层，模型将原始向量投影到三个不同的子空间：</p>
+<ul>
+<li><strong>Q (Query)</strong>：我想找什么信息？</li>
+<li><strong>K (Key)</strong>：我有多少信息可以提供？</li>
+<li><strong>V (Value)</strong>：我具体包含的内容是什么？</li>
+</ul>
+<p>   在Linear层里和QKV矩阵计算，获取对应向量，其中Q和K进行RoPE位置编码，然后点积，掩码处理后softmax，获得一个“相关性矩阵”，然后输入V点积，获得具体的上下文侧重信息</p>
+</li>
+</ul>
+<h3 id="2-注意力机制后的-Linear（位于-GQA-模块上方）"><a href="#2-注意力机制后的-Linear（位于-GQA-模块上方）" class="headerlink" title="2. 注意力机制后的 Linear（位于 GQA 模块上方）"></a>2. 注意力机制后的 Linear（位于 GQA 模块上方）</h3><p>在 <strong>(a) GQA</strong> 模块顶部的那个蓝色 <code>Linear</code> 框：</p>
+<ul>
+<li><p><strong>作用：特征融合与统一输出</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：经过注意力计算后，模型得到了很多分散的、加权后的上下文信息。这个 Linear 层的作用是把多头注意力整合，并映射回模型原本的维度，以便传给下一层。</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-FFN-模块中的三个-Linear（位于-b-模块中）"><a href="#3-FFN-模块中的三个-Linear（位于-b-模块中）" class="headerlink" title="3. FFN 模块中的三个 Linear（位于 b 模块中）"></a>3. FFN 模块中的三个 Linear（位于 b 模块中）</h3><p>这是模型存储“知识”的地方，图中 <strong>(b) FFN</strong> 展示了典型的 <strong>SwiGLU</strong> 结构，这里有三条线涉及 Linear：</p>
+<ul>
+<li><strong>左侧和右侧并行的两个 Linear</strong>：<ul>
+<li><strong>作用：空间扩张与门控控制</strong>。</li>
+<li><strong>原理</strong>：这两个 Linear 层通常会将向量的维度升得很高（比如从 512 升到 1408）。<ul>
+<li>右边的经过 <strong>SiLU</strong> 激活函数变成一个“门”；</li>
+<li>左边的提供原始特征；</li>
+<li>两者相乘，实现<strong>信息的筛选</strong>。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>顶部的 Linear</strong><ul>
+<li><strong>作用：维度还原</strong>。</li>
+<li><strong>原理</strong>：将刚才升高的维度重新压回到模型的标准维度。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4-模型最顶部的-Linear（输出层）"><a href="#4-模型最顶部的-Linear（输出层）" class="headerlink" title="4. 模型最顶部的 Linear（输出层）"></a>4. 模型最顶部的 Linear（输出层）</h3><p>在最左侧大图的 <strong>RMSNorm</strong> 之上、<strong>SoftMax</strong> 之下：</p>
+<ul>
+<li><p><strong>作用：预测词表概率</strong>。</p>
+</li>
+<li><p><strong>原理</strong>：这是最后一步。它将模型处理了半天的深层特征，映射到整个<strong>词表</strong>的大小（比如 MiniMind 词表如果有 64000 个词，那输出维度就是 64000）。</p>
+</li>
+</ul>
+<hr>
+<p>架构设计：</p>
+<h3 id="1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？"><a href="#1-为什么用-GQA（分组查询注意力）而不是传统的-Attention？" class="headerlink" title="1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？"></a>1. 为什么用 GQA（分组查询注意力）而不是传统的 Attention？</h3><p>传统的 Attention（MHA）每个“头”都有自己的 K 和 V，非常占显存。</p>
+<ul>
+<li><strong>设计目的：</strong> <strong>极致的推理速度和显存节省。</strong></li>
+<li><strong>原理：</strong> GQA 让多个 Q（查询）共享同一组 K 和 V。这大大减少了在生成文字时需要缓存的数据量（KV Cache）。</li>
+</ul>
+<hr>
+<h3 id="2-为什么选择-SwiGLU（FFN-里的那种设计）？"><a href="#2-为什么选择-SwiGLU（FFN-里的那种设计）？" class="headerlink" title="2. 为什么选择 SwiGLU（FFN 里的那种设计）？"></a>2. 为什么选择 SwiGLU（FFN 里的那种设计）？</h3><p>你在图中看到 FFN 模块分成了两条路，一条路走 SiLU 激活函数，然后两路相乘。</p>
+<ul>
+<li><strong>设计目的：</strong> <strong>提升模型的“理解深度”和“非线性表达能力”。</strong></li>
+<li><strong>原理：</strong> 传统的激活函数（如 ReLU）太死板，要么开要么关。SwiGLU 这种“门控”机制允许模型更精细地控制哪些信息该留下，哪些该丢弃。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>架构图组件</th>
+<th>对应类 &#x2F; 成员</th>
+<th>作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Input Embedding</strong></td>
+<td><code>MindModel.embed_tokens</code></td>
+<td>将 token id 映射成初始向量表示，相当于“查表取词向量”。</td>
+</tr>
+<tr>
+<td><strong>Layer k（堆叠 K 次）</strong></td>
+<td><code>MindModel.layers</code></td>
+<td>按层堆叠 Transformer Block；在推理阶段也负责串起整条计算链路和 KV Cache。</td>
+</tr>
+<tr>
+<td><strong>RMSNorm</strong></td>
+<td><code>RmsNorm</code></td>
+<td>稳定特征分布，减少深层网络中的数值爆炸或训练不稳定。</td>
+</tr>
+<tr>
+<td><strong>(a) GQA 模块</strong></td>
+<td><code>Attention</code><br><code>repeat_kv</code><br><code>apply_rotary_pos_emb</code><br><code>precompute_freqs</code></td>
+<td>完成分组查询注意力、RoPE 位置编码和 KV 复用，是注意力计算的核心部分。</td>
+</tr>
+<tr>
+<td><strong>(b) FFN 模块</strong></td>
+<td><code>FeedForward</code><br><code>MOEFeedForward</code></td>
+<td>通过 SwiGLU &#x2F; FFN 做非线性变换，提取更高层特征并增强表达能力。</td>
+</tr>
+<tr>
+<td><strong>$\oplus$（残差连接）</strong></td>
+<td><code>TransformerBlock</code> 内部的 <code>+</code></td>
+<td>保留输入并叠加子层输出，帮助梯度传播，缓解深层网络退化。</td>
+</tr>
+<tr>
+<td><strong>顶层 Linear &amp; SoftMax</strong></td>
+<td><code>MindForCausalLM</code></td>
+<td>将隐藏状态映射回词表 logits，并通过 <code>softmax / cross_entropy</code> 完成训练或生成时的选词。</td>
+</tr>
+</tbody></table>
+]]></content>
+      <categories>
+        <category>LLM</category>
+      </categories>
+      <tags>
+        <tag>LLM</tag>
+        <tag>MiniMind</tag>
+        <tag>架构解析</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>关于</title>
     <url>/my-blog/about/index.html</url>
     <content><![CDATA[<p>你好，我是 Ariasu，正在持续把个人知识库、项目实践和技术写作沉淀到公开博客里。</p>
@@ -2204,7 +2204,7 @@
 <li>个人项目的设计、实现和迭代过程</li>
 <li>值得长期保留的方法论、工作流与工程经验</li>
 </ul>
-<p>你也可以通过邮箱联系我：<a href="mailto:&#x61;&#114;&#x69;&#x61;&#x73;&#x75;&#x5f;&#106;&#x74;&#108;&#x65;&#64;&#x31;&#x36;&#51;&#46;&#x63;&#111;&#109;">ariasu_jtle@163.com</a></p>
+<p>你也可以通过邮箱联系我：<a href="mailto:&#97;&#x72;&#x69;&#x61;&#x73;&#117;&#95;&#x6a;&#116;&#x6c;&#x65;&#64;&#x31;&#54;&#x33;&#46;&#x63;&#x6f;&#x6d;">ariasu_jtle@163.com</a></p>
 <p>GitHub：<a href="https://github.com/Ariasu123">https://github.com/Ariasu123</a></p>
 ]]></content>
   </entry>
