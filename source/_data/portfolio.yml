@@ -38,18 +38,18 @@ projects:
     link: https://github.com/Ariasu123/AI-Novel-Generator
     tech:
       - Python
-      - LLM
-    status: 进行中
+      - Openai SDK
+    status: 已完成
     cover: /assets/images/default-cover.svg
 
   - id: handoff-skill
     title: handoff-skill
-    intro: 会话交接管理 skill,用于多 Agent 协作中的上下文转移。
+    intro: 会话交接管理 skill,用于跨会话上下文转移。
     link: https://github.com/Ariasu123/handoff-skill
     tech:
       - Python
-      - Agent
-    status: 进行中
+      - skill
+    status: 已完成
     cover: /assets/images/default-cover.svg
 
   - id: weekly-report-skill
@@ -59,7 +59,7 @@ projects:
     tech:
       - Python
       - LLM
-    status: 进行中
+    status: 已完成
     cover: /assets/images/default-cover.svg
 
   - id: my-blog
