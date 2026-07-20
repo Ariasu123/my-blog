@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html lang="zh-CN" data-default-color-scheme=light>
+<html lang="zh-CN" data-default-color-scheme=dark>
 
 
 
@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
-  <meta name="theme-color" content="#ffffffcc">
+  <meta name="theme-color" content="#ffffffd9">
   <meta name="author" content="Ariasu">
   <meta name="keywords" content="">
   
@@ -89,7 +89,7 @@
   <header>
     
 
-<div class="header-inner" style="height: 72vh;">
+<div class="header-inner" style="height: 30vh;">
   <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand" href="/my-blog/">
@@ -114,6 +114,18 @@
               <a class="nav-link" href="/my-blog/" target="_self">
                 <i class="iconfont icon-home-fill"></i>
                 <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
               </a>
             </li>
           
@@ -211,6 +223,20 @@
           
           
             <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/archives/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-archive-fill"></i>
+                  <span>归档</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
               <a href="/my-blog/categories/" target="_self">
                 <div class="mobile-grid-item">
                   <i class="iconfont icon-category-fill"></i>
@@ -291,25 +317,19 @@
 
   
 
-<div id="banner" class="banner" parallax=true
-     style="background: url('/my-blog/assets/images/default-banner.svg') no-repeat center center; background-size: cover;">
-  <div class="full-bg-img">
-    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.25)">
+
+  <!-- 内页:紧凑科技感 Banner(渐变 + 细网格由 CSS 提供) -->
+  <div id="banner" class="banner pf-banner">
+    <div class="pf-banner-bg" aria-hidden="true"></div>
+    <div class="mask flex-center">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
-          
-            <span id="subtitle"></span>
-          
+          <span id="subtitle">全部文章</span>
         </div>
-
         
       </div>
-
-      
     </div>
   </div>
-</div>
-
 
 
 </div>
@@ -328,114 +348,29 @@
                 
 
 <h1 style="display: none">my-blog</h1>
-<section class="homepage-shell">
-  <aside class="homepage-sidebar">
-    <img class="homepage-profile-avatar" src="/my-blog/assets/images/my-avatar.jpg" srcset="/my-blog/img/loading.gif" lazyload alt="Ariasu">
-    <div class="homepage-profile-name">Ariasu</div>
-    <div class="homepage-profile-id">@Ariasu123</div>
-    <p class="homepage-profile-intro">华中科技大学在读研一 ｜ 专注 AI Infra 与 Agent开发</p>
-    <a class="homepage-profile-email" href="mailto:ariasu_jtle@163.com">ariasu_jtle@163.com</a>
-    <ul class="homepage-profile-skills">
-      
-        <li>CUDA &amp; 高性能计算</li>
-      
-        <li>LLM 微调与推理部署</li>
-      
-        <li>PyTorch / C++</li>
-      
-        <li>Vibe Coding</li>
-      
-    </ul>
-    <div class="homepage-profile-status">🚀 记录项目实践与持续迭代中的技术思考</div>
-    <div class="homepage-profile-icons">
-      
-        <a href="https://github.com/Ariasu123" target="_blank" rel="noopener" aria-label="GitHub">
-          <i class="iconfont icon-github-fill" aria-hidden="true"></i>
-        </a>
-      
-        <a href="mailto:ariasu_jtle@163.com" target="_blank" rel="noopener" aria-label="Email">
-          <i class="iconfont icon-mail-fill" aria-hidden="true"></i>
-        </a>
-      
-    </div>
-  </aside>
 
-  <div class="homepage-main">
-    <header class="homepage-intro">
-      <div class="homepage-hero-label">WELCOME</div>
-      <h2>探索计算与智能的边界 </h2>
-      <p>欢迎来到我的技术空间！这里会持续发布我的系统学习路线、项目复盘。希望这些工程实践笔记能为你带来启发。</p>
-    </header>
 
-    <section class="homepage-post-list">
+
+<section class="pf-section" id="latest-posts">
+  
+
+  <div class="pf-post-grid pf-post-grid-paged">
+    
       
+      <article class="pf-post-card" data-reveal>
         
-        <article class="homepage-post-item">
-          
-            <a class="homepage-post-cover" href="/my-blog/2026/04/06/05%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86-%E6%96%87%E7%8C%AE%E7%B2%BE%E8%AF%BB%E8%B0%83%E7%A0%94/" target="_self">
-              <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="AI 辅助文献精读调研">
-            </a>
-          
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="/my-blog/2026/04/06/05%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86-%E6%96%87%E7%8C%AE%E7%B2%BE%E8%AF%BB%E8%B0%83%E7%A0%94/" target="_self">AI 辅助文献精读调研</a>
-            </h2>
-            
-            <a class="homepage-post-excerpt" href="/my-blog/2026/04/06/05%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86-%E6%96%87%E7%8C%AE%E7%B2%BE%E8%AF%BB%E8%B0%83%E7%A0%94/" target="_self">
-              <div>AI 辅助文献精读调研 [!summary]AI 辅助文献精读，核心不是“替你读完”，而是帮你完成 5 件事：  快速筛选 辅助理解 结构化提炼 多篇比较 笔记沉淀  最实用的组合通常是：找文献工具 + 单篇精读工具 + 多篇对比工具 + Zotero + 笔记系统  一、工具速览   场景 推荐工具 作用    找相关文献 ResearchRabbit &#x2F; Connected Pape</div>
-            </a>
-            <div class="homepage-post-meta post-metas">
-              
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="2026-04-07 00:00" pubdate>2026-04-07</time>
-                </div>
-              
-              
-              
-                <div class="post-meta">
-                  <i class="iconfont icon-tags"></i>
-                  
-                    <a href="/my-blog/tags/%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86/">#文献管理</a>
-                  
-                    <a href="/my-blog/tags/AI/">#AI</a>
-                  
-                    <a href="/my-blog/tags/Zotero/">#Zotero</a>
-                  
-                    <a href="/my-blog/tags/%E5%AD%A6%E6%9C%AF%E7%A0%94%E7%A9%B6/">#学术研究</a>
-                  
-                </div>
-              
-            </div>
-          </div>
-        </article>
-      
+          <a class="pf-post-cover" href="/my-blog/2026/02/28/hello-blog/" aria-label="Hello Blog">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="Hello Blog" loading="lazy">
+          </a>
         
-        <article class="homepage-post-item">
-          
-            <a class="homepage-post-cover" href="/my-blog/2026/04/01/03Agent-%E4%BB%8E%20OpenSpec%E3%80%81Superpowers%20%E5%88%B0%20TRELLIS%20%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%BC%94%E8%BF%9B/" target="_self">
-              <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="从 OpenSpec、Superpowers 到 TRELLIS：AI 编码工作流的工程化演进">
-            </a>
-          
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="/my-blog/2026/04/01/03Agent-%E4%BB%8E%20OpenSpec%E3%80%81Superpowers%20%E5%88%B0%20TRELLIS%20%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%BC%94%E8%BF%9B/" target="_self">从 OpenSpec、Superpowers 到 TRELLIS：AI 编码工作流的工程化演进</a>
-            </h2>
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
             
-            <a class="homepage-post-excerpt" href="/my-blog/2026/04/01/03Agent-%E4%BB%8E%20OpenSpec%E3%80%81Superpowers%20%E5%88%B0%20TRELLIS%20%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%BC%94%E8%BF%9B/" target="_self">
-              <div>在 AI 编码助手越来越强的今天，“让模型写出代码”已经不是最难的问题，真正难的是让它在复杂项目里持续、稳定、低成本地写对代码。 很多人第一次接触 AI 编程时，都会被它的速度震撼：一句 Prompt，几百行代码立刻就出来了。但只要真正把 AI 拉进长期项目，你很快就会发现，真正麻烦的不是“生成”，而是对齐需求、约束行为、控制上下文、维持质量，以及让一次次会话形成连续的工程记忆。 也正因为如此，社</div>
-            </a>
-            <div class="homepage-post-meta post-metas">
-              
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="2026-04-02 00:00" pubdate>2026-04-02</time>
-                </div>
-              
-              
-                <div class="post-meta mr-3 d-flex align-items-center">
-                  <i class="iconfont icon-category"></i>
-                  
+              <time datetime="2026-03-01 00:00" pubdate>2026-03-01</time>
+            
+            
+              <span class="pf-post-category">
+                
 
 <span class="category-chains">
   
@@ -443,7 +378,7 @@
     
       <span class="category-chain">
         
-  <a href="/my-blog/categories/vibe-coding/" class="category-chain-item">vibe coding</a>
+  <a href="/my-blog/categories/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" class="category-chain-item">博客搭建</a>
   
   
 
@@ -452,85 +387,43 @@
   
 </span>
 
-                </div>
-              
-              
-                <div class="post-meta">
-                  <i class="iconfont icon-tags"></i>
-                  
-                    <a href="/my-blog/tags/%E5%B7%A5%E5%85%B7%E6%8C%87%E5%8D%97/">#工具指南</a>
-                  
-                    <a href="/my-blog/tags/%E6%95%88%E7%8E%87/">#效率</a>
-                  
-                    <a href="/my-blog/tags/%E7%94%9F%E4%BA%A7%E5%8A%9B%E5%B7%A5%E5%85%B7/">#生产力工具</a>
-                  
-                </div>
-              
-            </div>
-          </div>
-        </article>
-      
-        
-        <article class="homepage-post-item">
-          
-            <a class="homepage-post-cover" href="/my-blog/2026/03/27/03Agent-Harness/" target="_self">
-              <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="手工敲代码到 AI 智能体流水线（Harness Engineering）">
-            </a>
-          
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="/my-blog/2026/03/27/03Agent-Harness/" target="_self">手工敲代码到 AI 智能体流水线（Harness Engineering）</a>
-            </h2>
+              </span>
             
-            <a class="homepage-post-excerpt" href="/my-blog/2026/03/27/03Agent-Harness/" target="_self">
-              <div>聊聊软件工程的进化：从手工敲代码到 AI 智能体流水线前阵子，OpenAI 和 Anthropic 等顶尖 AI 实验室先后公布了他们的内部工程实践——让 AI 智能体（Agent）全自动写出了包含上百万行代码的真实产品，而人类一行代码都没写。 很多开发者看完后都有一个疑问：AI 经常会胡说八道（幻觉），写个百来行代码还能凑合，它是怎么做到自主完成几万、几十万行代码的复杂工程，并且不出 Bug 的</div>
-            </a>
-            <div class="homepage-post-meta post-metas">
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/02/28/hello-blog/">Hello Blog</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/02/28/hello-blog/">
+            <div>这是博客初始化后的第一篇文章，用来验证首页文章流、分类标签、搜索和封面展示是否正常。</div>
+          </a>
+          
+            <div class="pf-post-tags">
               
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="2026-03-28 00:00" pubdate>2026-03-28</time>
-                </div>
+                <a href="/my-blog/tags/Hexo/">#Hexo</a>
               
-              
-                <div class="post-meta mr-3 d-flex align-items-center">
-                  <i class="iconfont icon-category"></i>
-                  
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/my-blog/categories/vibe-coding/" class="category-chain-item">vibe coding</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-                </div>
-              
+                <a href="/my-blog/tags/GitHub-Pages/">#GitHub Pages</a>
               
             </div>
-          </div>
-        </article>
-      
-    </section>
-
+          
+        </div>
+      </article>
     
+  </div>
+
+  
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <a class="extend prev" rel="prev" href="/my-blog/page/2/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/my-blog/">1</a><a class="page-number" href="/my-blog/page/2/#board">2</a><span class="page-number current">3</span><a class="page-number" href="/my-blog/page/4/#board">4</a><a class="page-number" href="/my-blog/page/5/#board">5</a><a class="extend next" rel="next" href="/my-blog/page/4/#board"><i class="iconfont icon-arrowright"></i></a>
+      <a class="extend prev" rel="prev" href="/my-blog/page/2/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/my-blog/">1</a><a class="page-number" href="/my-blog/page/2/#board">2</a><span class="page-number current">3</span>
     </span>
   </nav>
 
 
-  </div>
 </section>
+
+
+
+
 
               </div>
             </div>
@@ -618,6 +511,10 @@
   <script  src="/my-blog/js/local-search.js" ></script>
 
 
+
+
+  
+<script src="/my-blog/assets/js/portfolio.js"></script>
 
 
 

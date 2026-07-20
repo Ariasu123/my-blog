@@ -985,18 +985,18 @@ body.mobile-menu-open {
 }
 :root {
   --color-mode: "light";
-  --body-bg-color: #f8fafc;
+  --body-bg-color: #f6f7fb;
   --board-bg-color: #ffffff;
-  --text-color: #334155;
-  --sec-text-color: #64748b;
-  --post-text-color: #1e293b;
-  --post-heading-color: #0f172a;
-  --post-link-color: #2563eb;
-  --link-hover-color: #1d4ed8;
+  --text-color: #3a415c;
+  --sec-text-color: #6b7390;
+  --post-text-color: #2b3252;
+  --post-heading-color: #171c33;
+  --post-link-color: #4f46e5;
+  --link-hover-color: #6366f1;
   --link-hover-bg-color: #f8f9fa;
   --line-color: #eaecef;
-  --navbar-bg-color: #ffffffcc;
-  --navbar-text-color: #0f172a;
+  --navbar-bg-color: #ffffffd9;
+  --navbar-text-color: #1e2440;
   --subtitle-color: #fff;
   --scrollbar-color: #c4c6c9;
   --scrollbar-hover-color: #a6a6a6;
@@ -1004,7 +1004,7 @@ body.mobile-menu-open {
   --button-hover-bg-color: #f2f3f5;
   --highlight-bg-color: #f6f8fa;
   --inlinecode-bg-color: rgba(175,184,193,0.2);
-  --fold-title-color: #334155;
+  --fold-title-color: #3a415c;
   --fold-border-color: #eaecef;
 }
 @media (prefers-color-scheme: dark) {
@@ -1012,18 +1012,18 @@ body.mobile-menu-open {
     --color-mode: "dark";
   }
   :root:not([data-user-color-scheme]) {
-    --body-bg-color: #111827;
-    --board-bg-color: #1f2937;
-    --text-color: #cbd5e1;
-    --sec-text-color: #94a3b8;
-    --post-text-color: #e2e8f0;
-    --post-heading-color: #f8fafc;
-    --post-link-color: #60a5fa;
-    --link-hover-color: #93c5fd;
+    --body-bg-color: #0a0e1a;
+    --board-bg-color: #10162b;
+    --text-color: #aab4d4;
+    --sec-text-color: #7c88a8;
+    --post-text-color: #d6dcf0;
+    --post-heading-color: #f1f4ff;
+    --post-link-color: #818cf8;
+    --link-hover-color: #a5b4fc;
     --link-hover-bg-color: #364151;
     --line-color: #435266;
-    --navbar-bg-color: #111827cc;
-    --navbar-text-color: #e5e7eb;
+    --navbar-bg-color: #0d1426cc;
+    --navbar-text-color: #dbe2f4;
     --subtitle-color: #d0d0d0;
     --scrollbar-color: #687582;
     --scrollbar-hover-color: #9da8b3;
@@ -1031,7 +1031,7 @@ body.mobile-menu-open {
     --button-hover-bg-color: #46647e;
     --highlight-bg-color: #303030;
     --inlinecode-bg-color: rgba(99,110,123,0.4);
-    --fold-title-color: #cbd5e1;
+    --fold-title-color: #aab4d4;
     --fold-border-color: #435266;
   }
   :root:not([data-user-color-scheme]) img {
@@ -1043,7 +1043,7 @@ body.mobile-menu-open {
     :root:not([data-user-color-scheme]) .navbar .dropdown-collapse,
     :root:not([data-user-color-scheme]) .top-nav-collapse,
     :root:not([data-user-color-scheme]) .navbar-col-show {
-      background: rgba(17,24,39,0.8);
+      background: rgba(13,20,38,0.8);
       -webkit-backdrop-filter: blur(6px);
       backdrop-filter: blur(6px);
     }
@@ -1052,7 +1052,7 @@ body.mobile-menu-open {
     :root:not([data-user-color-scheme]) .navbar .dropdown-collapse,
     :root:not([data-user-color-scheme]) .top-nav-collapse,
     :root:not([data-user-color-scheme]) .navbar-col-show {
-      background: #111827;
+      background: #0d1426;
     }
   }
   :root:not([data-user-color-scheme]) .license-box {
@@ -1066,18 +1066,18 @@ body.mobile-menu-open {
 }
 @media not print {
   [data-user-color-scheme="dark"] {
-    --body-bg-color: #111827;
-    --board-bg-color: #1f2937;
-    --text-color: #cbd5e1;
-    --sec-text-color: #94a3b8;
-    --post-text-color: #e2e8f0;
-    --post-heading-color: #f8fafc;
-    --post-link-color: #60a5fa;
-    --link-hover-color: #93c5fd;
+    --body-bg-color: #0a0e1a;
+    --board-bg-color: #10162b;
+    --text-color: #aab4d4;
+    --sec-text-color: #7c88a8;
+    --post-text-color: #d6dcf0;
+    --post-heading-color: #f1f4ff;
+    --post-link-color: #818cf8;
+    --link-hover-color: #a5b4fc;
     --link-hover-bg-color: #364151;
     --line-color: #435266;
-    --navbar-bg-color: #111827cc;
-    --navbar-text-color: #e5e7eb;
+    --navbar-bg-color: #0d1426cc;
+    --navbar-text-color: #dbe2f4;
     --subtitle-color: #d0d0d0;
     --scrollbar-color: #687582;
     --scrollbar-hover-color: #9da8b3;
@@ -1085,7 +1085,7 @@ body.mobile-menu-open {
     --button-hover-bg-color: #46647e;
     --highlight-bg-color: #303030;
     --inlinecode-bg-color: rgba(99,110,123,0.4);
-    --fold-title-color: #cbd5e1;
+    --fold-title-color: #aab4d4;
     --fold-border-color: #435266;
   }
   [data-user-color-scheme="dark"] img {
@@ -1097,7 +1097,7 @@ body.mobile-menu-open {
     [data-user-color-scheme="dark"] .navbar .dropdown-collapse,
     [data-user-color-scheme="dark"] .top-nav-collapse,
     [data-user-color-scheme="dark"] .navbar-col-show {
-      background: rgba(17,24,39,0.8);
+      background: rgba(13,20,38,0.8);
       -webkit-backdrop-filter: blur(6px);
       backdrop-filter: blur(6px);
     }
@@ -1106,7 +1106,7 @@ body.mobile-menu-open {
     [data-user-color-scheme="dark"] .navbar .dropdown-collapse,
     [data-user-color-scheme="dark"] .top-nav-collapse,
     [data-user-color-scheme="dark"] .navbar-col-show {
-      background: #111827;
+      background: #0d1426;
     }
   }
   [data-user-color-scheme="dark"] .license-box {

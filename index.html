@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html lang="zh-CN" data-default-color-scheme=light>
+<html lang="zh-CN" data-default-color-scheme=dark>
 
 
 
@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
-  <meta name="theme-color" content="#ffffffcc">
+  <meta name="theme-color" content="#ffffffd9">
   <meta name="author" content="Ariasu">
   <meta name="keywords" content="">
   
@@ -89,7 +89,7 @@
   <header>
     
 
-<div class="header-inner" style="height: 72vh;">
+<div class="header-inner" style="height: 100vh;">
   <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand" href="/my-blog/">
@@ -114,6 +114,18 @@
               <a class="nav-link" href="/my-blog/" target="_self">
                 <i class="iconfont icon-home-fill"></i>
                 <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
               </a>
             </li>
           
@@ -211,6 +223,20 @@
           
           
             <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/archives/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-archive-fill"></i>
+                  <span>归档</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
               <a href="/my-blog/categories/" target="_self">
                 <div class="mobile-grid-item">
                   <i class="iconfont icon-category-fill"></i>
@@ -291,25 +317,47 @@
 
   
 
-<div id="banner" class="banner" parallax=true
-     style="background: url('/my-blog/assets/images/default-banner.svg') no-repeat center center; background-size: cover;">
-  <div class="full-bg-img">
-    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.25)">
-      <div class="banner-text text-center fade-in-up">
-        <div class="h2">
+
+  <!-- 首页第一页:全屏 Hero(网格光晕背景由 CSS 提供) -->
+  <div id="banner" class="banner pf-hero">
+    <div class="pf-hero-bg" aria-hidden="true"></div>
+    <div class="pf-hero-inner container">
+      
+        <div class="pf-hero-eyebrow">
           
-            <span id="subtitle"></span>
+            <span class="pf-hero-chip">AI Infra</span>
+          
+            <span class="pf-hero-chip">LLM</span>
+          
+            <span class="pf-hero-chip">Agent</span>
           
         </div>
-
+      
+      <h1 class="pf-hero-name">Ariasu</h1>
+      <div class="pf-hero-id">
+        @Ariasu123
+        <span class="pf-hero-dot">·</span>Wuhan, China
+      </div>
+      
+        <p class="pf-hero-intro">华中科技大学在读研一,专注 AI Infra 与 Agent 开发。这里持续记录系统学习路线与项目复盘,希望这些工程实践笔记能为你带来启发。</p>
+      
+      <div class="pf-hero-actions">
+        <a class="pf-btn pf-btn-primary" href="#latest-posts">阅读文章</a>
+        <a class="pf-btn pf-btn-ghost" href="/my-blog/projects/">查看项目</a>
+        
+          <a class="pf-btn pf-btn-ghost" href="https://github.com/Ariasu123" target="_blank" rel="noopener">GitHub</a>
         
       </div>
-
+      
+        <div class="pf-hero-status"><span class="pf-hero-status-dot" aria-hidden="true"></span>记录项目实践与持续迭代中的技术思考</div>
       
     </div>
+    
+      <div class="scroll-down-bar">
+        <i class="iconfont icon-arrowdown"></i>
+      </div>
+    
   </div>
-</div>
-
 
 
 </div>
@@ -320,7 +368,7 @@
     
       <div class="container nopadding-x-md">
         <div id="board"
-          >
+          style="margin-top: 0">
           
           <div class="container">
             <div class="row">
@@ -328,73 +376,49 @@
                 
 
 <h1 style="display: none">my-blog</h1>
-<section class="homepage-shell">
-  <aside class="homepage-sidebar">
-    <img class="homepage-profile-avatar" src="/my-blog/assets/images/my-avatar.jpg" srcset="/my-blog/img/loading.gif" lazyload alt="Ariasu">
-    <div class="homepage-profile-name">Ariasu</div>
-    <div class="homepage-profile-id">@Ariasu123</div>
-    <p class="homepage-profile-intro">华中科技大学在读研一 ｜ 专注 AI Infra 与 Agent开发</p>
-    <a class="homepage-profile-email" href="mailto:ariasu_jtle@163.com">ariasu_jtle@163.com</a>
-    <ul class="homepage-profile-skills">
-      
-        <li>CUDA &amp; 高性能计算</li>
-      
-        <li>LLM 微调与推理部署</li>
-      
-        <li>PyTorch / C++</li>
-      
-        <li>Vibe Coding</li>
-      
-    </ul>
-    <div class="homepage-profile-status">🚀 记录项目实践与持续迭代中的技术思考</div>
-    <div class="homepage-profile-icons">
-      
-        <a href="https://github.com/Ariasu123" target="_blank" rel="noopener" aria-label="GitHub">
-          <i class="iconfont icon-github-fill" aria-hidden="true"></i>
-        </a>
-      
-        <a href="mailto:ariasu_jtle@163.com" target="_blank" rel="noopener" aria-label="Email">
-          <i class="iconfont icon-mail-fill" aria-hidden="true"></i>
-        </a>
-      
+
+
+  <section class="pf-stats" aria-label="站点统计">
+    <div class="pf-stat-item" data-reveal>
+      <span class="pf-stat-num">13</span>
+      <span class="pf-stat-label">文章</span>
     </div>
-  </aside>
+    <div class="pf-stat-item" data-reveal>
+      <span class="pf-stat-num">4</span>
+      <span class="pf-stat-label">分类</span>
+    </div>
+    <div class="pf-stat-item" data-reveal>
+      <span class="pf-stat-num">6</span>
+      <span class="pf-stat-label">公开仓库</span>
+    </div>
+  </section>
 
-  <div class="homepage-main">
-    <header class="homepage-intro">
-      <div class="homepage-hero-label">WELCOME</div>
-      <h2>探索计算与智能的边界 </h2>
-      <p>欢迎来到我的技术空间！这里会持续发布我的系统学习路线、项目复盘。希望这些工程实践笔记能为你带来启发。</p>
+
+<section class="pf-section" id="latest-posts">
+  
+    <header class="pf-section-head" data-reveal>
+      <h2>最新文章</h2>
+      <a class="pf-section-more" href="/my-blog/archives/">全部归档<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
     </header>
+  
 
-    <section class="homepage-post-list">
+  <div class="pf-post-grid">
+    
       
+      <article class="pf-post-card" data-reveal>
         
-        <article class="homepage-post-item">
-          
-            <a class="homepage-post-cover" href="/my-blog/2026/04/16/06llm-Attention%20-GQA/" target="_self">
-              <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="Attention 与 GQA：从 KV Cache 到多头共享">
-            </a>
-          
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="/my-blog/2026/04/16/06llm-Attention%20-GQA/" target="_self">Attention 与 GQA：从 KV Cache 到多头共享</a>
-            </h2>
+          <a class="pf-post-cover" href="/my-blog/2026/04/16/06llm-Attention%20-GQA/" aria-label="Attention 与 GQA：从 KV Cache 到多头共享">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="Attention 与 GQA：从 KV Cache 到多头共享" loading="lazy">
+          </a>
+        
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
             
-            <a class="homepage-post-excerpt" href="/my-blog/2026/04/16/06llm-Attention%20-GQA/" target="_self">
-              <div>1. 注意力机制：数学公式$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$  $Q$ (Query): “我要找什么？”（当前词的查询向量）。 $K$ (Key): “我有什么标签？”（所有词的索引向量）。 $V$ (Value): “我包含什么信息？”（所有词的内容向量</div>
-            </a>
-            <div class="homepage-post-meta post-metas">
-              
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="2026-04-17 00:00" pubdate>2026-04-17</time>
-                </div>
-              
-              
-                <div class="post-meta mr-3 d-flex align-items-center">
-                  <i class="iconfont icon-category"></i>
-                  
+              <time datetime="2026-04-17 00:00" pubdate>2026-04-17</time>
+            
+            
+              <span class="pf-post-category">
+                
 
 <span class="category-chains">
   
@@ -411,50 +435,45 @@
   
 </span>
 
-                </div>
+              </span>
+            
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/04/16/06llm-Attention%20-GQA/">Attention 与 GQA：从 KV Cache 到多头共享</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/04/16/06llm-Attention%20-GQA/">
+            <div>1. 注意力机制：数学公式$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$  $Q$ (Query): “我要找</div>
+          </a>
+          
+            <div class="pf-post-tags">
               
+                <a href="/my-blog/tags/LLM/">#LLM</a>
               
-                <div class="post-meta">
-                  <i class="iconfont icon-tags"></i>
-                  
-                    <a href="/my-blog/tags/LLM/">#LLM</a>
-                  
-                    <a href="/my-blog/tags/GQA/">#GQA</a>
-                  
-                    <a href="/my-blog/tags/KVCache/">#KVCache</a>
-                  
-                </div>
+                <a href="/my-blog/tags/GQA/">#GQA</a>
+              
+                <a href="/my-blog/tags/KVCache/">#KVCache</a>
               
             </div>
-          </div>
-        </article>
+          
+        </div>
+      </article>
+    
       
+      <article class="pf-post-card" data-reveal>
         
-        <article class="homepage-post-item">
-          
-            <a class="homepage-post-cover" href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/" target="_self">
-              <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="Rope位置编码和YaRN">
-            </a>
-          
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/" target="_self">Rope位置编码和YaRN</a>
-            </h2>
+          <a class="pf-post-cover" href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/" aria-label="Rope位置编码和YaRN">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="Rope位置编码和YaRN" loading="lazy">
+          </a>
+        
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
             
-            <a class="homepage-post-excerpt" href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/" target="_self">
-              <div>RoPE (Rotary Positional Embedding，旋转位置编码) 是目前大模型（如 Llama, Qwen, MiniMind）的标配。 在它出现之前，模型很难处理超长的句子。RoPE 的核心天才之处在于：它利用复数旋转的数学特性，把“绝对位置”变成了“相对位置”。  1. 为什么要有 RoPE？（痛点）在 Transformer 中，如果不加位置编码，模型看“我爱吃蝉”和“吃我</div>
-            </a>
-            <div class="homepage-post-meta post-metas">
-              
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="2026-04-16 00:00" pubdate>2026-04-16</time>
-                </div>
-              
-              
-                <div class="post-meta mr-3 d-flex align-items-center">
-                  <i class="iconfont icon-category"></i>
-                  
+              <time datetime="2026-04-16 00:00" pubdate>2026-04-16</time>
+            
+            
+              <span class="pf-post-category">
+                
 
 <span class="category-chains">
   
@@ -471,39 +490,35 @@
   
 </span>
 
-                </div>
-              
-              
-            </div>
-          </div>
-        </article>
-      
-        
-        <article class="homepage-post-item">
-          
-            <a class="homepage-post-cover" href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/" target="_self">
-              <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件">
-            </a>
-          
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/" target="_self">PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</a>
-            </h2>
+              </span>
             
-            <a class="homepage-post-excerpt" href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/" target="_self">
-              <div>PyTorch 及其他相关方法1. PyTorch 的基础架构   组件 一句话理解    Tensor 张量，PyTorch 最基础的数据结构。   Parameter 可训练参数，会被模型自动注册。   Module 层或模型的基类，用来组织参数和子模块。   Autograd 自动求导系统，负责计算梯度。   Optimizer 根据梯度更新参数。   2. 常用 torch 方法2.1 t</div>
-            </a>
-            <div class="homepage-post-meta post-metas">
-              
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="2026-04-15 00:00" pubdate>2026-04-15</time>
-                </div>
-              
-              
-                <div class="post-meta mr-3 d-flex align-items-center">
-                  <i class="iconfont icon-category"></i>
-                  
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/">Rope位置编码和YaRN</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/04/15/06llm-Rope%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81%E5%92%8CYaRN/">
+            <div>RoPE (Rotary Positional Embedding，旋转位置编码) 是目前大模型（如 Llama, Qwen, MiniMind）的标配。 在它出现之前，模型很难处理超长的句子。RoPE 的核心天才之处在于：它利用复数旋转的</div>
+          </a>
+          
+        </div>
+      </article>
+    
+      
+      <article class="pf-post-card" data-reveal>
+        
+          <a class="pf-post-cover" href="/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/" aria-label="MiniMind 架构图解析">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="MiniMind 架构图解析" loading="lazy">
+          </a>
+        
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
+            
+              <time datetime="2026-04-15 00:00" pubdate>2026-04-15</time>
+            
+            
+              <span class="pf-post-category">
+                
 
 <span class="category-chains">
   
@@ -520,36 +535,269 @@
   
 </span>
 
-                </div>
+              </span>
+            
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/">MiniMind 架构图解析</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/04/14/06llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/">
+            <div>1. 整体流程这是模型处理信息的全过程：  Tokenizer Encoder（分词编码）：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。 Input Embedding（嵌入层）：把数字编号变成一串高维向量（</div>
+          </a>
+          
+            <div class="pf-post-tags">
               
+                <a href="/my-blog/tags/MiniMind/">#MiniMind</a>
               
-                <div class="post-meta">
-                  <i class="iconfont icon-tags"></i>
-                  
-                    <a href="/my-blog/tags/LLM/">#LLM</a>
-                  
-                    <a href="/my-blog/tags/PyTorch/">#PyTorch</a>
-                  
-                    <a href="/my-blog/tags/Tensor/">#Tensor</a>
-                  
-                </div>
+                <a href="/my-blog/tags/LLM/">#LLM</a>
+              
+                <a href="/my-blog/tags/%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">#架构解析</a>
               
             </div>
-          </div>
-        </article>
-      
-    </section>
-
+          
+        </div>
+      </article>
     
+      
+      <article class="pf-post-card" data-reveal>
+        
+          <a class="pf-post-cover" href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/" aria-label="PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件" loading="lazy">
+          </a>
+        
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
+            
+              <time datetime="2026-04-15 00:00" pubdate>2026-04-15</time>
+            
+            
+              <span class="pf-post-category">
+                
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+              </span>
+            
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/">PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/04/14/06llm-Pytorch%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95/">
+            <div>PyTorch 及其他相关方法1. PyTorch 的基础架构   组件 一句话理解    Tensor 张量，PyTorch 最基础的数据结构。   Parameter 可训练参数，会被模型自动注册。   Module 层或模型的基类，用</div>
+          </a>
+          
+            <div class="pf-post-tags">
+              
+                <a href="/my-blog/tags/LLM/">#LLM</a>
+              
+                <a href="/my-blog/tags/PyTorch/">#PyTorch</a>
+              
+                <a href="/my-blog/tags/Tensor/">#Tensor</a>
+              
+            </div>
+          
+        </div>
+      </article>
+    
+      
+      <article class="pf-post-card" data-reveal>
+        
+          <a class="pf-post-cover" href="/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/" aria-label="vLLM 与 SGLang 学习路线">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="vLLM 与 SGLang 学习路线" loading="lazy">
+          </a>
+        
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
+            
+              <time datetime="2026-04-13 00:00" pubdate>2026-04-13</time>
+            
+            
+              <span class="pf-post-category">
+                
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/AI-Infra/" class="category-chain-item">AI Infra</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+              </span>
+            
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/">vLLM 与 SGLang 学习路线</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/04/12/02AI%20infra-vLLM%20%E4%B8%8E%20SGLang%20%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/">
+            <div>[!summary]  推荐顺序：先学 vLLM，再学 SGLang。 Mac 适合做学习、开发和 toy experiment；真实性能实验放到远程 Linux GPU。 如果目标是 AI infra 岗位，重点不是“会用框架”，而是“</div>
+          </a>
+          
+            <div class="pf-post-tags">
+              
+                <a href="/my-blog/tags/AIInfra/">#AIInfra</a>
+              
+                <a href="/my-blog/tags/vLLM/">#vLLM</a>
+              
+                <a href="/my-blog/tags/SGLang/">#SGLang</a>
+              
+            </div>
+          
+        </div>
+      </article>
+    
+      
+      <article class="pf-post-card" data-reveal>
+        
+          <a class="pf-post-cover" href="/my-blog/2026/04/12/02AI%20infra-%E4%BB%8E%20vLLM%20%E5%92%8C%20SGLang%20%E5%85%A5%E9%97%A8%EF%BC%8C%E5%88%B0%20AI%20Infra%20%E6%B1%82%E8%81%8C%E8%90%BD%E5%9C%B0/" aria-label="从 vLLM 和 SGLang 入门，到 AI Infra 求职落地">
+            <img src="/my-blog/assets/images/default-cover.svg" srcset="/my-blog/img/loading.gif" lazyload alt="从 vLLM 和 SGLang 入门，到 AI Infra 求职落地" loading="lazy">
+          </a>
+        
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
+            
+              <time datetime="2026-04-13 00:00" pubdate>2026-04-13</time>
+            
+            
+              <span class="pf-post-category">
+                
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/AI-Infra/" class="category-chain-item">AI Infra</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+              </span>
+            
+          </div>
+          <h3 class="pf-post-title">
+            <a href="/my-blog/2026/04/12/02AI%20infra-%E4%BB%8E%20vLLM%20%E5%92%8C%20SGLang%20%E5%85%A5%E9%97%A8%EF%BC%8C%E5%88%B0%20AI%20Infra%20%E6%B1%82%E8%81%8C%E8%90%BD%E5%9C%B0/">从 vLLM 和 SGLang 入门，到 AI Infra 求职落地</a>
+          </h3>
+          
+          <a class="pf-post-excerpt" href="/my-blog/2026/04/12/02AI%20infra-%E4%BB%8E%20vLLM%20%E5%92%8C%20SGLang%20%E5%85%A5%E9%97%A8%EF%BC%8C%E5%88%B0%20AI%20Infra%20%E6%B1%82%E8%81%8C%E8%90%BD%E5%9C%B0/">
+            <div>从 vLLM 和 SGLang 入门，到 AI Infra 求职落地这两年，大模型工程岗位正在发生一个很明显的变化： 企业不再只需要“会调 API 的应用工程师”，而是越来越需要“会做推理系统的工程师”。 以前很多人做 AI 应用开发，只要</div>
+          </a>
+          
+            <div class="pf-post-tags">
+              
+                <a href="/my-blog/tags/AIInfra/">#AIInfra</a>
+              
+                <a href="/my-blog/tags/vLLM/">#vLLM</a>
+              
+                <a href="/my-blog/tags/SGLang/">#SGLang</a>
+              
+                <a href="/my-blog/tags/LLMServing/">#LLMServing</a>
+              
+            </div>
+          
+        </div>
+      </article>
+    
+  </div>
+
+  
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <span class="page-number current">1</span><a class="page-number" href="/my-blog/page/2/#board">2</a><a class="page-number" href="/my-blog/page/3/#board">3</a><span class="space">&hellip;</span><a class="page-number" href="/my-blog/page/5/#board">5</a><a class="extend next" rel="next" href="/my-blog/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+      <span class="page-number current">1</span><a class="page-number" href="/my-blog/page/2/#board">2</a><a class="page-number" href="/my-blog/page/3/#board">3</a><a class="extend next" rel="next" href="/my-blog/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 
 
-  </div>
 </section>
+
+
+  <section class="pf-section" id="featured-projects">
+    <header class="pf-section-head" data-reveal>
+      <h2>精选项目</h2>
+      <a class="pf-section-more" href="/my-blog/projects/">全部项目<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
+    </header>
+    <div class="pf-project-grid">
+      
+        <article class="pf-project-card" data-reveal>
+          <div class="pf-project-head">
+            <h3>tinyllm</h3>
+            <span class="pf-project-status">进行中</span>
+          </div>
+          <p class="pf-project-intro">从零实现的小型 LLM 训练与推理项目,覆盖分词、模型结构、训练循环与推理部署的完整链路。</p>
+          
+            <div class="pf-project-tech">
+              <span>PyTorch</span><span>CUDA</span><span>LLM</span>
+            </div>
+          
+          
+            <a class="pf-project-link" href="https://github.com/Ariasu123/tinyllm" target="_blank" rel="noopener">查看仓库<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
+          
+        </article>
+      
+        <article class="pf-project-card" data-reveal>
+          <div class="pf-project-head">
+            <h3>my-blog</h3>
+            <span class="pf-project-status">进行中</span>
+          </div>
+          <p class="pf-project-intro">个人技术博客,包含一套从 Obsidian 私有知识库自动同步发布的自动化工作流模板。</p>
+          
+            <div class="pf-project-tech">
+              <span>Hexo</span><span>Fluid</span><span>GitHub Actions</span>
+            </div>
+          
+          
+            <a class="pf-project-link" href="https://github.com/Ariasu123/my-blog" target="_blank" rel="noopener">查看仓库<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
+          
+        </article>
+      
+    </div>
+  </section>
+
+
+
+  <section class="pf-section pf-about" id="about-contact" data-reveal>
+    <img class="pf-about-avatar" src="/my-blog/assets/images/my-avatar.jpg" srcset="/my-blog/img/loading.gif" lazyload alt="Ariasu 的头像">
+    <h2>关于我</h2>
+    <p class="pf-about-intro">华中科技大学在读研一,专注 AI Infra 与 Agent 开发。这里持续记录系统学习路线与项目复盘,希望这些工程实践笔记能为你带来启发。</p>
+    <div class="pf-about-actions">
+      
+        <a class="pf-btn pf-btn-primary" href="mailto:ariasu_jtle@163.com">邮箱联系</a>
+      
+      
+        <a class="pf-btn pf-btn-ghost" href="https://github.com/Ariasu123" target="_blank" rel="noopener">GitHub</a>
+      
+      <a class="pf-btn pf-btn-ghost" href="/my-blog/about/">了解更多</a>
+    </div>
+  </section>
+
 
               </div>
             </div>
@@ -637,6 +885,10 @@
   <script  src="/my-blog/js/local-search.js" ></script>
 
 
+
+
+  
+<script src="/my-blog/assets/js/portfolio.js"></script>
 
 
 
