@@ -1,6 +1,6 @@
 ---
 title: MiniMind 架构图解析
-date: '2026-04-15 00:00:00'
+date: '2026-04-15 08:00:00'
 tags:
   - MiniMind
   - LLM
