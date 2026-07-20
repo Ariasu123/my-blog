@@ -1,5 +1,5 @@
 ---
-date: '2026-04-20 08:00:00'
+date: '2026-04-20 00:00:00'
 published: true
 tags:
   - LLM
@@ -7,6 +7,7 @@ tags:
 title: MoE (混合专家模型) 学习笔记
 categories:
   - LLM
+index_img: /assets/covers/MoE.JPG
 _sync_managed: repo-a
 _sync_source_path: 01 llm/MoE学习笔记.md
 ---
