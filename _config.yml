@@ -85,4 +85,4 @@ markdown:
     linkify: true
     typographer: true
   plugins:
-    - markdown-it-katex
+    - markdown-it-mathjax3

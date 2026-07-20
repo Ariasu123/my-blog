@@ -31,9 +31,7 @@ post:
   banner_img_height: 42
   banner_mask_alpha: 0.35
   math:
-    enable: true
-    specific: false
-    engine: katex
+    enable: false
   meta:
     date:
       enable: true
