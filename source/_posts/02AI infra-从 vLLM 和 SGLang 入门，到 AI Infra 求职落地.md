@@ -1,6 +1,6 @@
 ---
 title: 从 vLLM 和 SGLang 入门，到 AI Infra 求职落地
-date: '2026-04-13 00:00:00'
+date: '2026-04-13 08:00:00'
 tags:
   - AIInfra
   - vLLM

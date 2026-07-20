@@ -1,5 +1,5 @@
 ---
-date: '2026-03-28 00:00:00'
+date: '2026-03-28 08:00:00'
 published: true
 title: 手工敲代码到 AI 智能体流水线（Harness Engineering）
 categories: vibe coding
