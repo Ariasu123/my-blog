@@ -5,8 +5,8 @@
   
   <entry>
     <title>MoE (混合专家模型) 学习笔记</title>
-    <link href="/my-blog/2026/04/19/01%20llm-MoE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"/>
-    <url>/my-blog/2026/04/19/01%20llm-MoE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
+    <link href="/my-blog/2026/04/20/01%20llm-MoE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"/>
+    <url>/my-blog/2026/04/20/01%20llm-MoE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
     
     <content type="html"><![CDATA[<h2 id="一、-MoE-核心理论与本质概念"><a href="#一、-MoE-核心理论与本质概念" class="headerlink" title="一、 MoE 核心理论与本质概念"></a>一、 MoE 核心理论与本质概念</h2><h3 id="1-核心定义与价值"><a href="#1-核心定义与价值" class="headerlink" title="1. 核心定义与价值"></a>1. 核心定义与价值</h3><p>传统稠密模型（Dense Model）在处理任何输入时，都会强制激活全部参数，计算量与参数量完全绑定。<strong>混合专家模型（MoE）巧妙地将模型总容量与激活计算量解耦。</strong> 通过引入路由机制，模型每次只激活极少部分的“专家”网络参与计算，从而在不显著增加推理计算量的前提下，大幅提升模型的参数总容量。</p><h3 id="2-MoEGate-路由门控-的核心机制"><a href="#2-MoEGate-路由门控-的核心机制" class="headerlink" title="2. MoEGate (路由门控) 的核心机制"></a>2. MoEGate (路由门控) 的核心机制</h3><p>传统的 FFN 层通常使用 SiLU 等激活函数对特征维度进行门控筛选，而在 MoE 架构中，引入了一套全新的门控筛选机制——<strong>Router（路由器）</strong>，用于对不同的专家进行筛选。</p><ul><li><p><strong>计算逻辑：</strong> 对于每个到来的 Token，系统会拿出其前一层的隐藏状态（<code>hidden_state</code>）与 gate 的权重进行点积计算。点积越大，表示该 Token 越“偏爱”某个专家。</p></li><li><p><strong>Top-K 筛选：</strong> 根据点积得分，模型会为每个 Token 选出得分最高的 <code>Top_k</code> 个专家进行权重处理和特征提取。</p></li></ul><hr><h2 id="二、-负载均衡与双重辅助损失推导"><a href="#二、-负载均衡与双重辅助损失推导" class="headerlink" title="二、 负载均衡与双重辅助损失推导"></a>二、 负载均衡与双重辅助损失推导</h2><p>在 MoEGate 的实际运行中，必须防止一个致命问题：某个专家被选择过多，被过度依赖（强者恒强），而其他专家被闲置。计算的核心在于综合考虑“打分”和“频率”，不让某个专家太过被偏爱。针对这一问题，业界提出了两种维度的**辅助损失函数（Auxiliary Loss）**来进行约束：</p><h3 id="1-序列级辅助损失（Sequence-level-Auxiliary-Loss-seq-aux-True）"><a href="#1-序列级辅助损失（Sequence-level-Auxiliary-Loss-seq-aux-True）" class="headerlink" title="1. 序列级辅助损失（Sequence-level Auxiliary Loss, seq_aux=True）"></a>1. 序列级辅助损失（Sequence-level Auxiliary Loss, <code>seq_aux=True</code>）</h3><p>该方式以每个序列（句子&#x2F;样本）为单位计算负载，保证每个句子内部都不会过度依赖某个专家。它非常适用于处理长序列或需要细粒度均衡的场景。</p><p><strong>数学推导与计算步骤：</strong></p><ol><li><p>统计每个序列中各专家被选中的次数（其中 $b$ 为 batch 索引，$t$ 为序列位置，$j$ 为 top-k 中的第 $j$ 个专家）：</p><p> $$c_{b,e} &#x3D; \sum_{t&#x3D;1}^{L} \sum_{j&#x3D;1}^{k} \mathbf{1}(\text{topk_idx}_{b,t,j} &#x3D; e)$$</p></li><li><p>归一化为相对负载率（理想均匀负载为 1，若 $\tilde{c}_{b,e} &gt; 1$，则表示专家 $e$ 在该序列中被过度使用）：</p><p> $$\tilde{c}<em>{b,e} &#x3D; \frac{c</em>{b,e}}{L \cdot k &#x2F; E}$$</p></li><li><p>计算该序列中专家 $e$ 的平均打分（$s$ 为 Router 给出的 softmax 概率得分）：</p><p> $$\bar{s}<em>{b,e} &#x3D; \frac{1}{L} \sum</em>{t&#x3D;1}^{L} s_{(b,t),e}$$</p></li><li><p>计算序列级辅助损失（$\alpha$ 为损失权重系数）：</p><p> $$\mathcal{L}<em>{\text{aux}}^{\text{seq}} &#x3D; \alpha \cdot \frac{1}{B} \sum</em>{b&#x3D;1}^{B} \sum_{e&#x3D;1}^{E} \tilde{c}<em>{b,e} \cdot \bar{s}</em>{b,e}$$</p></li></ol><blockquote><p><strong>直观解释：</strong> 如果某个专家在某个序列中被高频选中（导致 $\tilde{c}<em>{b,e} &gt; 1$），且其平均得分 $\bar{s}</em>{b,e}$ 也高，两者的乘积就会变大，导致整体损失上升。通过梯度反向传播，模型会抑制该专家的打分，促使其被少选；反之，使用不足但分数高的专家会被鼓励多用。</p></blockquote><h3 id="2-批级辅助损失（Batch-level-Auxiliary-Loss-seq-aux-False）"><a href="#2-批级辅助损失（Batch-level-Auxiliary-Loss-seq-aux-False）" class="headerlink" title="2. 批级辅助损失（Batch-level Auxiliary Loss, seq_aux=False）"></a>2. 批级辅助损失（Batch-level Auxiliary Loss, <code>seq_aux=False</code>）</h3><p>该方式以整个 Batch 为单位统计负载，保证整体不会过度依赖某个专家。这种方式计算更简洁、高效，是 Switch Transformer 等主流方案采用的方式，极其适合大规模训练。</p><p><strong>数学推导与计算步骤：</strong></p><ol><li><p>计算专家 $e$ 的全局平均选择率（其中 $N$ 为当前 batch 的 token 总数，$m_{i,e}$ 来自展平后的 top-k 索引的 one-hot 编码）：</p><p> $$f_e &#x3D; \frac{1}{N \cdot k} \sum_{i&#x3D;1}^{N \cdot k} m_{i,e}$$</p></li><li><p>标准化为“相对负载因子”（绝对均衡时 $f_e &#x3D; 1&#x2F;E$，乘以 $E$ 后均衡态的 $\hat{f}_e$ 即为 1）：</p><p> $$\hat{f}_e &#x3D; f_e \cdot E$$</p></li><li><p>计算专家 $e$ 的全局平均打分：</p><p> $$p_e &#x3D; \frac{1}{N} \sum_{i&#x3D;1}^{N} s_{i,e}$$</p></li><li><p>计算批级辅助损失：</p><p> $$\mathcal{L}<em>{\text{aux}}^{\text{batch}} &#x3D; \alpha \cdot \sum</em>{e&#x3D;1}^{E} \hat{f}_e \cdot p_e$$</p></li></ol><blockquote><p><strong>直观解释：</strong> 损失项 $\hat{f}_e \cdot p_e$ 构成了直接的惩罚机制。对于高负载的专家（$\hat{f}_e &gt; 1$），系统要求其具有较低的平均得分 $p_e$ 以降低 Loss；而低负载的专家应有较高的分数。门控网络会以此调整打分分布，从而在全局 Batch 层面实现精妙的负载均衡。</p></blockquote><hr><h2 id="三、-MoE-演进历程"><a href="#三、-MoE-演进历程" class="headerlink" title="三、 MoE 演进历程"></a>三、 MoE 演进历程</h2><p>MoE 架构的发展是一部不断追求“规模与效率解耦”的历史：</p><ul><li><p><strong>萌芽阶段 (1991年)：</strong> 提出竞争式损失函数，迫使专家网络产生专业化分工。</p></li><li><p><strong>RNN与早期Transformer (2017-2021年)：</strong> Google 引入稀疏门控与 Top-k 机制。随后的 Switch Transformer 进一步采用极简的 Top-1 路由，将参数推至 1.6 万亿，确立了“参数量作为独立缩放轴”的理念。</p></li><li><p><strong>当前主流趋势：</strong> 由早期如 Mixtral 8x7B 的“大参数、少专家”架构，逐渐演进为如 DeepSeek-V3 的“小参数、多专家”架构，通过更细粒度的专家分工实现极致的推理成本控制与高性能。</p></li></ul><hr><h2 id="四、-代码实现与分布式工程优化"><a href="#四、-代码实现与分布式工程优化" class="headerlink" title="四、 代码实现与分布式工程优化"></a>四、 代码实现与分布式工程优化</h2><p>当 MoE 步入大模型集群时，单机代码必须进行深度分布式改造，以下是核心工程实践：</p><ol><li><p><strong>专家模块与底层聚合</strong></p><ul><li><p><strong>模块管理：</strong> 在 PyTorch 中，必须使用 <code>nn.ModuleList</code> 来存放多个专家模块（通常是选用 GELU 激活函数的 MLP 层），确保支持 GPU 迁移与 DDP 参数管理。</p></li><li><p><strong>结果聚合：</strong> 避免低效的 <code>for</code> 循环，利用 PyTorch 的 <code>index_add_</code> 原地操作，精准按样本索引将选定专家的输出加权聚合到一起。</p></li></ul></li><li><p><strong>分布式训练环境 (DDP) 避坑指南</strong></p><ul><li><p><strong>设备绑定：</strong> 将专家均匀固定绑定到特定 GPU 上（如 8 卡对应 8 专家），避免单 GPU 的显存溢出。</p></li><li><p><code>find_unused_parameters=True</code>：在 DDP 包装 MoE 时必须开启此项。因为稀疏激活导致未激活专家的梯度为空，该设置能让系统自动忽略这些参数的同步，避免报错并减少无效的通信开销。</p></li></ul></li><li><p><strong>容量因子限制 (Capacity Factor)</strong></p><ul><li>除了上述的辅助损失函数外，工程上还会加上硬性约束：强制设定专家在一个 Batch 内的 Token 处理上限（<code>capacity = batch_size * top_k / num_experts * capacity_factor</code>）。一旦溢出，多余 Token 必须作废或通过残差连接跳过，以此死保 GPU 显存不 OOM。</li></ul></li><li><p><strong>性能剖析与极致优化</strong></p><ul><li><p><strong>路由计算降维：</strong> 在大量专家的场景下，<code>hidden_state</code> 与 gate 权重的点积计算量倍增。可引入瓶颈层（Bottleneck Layer），先降维再输出专家 Logits，大幅降低 Router 的计算负担。</p></li><li><p><strong>量化通信：</strong> 在跨设备 All-to-All 传输 Token 时，先在源 GPU 将 FP32 量化压缩为 INT8，到达目标 GPU 后反量化，将通信数据量直接降低 <strong>75%</strong>。</p></li><li><p><strong>负载感知路由：</strong> 不仅仅看 Router 算出的分数，还可以跨设备读取通信队列长度，让模型优先把 Token 路由给“目前排队较少”的 GPU 设备，从物理层面上消除通信拥塞。</p></li></ul></li></ol>]]></content>
     
@@ -183,33 +183,6 @@
     <tags>
       
       <tag>CPP/LLM/CUDA/GPU</tag>
-      
-    </tags>
-    
-  </entry>
-  
-  
-  
-  <entry>
-    <title>Hello Blog</title>
-    <link href="/my-blog/2026/02/28/hello-blog/"/>
-    <url>/my-blog/2026/02/28/hello-blog/</url>
-    
-    <content type="html"><![CDATA[<p>欢迎来到我的个人博客。</p><p>这篇文章用于验证：</p><ul><li>首页文章列表是否展示封面、摘要、日期、分类和标签</li><li>文章详情页是否展示阅读时长和字数统计</li><li>搜索索引是否正常生成</li><li>GitHub Pages 项目路径下的资源是否正常加载</li></ul>]]></content>
-    
-    
-    <categories>
-      
-      <category>博客搭建</category>
-      
-    </categories>
-    
-    
-    <tags>
-      
-      <tag>Hexo</tag>
-      
-      <tag>GitHub Pages</tag>
       
     </tags>
     
