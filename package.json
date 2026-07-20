@@ -4,9 +4,8 @@
   "private": true,
   "description": "Hexo blog for GitHub Pages project site deployment.",
   "scripts": {
-    "cover:sync": "node scripts/sync-covers.js",
-    "server": "npm run cover:sync && hexo server",
-    "build": "npm run cover:sync && hexo clean && hexo generate"
+    "server": "hexo server",
+    "build": "hexo clean && hexo generate"
   },
   "hexo": {
     "version": "8.1.1"

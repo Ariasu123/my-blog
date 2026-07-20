@@ -1,0 +1,10 @@
+# 文章封面手动映射(可选)
+#
+# key:   文章 slug(或 source/_posts 下去扩展名的文件名)
+# value: 封面图片路径(图片请放入 source/assets/covers/ 等 assets 目录)
+#
+# 封面优先级:文章 front-matter 的 index_img > 本文件映射 > 构建期自动生成 SVG
+# 也可以直接在 Obsidian(Repo A)文章 front-matter 中设置 index_img,同步时会透传。
+#
+# 示例:
+# hello-blog: /assets/covers/hello-blog.png
