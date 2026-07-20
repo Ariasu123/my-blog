@@ -1,0 +1,63 @@
+# 个人展示内容单一数据源(Single Source of Truth)
+# 由 scripts/portfolio-data-loader.js 在构建时加载,模板中通过 theme.portfolio 访问。
+# 修改本文件即可更新首页 Hero、统计、精选项目与项目页,无需改动模板。
+
+profile:
+  name: Ariasu
+  id: "@Ariasu123"
+  directions:
+    - AI Infra
+    - LLM
+    - Agent
+  intro: 华中科技大学在读研一,专注 AI Infra 与 Agent 开发。这里持续记录系统学习路线与项目复盘,希望这些工程实践笔记能为你带来启发。
+  avatar: /assets/images/my-avatar.jpg
+  location: Wuhan, China
+  email: ariasu_jtle@163.com
+  github: https://github.com/Ariasu123
+  status: 记录项目实践与持续迭代中的技术思考
+
+stats:
+  # 静态配置的公开仓库数(GitHub 不在构建时实时请求)
+  public_repos: 6
+
+projects:
+  - id: tinyllm
+    title: tinyllm
+    intro: 从零实现的小型 LLM 训练与推理项目,覆盖分词、模型结构、训练循环与推理部署的完整链路。
+    link: https://github.com/Ariasu123/tinyllm
+    tech:
+      - PyTorch
+      - CUDA
+      - LLM
+    status: 进行中
+    cover: /assets/images/default-cover.svg
+
+  - id: my-blog
+    title: my-blog
+    intro: 个人技术博客,包含一套从 Obsidian 私有知识库自动同步发布的自动化工作流模板。
+    link: https://github.com/Ariasu123/my-blog
+    tech:
+      - Hexo
+      - Fluid
+      - GitHub Actions
+    status: 进行中
+    cover: /assets/images/default-cover.svg
+
+  - id: inkflow-novel-studio
+    title: inkflow-novel-studio
+    intro: 基于 Streamlit + CrewAI 的中文小说创作网页应用,支持续写、下一章扩写、段落重写与视角转换。
+    link: https://github.com/Ariasu123/inkflow-novel-studio
+    tech:
+      - Python
+      - Streamlit
+      - CrewAI
+    status: Demo 已完成
+    cover: /assets/images/default-cover.svg
+
+homepage:
+  # 首页精选项目:只改 ID 列表即可自由选择展示哪些项目及其顺序
+  featured_project_ids:
+    - tinyllm
+    - my-blog
+  # 首页最新文章数(固定为 6)
+  latest_post_count: 6

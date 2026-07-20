@@ -49,7 +49,7 @@ prismjs:
 
 index_generator:
   path: ''
-  per_page: 3
+  per_page: 6
   order_by: -date
 
 default_category: uncategorized

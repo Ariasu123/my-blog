@@ -1,87 +1,132 @@
 <%
-if (theme.index.slogan.enable) {
-  page.subtitle = theme.index.slogan.text || config.subtitle || ''
-}
-page.banner_img = theme.index.banner_img
-page.banner_img_height = theme.index.banner_img_height
+const portfolio = theme.portfolio || {}
+const profile = portfolio.profile || {}
+const homepage = portfolio.homepage || {}
+const projects = portfolio.projects || []
+const featuredIds = homepage.featured_project_ids || []
+const featured = featuredIds
+  .map((id) => projects.find((item) => item.id === id))
+  .filter(Boolean)
+const is_first = !page.current || page.current === 1
+
+// 首页第一页由 banner 覆盖层渲染全屏 Hero,后续分页使用紧凑 Banner
+page.banner_img_height = is_first ? 100 : 30
 page.banner_mask_alpha = theme.index.banner_mask_alpha
-const profile = theme.homepage_profile || {}
+if (!is_first) {
+  page.subtitle = '全部文章'
+}
 %>
 
 <h1 style="display: none"><%= config.title %></h1>
-<section class="homepage-shell">
-  <aside class="homepage-sidebar">
-    <img class="homepage-profile-avatar" src="<%= url_for(theme.about.avatar) %>" alt="<%= profile.title || theme.about.name %>">
-    <div class="homepage-profile-name"><%= profile.title || theme.about.name %></div>
-    <div class="homepage-profile-id"><%= profile.id || '' %></div>
-    <p class="homepage-profile-intro"><%= profile.intro || theme.about.intro || '' %></p>
-    <a class="homepage-profile-email" href="mailto:<%= profile.email || '' %>"><%= profile.email || '' %></a>
-    <ul class="homepage-profile-skills">
-      <% (profile.skills || []).forEach(function(skill) { %>
-        <li><%= skill %></li>
-      <% }) %>
-    </ul>
-    <div class="homepage-profile-status"><%= profile.status || '' %></div>
-    <div class="homepage-profile-icons">
-      <% (theme.about.icons || []).forEach(function(icon) { %>
-        <a href="<%= url_for(icon.link) %>" target="_blank" rel="noopener" aria-label="<%= icon.tip || '' %>">
-          <i class="<%= icon.class %>" aria-hidden="true"></i>
-        </a>
-      <% }) %>
+
+<% if (is_first) { %>
+  <section class="pf-stats" aria-label="站点统计">
+    <div class="pf-stat-item" data-reveal>
+      <span class="pf-stat-num"><%= site.posts.length %></span>
+      <span class="pf-stat-label">文章</span>
     </div>
-  </aside>
+    <div class="pf-stat-item" data-reveal>
+      <span class="pf-stat-num"><%= site.categories.length %></span>
+      <span class="pf-stat-label">分类</span>
+    </div>
+    <div class="pf-stat-item" data-reveal>
+      <span class="pf-stat-num"><%= (portfolio.stats && portfolio.stats.public_repos) || 0 %></span>
+      <span class="pf-stat-label">公开仓库</span>
+    </div>
+  </section>
+<% } %>
 
-  <div class="homepage-main">
-    <header class="homepage-intro">
-      <div class="homepage-hero-label">WELCOME</div>
-      <h2><%= profile.hero_title || '' %></h2>
-      <p><%= profile.hero_text || '' %></p>
+<section class="pf-section" id="latest-posts">
+  <% if (is_first) { %>
+    <header class="pf-section-head" data-reveal>
+      <h2>最新文章</h2>
+      <a class="pf-section-more" href="<%= url_for('/archives/') %>">全部归档<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
     </header>
+  <% } %>
 
-    <section class="homepage-post-list">
-      <% page.posts.each(function (post) { %>
-        <% var post_url = url_for(post.path), index_img = post.index_img || theme.post.default_index_img %>
-        <article class="homepage-post-item">
-          <% if (index_img) { %>
-            <a class="homepage-post-cover" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
-              <img src="<%= url_for(index_img) %>" alt="<%= post.title %>">
-            </a>
-          <% } %>
-          <div class="homepage-post-body">
-            <h2 class="homepage-post-title">
-              <a href="<%= post_url %>" target="<%- theme.index.post_url_target %>"><%= post.title %></a>
-            </h2>
-            <% var excerpt = post.description || post.excerpt || (theme.index.auto_excerpt.enable && !post.encrypt && post.content) %>
-            <a class="homepage-post-excerpt" href="<%= post_url %>" target="<%- theme.index.post_url_target %>">
-              <div><%- strip_html(excerpt).substring(0, 200).trim().replace(/\n/g, ' ') %></div>
-            </a>
-            <div class="homepage-post-meta post-metas">
-              <% if (theme.index.post_meta.date) { %>
-                <div class="post-meta mr-3">
-                  <i class="iconfont icon-date"></i>
-                  <time datetime="<%= full_date(post.date, 'YYYY-MM-DD HH:mm') %>" pubdate><%- date(post.date, config.date_format) %></time>
-                </div>
-              <% } %>
-              <% if (theme.index.post_meta.category && post.categories.length > 0) { %>
-                <div class="post-meta mr-3 d-flex align-items-center">
-                  <i class="iconfont icon-category"></i>
-                  <%- partial('_partials/category-chains', { categories: post.categories, limit: 1 }) %>
-                </div>
-              <% } %>
-              <% if (theme.index.post_meta.tag && post.tags.length > 0) { %>
-                <div class="post-meta">
-                  <i class="iconfont icon-tags"></i>
-                  <% post.tags.each(function(tag){ %>
-                    <a href="<%= url_for(tag.path) %>">#<%- tag.name %></a>
-                  <% }) %>
-                </div>
-              <% } %>
-            </div>
+  <div class="pf-post-grid<%= is_first ? '' : ' pf-post-grid-paged' %>">
+    <% page.posts.each(function (post) { %>
+      <% var post_url = url_for(post.path), index_img = post.index_img || theme.post.default_index_img %>
+      <article class="pf-post-card" data-reveal>
+        <% if (index_img) { %>
+          <a class="pf-post-cover" href="<%= post_url %>" aria-label="<%= post.title %>">
+            <img src="<%= url_for(index_img) %>" alt="<%= post.title %>" loading="lazy">
+          </a>
+        <% } %>
+        <div class="pf-post-body">
+          <div class="pf-post-topline">
+            <% if (theme.index.post_meta.date) { %>
+              <time datetime="<%= full_date(post.date, 'YYYY-MM-DD HH:mm') %>" pubdate><%- date(post.date, config.date_format) %></time>
+            <% } %>
+            <% if (theme.index.post_meta.category && post.categories.length > 0) { %>
+              <span class="pf-post-category">
+                <%- partial('_partials/category-chains', { categories: post.categories, limit: 1 }) %>
+              </span>
+            <% } %>
           </div>
+          <h3 class="pf-post-title">
+            <a href="<%= post_url %>"><%= post.title %></a>
+          </h3>
+          <% var excerpt = post.description || post.excerpt || (theme.index.auto_excerpt.enable && !post.encrypt && post.content) %>
+          <a class="pf-post-excerpt" href="<%= post_url %>">
+            <div><%- strip_html(excerpt).substring(0, 120).trim().replace(/\n/g, ' ') %></div>
+          </a>
+          <% if (theme.index.post_meta.tag && post.tags.length > 0) { %>
+            <div class="pf-post-tags">
+              <% post.tags.each(function(tag){ %>
+                <a href="<%= url_for(tag.path) %>">#<%- tag.name %></a>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+
+  <%- partial('_partials/paginator') %>
+</section>
+
+<% if (is_first && featured.length > 0) { %>
+  <section class="pf-section" id="featured-projects">
+    <header class="pf-section-head" data-reveal>
+      <h2>精选项目</h2>
+      <a class="pf-section-more" href="<%= url_for('/projects/') %>">全部项目<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
+    </header>
+    <div class="pf-project-grid">
+      <% featured.forEach(function (project) { %>
+        <article class="pf-project-card" data-reveal>
+          <div class="pf-project-head">
+            <h3><%= project.title %></h3>
+            <% if (project.status) { %><span class="pf-project-status"><%= project.status %></span><% } %>
+          </div>
+          <p class="pf-project-intro"><%= project.intro %></p>
+          <% if ((project.tech || []).length > 0) { %>
+            <div class="pf-project-tech">
+              <% project.tech.forEach(function (tech) { %><span><%= tech %></span><% }) %>
+            </div>
+          <% } %>
+          <% if (project.link) { %>
+            <a class="pf-project-link" href="<%= project.link %>" target="_blank" rel="noopener">查看仓库<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
+          <% } %>
         </article>
       <% }) %>
-    </section>
+    </div>
+  </section>
+<% } %>
 
-    <%- partial('_partials/paginator') %>
-  </div>
-</section>
+<% if (is_first) { %>
+  <section class="pf-section pf-about" id="about-contact" data-reveal>
+    <img class="pf-about-avatar" src="<%= url_for(profile.avatar || theme.about.avatar) %>" alt="<%= profile.name || theme.about.name %> 的头像">
+    <h2>关于我</h2>
+    <p class="pf-about-intro"><%= profile.intro || theme.about.intro || '' %></p>
+    <div class="pf-about-actions">
+      <% if (profile.email) { %>
+        <a class="pf-btn pf-btn-primary" href="mailto:<%= profile.email %>">邮箱联系</a>
+      <% } %>
+      <% if (profile.github) { %>
+        <a class="pf-btn pf-btn-ghost" href="<%= profile.github %>" target="_blank" rel="noopener">GitHub</a>
+      <% } %>
+      <a class="pf-btn pf-btn-ghost" href="<%= url_for('/about/') %>">了解更多</a>
+    </div>
+  </section>
+<% } %>

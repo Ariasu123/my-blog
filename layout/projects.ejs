@@ -1,0 +1,36 @@
+<%
+page.layout = 'projects'
+page.title = page.title || '项目'
+page.banner_img = page.banner_img || theme.page.banner_img
+page.banner_img_height = page.banner_img_height || theme.page.banner_img_height
+page.banner_mask_alpha = page.banner_mask_alpha || theme.page.banner_mask_alpha
+
+const portfolio = theme.portfolio || {}
+const projects = portfolio.projects || []
+%>
+
+<div class="pf-projects-page">
+  <% if (projects.length > 0) { %>
+    <div class="pf-project-grid">
+      <% projects.forEach(function (project) { %>
+        <article class="pf-project-card" data-reveal>
+          <div class="pf-project-head">
+            <h3><%= project.title %></h3>
+            <% if (project.status) { %><span class="pf-project-status"><%= project.status %></span><% } %>
+          </div>
+          <p class="pf-project-intro"><%= project.intro %></p>
+          <% if ((project.tech || []).length > 0) { %>
+            <div class="pf-project-tech">
+              <% project.tech.forEach(function (tech) { %><span><%= tech %></span><% }) %>
+            </div>
+          <% } %>
+          <% if (project.link) { %>
+            <a class="pf-project-link" href="<%= project.link %>" target="_blank" rel="noopener">查看仓库<i class="iconfont icon-arrowright" aria-hidden="true"></i></a>
+          <% } %>
+        </article>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="note note-info">暂无项目,请在 source/_data/portfolio.yml 中配置 projects。</div>
+  <% } %>
+</div>

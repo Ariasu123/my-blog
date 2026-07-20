@@ -5,7 +5,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const TOP_LEVEL_VIEWS = ['index.ejs', 'tags.ejs'];
+const TOP_LEVEL_VIEWS = [
+  'index.ejs',
+  'tags.ejs',
+  'projects.ejs',
+  '_partials/header/banner.ejs'
+];
 
 function getSynchronizedProjectViews() {
   const layoutDir = path.join(hexo.base_dir, 'layout');
@@ -18,10 +23,6 @@ function getSynchronizedProjectViews() {
     const filePath = path.join(layoutDir, name);
 
     if (!fs.existsSync(filePath)) {
-      return null;
-    }
-
-    if (!hexo.theme.getView(name)) {
       return null;
     }
 

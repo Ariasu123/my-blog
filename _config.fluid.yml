@@ -6,6 +6,7 @@ navbar:
     alpha: 0.8
   menu:
     - { key: "home", name: "首页", link: "/", icon: "iconfont icon-home-fill" }
+    - { key: "archive", name: "归档", link: "/archives/", icon: "iconfont icon-archive-fill" }
     - { key: "category", name: "分类", link: "/categories/", icon: "iconfont icon-category-fill" }
     - { key: "tag", name: "标签", link: "/tags/", icon: "iconfont icon-tags-fill" }
     - { key: "projects", name: "项目", link: "/projects/", icon: "iconfont icon-link-fill" }
@@ -13,7 +14,7 @@ navbar:
 
 index:
   banner_img: /assets/images/default-banner.svg
-  banner_img_height: 72
+  banner_img_height: 36
   banner_mask_alpha: 0.25
   slogan:
     enable: false
@@ -27,8 +28,8 @@ index:
 post:
   banner_img: /assets/images/about-banner.jpg
   default_index_img: /assets/images/default-cover.svg
-  banner_img_height: 65
-  banner_mask_alpha: 0.25
+  banner_img_height: 42
+  banner_mask_alpha: 0.35
   meta:
     date:
       enable: true
@@ -49,7 +50,7 @@ post:
 about:
   enable: true
   banner_img: /assets/images/about-banner.svg
-  banner_img_height: 55
+  banner_img_height: 40
   avatar: /assets/images/my-avatar.jpg
   name: Ariasu
   intro: AI Infra / 系统优化 / 知识沉淀
@@ -57,35 +58,24 @@ about:
     - { class: "iconfont icon-github-fill", link: "https://github.com/Ariasu123", tip: "GitHub" }
     - { class: "iconfont icon-mail-fill", link: "mailto:ariasu_jtle@163.com", tip: "Email" }
 
-homepage_profile:
-  title: Ariasu
-  id: "@Ariasu123"
-  intro: 华中科技大学在读研一 ｜ 专注 AI Infra 与 Agent开发
-  location: Wuhan, China
-  email: ariasu_jtle@163.com
-  github: https://github.com/Ariasu123 # 强烈建议加上
-  skills:
-    - CUDA & 高性能计算
-    - LLM 微调与推理部署
-    - PyTorch / C++
-    - Vibe Coding 
-  status: 🚀 记录项目实践与持续迭代中的技术思考
-  hero_title: "探索计算与智能的边界 "
-  hero_text: "欢迎来到我的技术空间！这里会持续发布我的系统学习路线、项目复盘。希望这些工程实践笔记能为你带来启发。"
-
 category:
   banner_img: /assets/images/categories-banner.svg
-  banner_img_height: 60
+  banner_img_height: 36
+  banner_mask_alpha: 0.2
+
+archive:
+  banner_img: /assets/images/default-banner.svg
+  banner_img_height: 36
   banner_mask_alpha: 0.2
 
 tag:
   banner_img: /assets/images/tags-banner.svg
-  banner_img_height: 80
+  banner_img_height: 36
   banner_mask_alpha: 0.2
 
 page:
   banner_img: /assets/images/default-banner.svg
-  banner_img_height: 45
+  banner_img_height: 32
   banner_mask_alpha: 0.2
 
 search:
@@ -97,29 +87,29 @@ search:
 
 dark_mode:
   enable: true
-  default: light
+  default: dark
 
 color:
-  body_bg_color: '#f8fafc'
-  body_bg_color_dark: '#111827'
-  navbar_bg_color: '#ffffffcc'
-  navbar_bg_color_dark: '#111827cc'
-  navbar_text_color: '#0f172a'
-  navbar_text_color_dark: '#e5e7eb'
-  text_color: '#334155'
-  text_color_dark: '#cbd5e1'
-  sec_text_color: '#64748b'
-  sec_text_color_dark: '#94a3b8'
+  body_bg_color: '#f6f7fb'
+  body_bg_color_dark: '#0a0e1a'
+  navbar_bg_color: '#ffffffd9'
+  navbar_bg_color_dark: '#0d1426cc'
+  navbar_text_color: '#1e2440'
+  navbar_text_color_dark: '#dbe2f4'
+  text_color: '#3a415c'
+  text_color_dark: '#aab4d4'
+  sec_text_color: '#6b7390'
+  sec_text_color_dark: '#7c88a8'
   board_color: '#ffffff'
-  board_color_dark: '#1f2937'
-  post_text_color: '#1e293b'
-  post_text_color_dark: '#e2e8f0'
-  post_heading_color: '#0f172a'
-  post_heading_color_dark: '#f8fafc'
-  post_link_color: '#2563eb'
-  post_link_color_dark: '#60a5fa'
-  link_hover_color: '#1d4ed8'
-  link_hover_color_dark: '#93c5fd'
+  board_color_dark: '#10162b'
+  post_text_color: '#2b3252'
+  post_text_color_dark: '#d6dcf0'
+  post_heading_color: '#171c33'
+  post_heading_color_dark: '#f1f4ff'
+  post_link_color: '#4f46e5'
+  post_link_color_dark: '#818cf8'
+  link_hover_color: '#6366f1'
+  link_hover_color_dark: '#a5b4fc'
 
 fun_features:
   typing:
@@ -127,3 +117,6 @@ fun_features:
 
 custom_css:
   - /assets/css/custom.css
+
+custom_js:
+  - /assets/js/portfolio.js

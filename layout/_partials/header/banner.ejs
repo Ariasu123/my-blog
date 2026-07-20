@@ -1,0 +1,60 @@
+<%
+var portfolio = theme.portfolio || {}
+var profile = portfolio.profile || {}
+var is_first_home = is_home() && (!page.current || page.current === 1)
+var subtitle = page.subtitle || page.title
+%>
+
+<% if (is_first_home) { %>
+  <!-- 首页第一页:全屏 Hero(网格光晕背景由 CSS 提供) -->
+  <div id="banner" class="banner pf-hero">
+    <div class="pf-hero-bg" aria-hidden="true"></div>
+    <div class="pf-hero-inner container">
+      <% if ((profile.directions || []).length > 0) { %>
+        <div class="pf-hero-eyebrow">
+          <% profile.directions.forEach(function(direction) { %>
+            <span class="pf-hero-chip"><%= direction %></span>
+          <% }) %>
+        </div>
+      <% } %>
+      <h1 class="pf-hero-name"><%= profile.name || config.author %></h1>
+      <div class="pf-hero-id">
+        <%= profile.id || '' %>
+        <% if (profile.location) { %><span class="pf-hero-dot">·</span><%= profile.location %><% } %>
+      </div>
+      <% if (profile.intro) { %>
+        <p class="pf-hero-intro"><%= profile.intro %></p>
+      <% } %>
+      <div class="pf-hero-actions">
+        <a class="pf-btn pf-btn-primary" href="#latest-posts">阅读文章</a>
+        <a class="pf-btn pf-btn-ghost" href="<%= url_for('/projects/') %>">查看项目</a>
+        <% if (profile.github) { %>
+          <a class="pf-btn pf-btn-ghost" href="<%= profile.github %>" target="_blank" rel="noopener">GitHub</a>
+        <% } %>
+      </div>
+      <% if (profile.status) { %>
+        <div class="pf-hero-status"><span class="pf-hero-status-dot" aria-hidden="true"></span><%= profile.status %></div>
+      <% } %>
+    </div>
+    <% if (theme.scroll_down_arrow.enable && page.layout !== '404') { %>
+      <div class="scroll-down-bar">
+        <i class="iconfont icon-arrowdown"></i>
+      </div>
+    <% } %>
+  </div>
+<% } else { %>
+  <!-- 内页:紧凑科技感 Banner(渐变 + 细网格由 CSS 提供) -->
+  <div id="banner" class="banner pf-banner">
+    <div class="pf-banner-bg" aria-hidden="true"></div>
+    <div class="mask flex-center">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          <span id="subtitle"><%- subtitle %></span>
+        </div>
+        <% if (is_post()) { %>
+          <%- inject_point('postMetaTop') %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+<% } %>
