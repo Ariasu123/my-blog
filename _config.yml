@@ -74,3 +74,15 @@ search:
   field: all
   content: true
   format: html
+
+# hexo-renderer-markdown-it + markdown-it-katex 配置
+# 用 markdown-it 替代 marked,在服务端渲染 KaTeX 公式,避免 $...$ 被当作 emphasis 破坏
+markdown:
+  render:
+    html: true
+    xhtmlOut: false
+    breaks: false
+    linkify: true
+    typographer: true
+  plugins:
+    - markdown-it-katex
