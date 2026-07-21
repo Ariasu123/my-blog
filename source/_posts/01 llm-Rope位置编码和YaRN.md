@@ -1,5 +1,5 @@
 ---
-date: '2026-04-16 08:00:00'
+date: '2026-04-16 00:00:00'
 published: true
 categories: LLM
 title: Rope位置编码和YaRN
