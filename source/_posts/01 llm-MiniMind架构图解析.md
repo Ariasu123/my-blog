@@ -8,6 +8,7 @@ tags:
 published: true
 categories:
   - LLM
+index_img: /assets/covers/MiniMind.png
 _sync_managed: repo-a
 _sync_source_path: 01 llm/MiniMind架构图解析.md
 ---
