@@ -1,10 +1,11 @@
 ---
-date: '2026-03-15 00:00:00'
+date: '2026-03-15 08:00:00'
 tags:
   - CPP/LLM/CUDA/GPU
 published: true
 title: LLM 推理加速与算子优化学习路线
 categories: AI Infra
+index_img: /assets/covers/LLM-Inference-Acceleration.jpg
 _sync_managed: repo-a
 _sync_source_path: 02 AI infra/LLM 推理加速与算子优化学习路线.md
 ---

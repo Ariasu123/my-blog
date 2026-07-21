@@ -111,24 +111,9 @@ function transformContentAndCollectAssets(rootDir, config, baseUrl, post) {
     return url;
   };
 
-  // 处理 Obsidian 图片嵌入: ![[image.png]]
-  const embedPattern = /!\[\[([^\]]+)\]\]/g;
-  content = content.replace(embedPattern, (match, inner) => {
-    const raw = inner.trim();
-    const fileName = path.basename(raw);
-    if (!isImageFileName(fileName)) {
-      // 非图片嵌入，降级为纯文本
-      return fileName;
-    }
-    const imagePath = resolveImagePath(rootDir, post.sourcePath, raw);
-    if (!imagePath) {
-      throw new Error(`[image] 找不到 Obsidian 图片文件: ${raw} (源文件: ${post.relativePath})`);
-    }
-    const url = addAsset(imagePath, fileName);
-    return `![](${url})`;
-  });
-
   // 处理标准 Markdown 图片: ![alt](path)
+  // 注意:必须先处理标准语法,再处理 Obsidian 嵌入语法,
+  // 否则嵌入语法生成的 ![](url) 会被本正则二次处理,导致误判为本地文件
   const mdImagePattern = /!\[([^\]]*)\]\(([^)]+)\)/g;
   content = content.replace(mdImagePattern, (match, alt, link) => {
     const rawLink = link.trim();
@@ -145,6 +130,23 @@ function transformContentAndCollectAssets(rootDir, config, baseUrl, post) {
     }
     const url = addAsset(imagePath, fileName);
     return `![${alt}](${url})`;
+  });
+
+  // 处理 Obsidian 图片嵌入: ![[image.png]]
+  const embedPattern = /!\[\[([^\]]+)\]\]/g;
+  content = content.replace(embedPattern, (match, inner) => {
+    const raw = inner.trim();
+    const fileName = path.basename(raw);
+    if (!isImageFileName(fileName)) {
+      // 非图片嵌入，降级为纯文本
+      return fileName;
+    }
+    const imagePath = resolveImagePath(rootDir, post.sourcePath, raw);
+    if (!imagePath) {
+      throw new Error(`[image] 找不到 Obsidian 图片文件: ${raw} (源文件: ${post.relativePath})`);
+    }
+    const url = addAsset(imagePath, fileName);
+    return `![](${url})`;
   });
 
   // 处理 Obsidian 内部链接 [[Note]] / [[Note|显示名]] → 纯文本
