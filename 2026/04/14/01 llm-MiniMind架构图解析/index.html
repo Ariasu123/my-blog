@@ -27,7 +27,7 @@
 <meta property="og:description" content="![](&#x2F;my-blog&#x2F;assets&#x2F;obsidian&#x2F;01 llm-MiniMind架构图解析&#x2F;Pasted image 20260721101758.png) 1. 整体流程 这是模型处理信息的全过程：  Tokenizer Encoder（分词编码）：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。 Input Embedding（嵌入层）：把数字编号变成一串高">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-04-14T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-07-21T02:31:30.870Z">
+<meta property="article:modified_time" content="2026-07-21T03:04:54.252Z">
 <meta property="article:author" content="Ariasu">
 <meta property="article:tag" content="LLM">
 <meta property="article:tag" content="MiniMind">
@@ -416,9 +416,9 @@
 <li><strong>Tokenizer Encoder（分词编码）</strong>：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。</li>
 <li><strong>Input Embedding（嵌入层）</strong>：把数字编号变成一串高维向量（数值列表），赋予单词语义特征</li>
 <li><strong>Transformer Layer k（核心加工层）</strong>：这是模型的大脑，图中显示它会重复 
-    <span id="mjx-9d6da19">
+    <span id="mjx-5e4b293">
       <style>
-      #mjx-9d6da19{
+      #mjx-5e4b293{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;
@@ -604,9 +604,9 @@ g[data-mml-node="xypic"] path {
 <li><strong>三个 Linear 层</strong>：通过矩阵运算进行高维空间的映射。这里是模型存储“知识”的地方。</li>
 </ul>
 <p>在 MiniMind（以及所有类 Llama 架构）中，<strong>Linear 层（线性变换层）</strong> 本质上是矩阵乘法 
-    <span id="mjx-0236bd8">
+    <span id="mjx-1682fdf">
       <style>
-      #mjx-0236bd8{
+      #mjx-1682fdf{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;
@@ -872,9 +872,9 @@ g[data-mml-node="xypic"] path {
 </tr>
 <tr>
 <td><strong>
-    <span id="mjx-e2cc63d">
+    <span id="mjx-15be6d4">
       <style>
-      #mjx-e2cc63d{
+      #mjx-15be6d4{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;
@@ -1076,9 +1076,9 @@ g[data-mml-node="xypic"] path {
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/my-blog/tags/LLM/" class="print-no-link">#LLM</a>
-      
         <a href="/my-blog/tags/MiniMind/" class="print-no-link">#MiniMind</a>
+      
+        <a href="/my-blog/tags/LLM/" class="print-no-link">#LLM</a>
       
         <a href="/my-blog/tags/%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="print-no-link">#架构解析</a>
       
