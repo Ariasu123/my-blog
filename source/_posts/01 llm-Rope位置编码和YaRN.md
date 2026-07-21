@@ -1,8 +1,9 @@
 ---
-date: '2026-04-16 08:00:00'
+date: '2026-04-16 00:00:00'
 published: true
 categories: LLM
 title: Rope位置编码和YaRN
+index_img: /assets/covers/RoPE.png
 _sync_managed: repo-a
 _sync_source_path: 01 llm/Rope位置编码和YaRN.md
 ---

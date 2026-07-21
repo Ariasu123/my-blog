@@ -1,6 +1,6 @@
 ---
 title: PyTorch 及其他相关方法：常用Tensor 操作与 nn 组件
-date: '2026-04-15 08:00:00'
+date: '2026-04-15 00:00:00'
 tags:
   - PyTorch
   - Tensor

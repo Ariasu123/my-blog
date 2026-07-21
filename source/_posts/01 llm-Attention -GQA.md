@@ -1,6 +1,6 @@
 ---
 title: Attention 与 GQA：从 KV Cache 到多头共享
-date: '2026-04-17 08:00:00'
+date: '2026-04-17 00:00:00'
 tags:
   - LLM
   - GQA
@@ -8,6 +8,7 @@ tags:
 published: true
 categories:
   - LLM
+index_img: /assets/covers/Attention-GQA.jpg
 _sync_managed: repo-a
 _sync_source_path: 01 llm/Attention -GQA.md
 ---
@@ -23,7 +24,6 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 - **$\sqrt{d_k}$**: 缩放因子，防止点积结果过大导致梯度消失。
 - **$\text{softmax}$**: 将得分转换为概率（权重），总和为 1。
 
----
 
 ## 2. KV Cache：推理的加速器
 
@@ -34,7 +34,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 - **原理**：在计算当前词时，把算好的 $K$ 和 $V$ 存入显存。下次计算只需算“新词”的 `QKV`，然后直接读取历史的 $K$ 和 $V$ 进行拼接。
 - **代价**：显存占用极高。显存容量限制了 Batch Size 和最大序列长度。
 
----
+
 
 ## 3. 三大架构：MHA vs MQA vs GQA
 
@@ -58,7 +58,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 - **特点**：例如 32 个 Q，8 个 KV，每 4 个 Q 共用 1 对 KV。
 - **意义**：**完美的折中**。显存占用远低于 MHA，但模型表现几乎持平 MHA。
 
----
+
 
 ## 4. 维度对比表 (以 Llama-7B 为例)
 
