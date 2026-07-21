@@ -105,7 +105,8 @@ function transformContentAndCollectAssets(rootDir, config, baseUrl, post) {
       .join(assetsDir, post.targetName, fileName)
       .replace(/\\/g, '/');
     const publicPath = `${assetsPublicRoot}/${post.targetName}/${fileName}`.replace(/\\/g, '/');
-    const url = `${baseUrl}${publicPath.replace(/^\/+/, '')}`;
+    // URL 编码:避免空格、中文等字符破坏 Markdown 图片语法与浏览器请求
+    const url = encodeURI(`${baseUrl}${publicPath.replace(/^\/+/, '')}`);
     assets.push({ sourcePath, targetRelPath, url });
     return url;
   };
