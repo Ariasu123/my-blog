@@ -18,47 +18,83 @@ profile:
 
 stats:
   # 静态配置的公开仓库数(GitHub 不在构建时实时请求)
-  public_repos: 6
+  public_repos: 9
 
 projects:
+  - id: nano-vllm-ext
+    title: Nano-vLLM-Ext
+    intro: 基于 Nano-vLLM 的个人扩展项目,计划加入投机解码、调度策略与 Cache 可观测性,并持续改进源码可读性。
+    link: https://github.com/Ariasu123/Nano-vLLM-Ext
+    tech:
+      - Python
+      - PyTorch
+      - vLLM
+    status: 持续迭代
+    cover: /assets/images/default-cover.svg
+
   - id: tinyllm
     title: tinyllm
-    intro: 复刻 MiniMind 项目,从 0 到 1 构建轻量级大语言模型。
+    intro: 从零训练 54.47M 参数中文小模型,覆盖原生 Transformer、预训练、Full-SFT、评测与推理全链路。
     link: https://github.com/Ariasu123/tinyllm
     tech:
       - PyTorch
-      - CUDA
+      - Transformer
       - LLM
     status: 已完成
     cover: /assets/images/default-cover.svg
 
+  - id: pion
+    title: Pion
+    intro: 参考 Pi coding agent 核心设计,使用 Python 重写的轻量可扩展 CLI 编程智能体,覆盖 Agent Loop、模型提供商、工具、会话与 Hooks。
+    link: https://github.com/Ariasu123/Pion
+    tech:
+      - Python
+      - CLI
+      - Agent
+    status: 持续迭代
+    cover: /assets/images/default-cover.svg
+
+  - id: ariasu-wiki
+    title: Ariasu-wiki
+    intro: 由 AI Agent 持续维护的个人技术知识库,覆盖 LLM、AI Infra、Agent Engineering 与 RAG。
+    link: https://github.com/Ariasu123/Ariasu-wiki
+    tech:
+      - Markdown
+      - Knowledge Base
+      - Agent
+    status: 持续维护
+    cover: /assets/images/default-cover.svg
+
   - id: ai-novel-generator
     title: AI-Novel-Generator
-    intro: AI 小说生成器,探索大模型在创意写作中的应用。
+    intro: 基于 Streamlit 与 OpenAI SDK 的本地中文小说创作工作台,支持流式生成、长程记忆、AI 审稿、多项目管理与导入导出。
     link: https://github.com/Ariasu123/AI-Novel-Generator
     tech:
       - Python
+      - Streamlit
       - OpenAI SDK
-    status: 已完成
-    cover: /assets/images/default-cover.svg
-
-  - id: handoff-skill
-    title: handoff-skill
-    intro: 会话交接管理 skill,用于跨会话上下文转移。
-    link: https://github.com/Ariasu123/handoff-skill
-    tech:
-      - Python
-      - skill
     status: 已完成
     cover: /assets/images/default-cover.svg
 
   - id: weekly-report-skill
     title: Weekly-report-skill
-    intro: 科研周报 skill,基于 LLM 自动生成研究进展周报。
+    intro: 科研周报 Codex Skill,可维护已用文献、检索不重复论文,并按模板生成包含图文与文献精读的 DOCX 周报。
     link: https://github.com/Ariasu123/Weekly-report-skill
     tech:
       - Python
-      - LLM
+      - Codex Skill
+      - DOCX
+    status: 已完成
+    cover: /assets/images/default-cover.svg
+
+  - id: handoff-skill
+    title: handoff-skill
+    intro: Codex 跨会话交接 Skill,通过可追溯摘要与 Git 状态快照保留项目上下文。
+    link: https://github.com/Ariasu123/handoff-skill
+    tech:
+      - Python
+      - Codex
+      - Git
     status: 已完成
     cover: /assets/images/default-cover.svg
 
@@ -76,9 +112,9 @@ projects:
 homepage:
   # 首页精选项目:只改 ID 列表即可自由选择展示哪些项目及其顺序
   featured_project_ids:
+    - nano-vllm-ext
     - tinyllm
-    - ai-novel-generator
-    - handoff-skill
-    - weekly-report-skill
+    - pion
+    - ariasu-wiki
   # 首页最新文章数(固定为 6)
   latest_post_count: 6
