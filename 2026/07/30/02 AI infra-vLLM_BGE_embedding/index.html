@@ -1,0 +1,1194 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/my-blog/img/fluid.png">
+  <link rel="icon" href="/my-blog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#ffffffd9">
+  <meta name="author" content="Ariasu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="为什么迁移 这套 embedding 服务用于企业知识库（LightRAG）的文档入库和检索。最初我用 Ollama 单机运行 BGE-M3：部署很快，但持续入库时并发稍高就会出现请求失败或服务无响应。为了保证任务跑完，客户端最终只能使用 batch_size&#x3D;2、单并发，并在每个 batch 后设置 sleep_interval&#x3D;2.0。 这套配置能换来稳定，却把 embedding 阶段变成了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从 Ollama 迁移到 vLLM：Embedding 部署与压测">
+<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/07/30/02%20AI%20infra-vLLM_BGE_embedding/index.html">
+<meta property="og:site_name" content="my-blog">
+<meta property="og:description" content="为什么迁移 这套 embedding 服务用于企业知识库（LightRAG）的文档入库和检索。最初我用 Ollama 单机运行 BGE-M3：部署很快，但持续入库时并发稍高就会出现请求失败或服务无响应。为了保证任务跑完，客户端最终只能使用 batch_size&#x3D;2、单并发，并在每个 batch 后设置 sleep_interval&#x3D;2.0。 这套配置能换来稳定，却把 embedding 阶段变成了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/covers/vLLM_Embed.png">
+<meta property="article:published_time" content="2026-07-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-07-31T15:11:05.552Z">
+<meta property="article:author" content="Ariasu">
+<meta property="article:tag" content="vLLM">
+<meta property="article:tag" content="工程经验">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ariasu123.github.io/my-blog/assets/covers/vLLM_Embed.png">
+  
+  
+  
+  <title>从 Ollama 迁移到 vLLM：Embedding 部署与压测 - my-blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/my-blog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/my-blog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/my-blog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/my-blog/assets/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ariasu123.github.io","root":"/my-blog/","version":"1.9.9","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"expand_all":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"openkounter":{"server_url":"https://open-kounter.mintimate.cn","path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/my-blog/search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/my-blog/js/utils.js" ></script>
+  <script  src="/my-blog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 42vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/my-blog/">
+      <strong>Ariasu Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content (desktop) -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/projects/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile grid menu overlay -->
+<div id="mobile-grid-menu" class="d-lg-none">
+  <div class="mobile-grid-menu-inner">
+    <div class="container">
+      <div class="row">
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-home-fill"></i>
+                  <span>首页</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/archives/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-archive-fill"></i>
+                  <span>归档</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/categories/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-category-fill"></i>
+                  <span>分类</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/tags/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-tags-fill"></i>
+                  <span>标签</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/projects/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-link-fill"></i>
+                  <span>项目</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/about/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-user-fill"></i>
+                  <span>关于</span>
+                </div>
+              </a>
+            </div>
+          
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-search-btn">
+            <a href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-search"></i>
+                <span>搜索</span>
+              </div>
+            </a>
+          </div>
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-color-toggle-btn"
+               data-label-light="开灯"
+               data-label-dark="关灯">
+            <a href="javascript:;" aria-label="Color Toggle">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-dark" id="mobile-color-toggle-icon"></i>
+                <span id="mobile-color-toggle-label">关灯</span>
+              </div>
+            </a>
+          </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+
+  <!-- 内页:紧凑科技感 Banner(渐变 + 细网格由 CSS 提供) -->
+  <div id="banner" class="banner pf-banner">
+    <div class="pf-banner-bg" aria-hidden="true"></div>
+    <div class="mask flex-center">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          <span id="subtitle">从 Ollama 迁移到 vLLM：Embedding 部署与压测</span>
+        </div>
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-07-31 00:00" pubdate>
+          2026-07-31
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          5.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          44 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">从 Ollama 迁移到 vLLM：Embedding 部署与压测</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="为什么迁移">为什么迁移</h2>
+<p>这套 embedding 服务用于企业知识库（LightRAG）的文档入库和检索。最初我用 Ollama 单机运行 BGE-M3：部署很快，但持续入库时并发稍高就会出现请求失败或服务无响应。为了保证任务跑完，客户端最终只能使用 <code>batch_size=2</code>、单并发，并在每个 batch 后设置 <code>sleep_interval=2.0</code>。</p>
+<p>这套配置能换来稳定，却把 embedding 阶段变成了由休眠时间主导的串行任务：入库耗时难以反映模型和 GPU 的真实能力，重试机制也没有在实际压力下得到验证。于是我将服务迁移到 vLLM，希望解决三个问题：</p>
+<ol>
+<li>长时间运行稳定，不再依赖人为休眠；</li>
+<li>提供 OpenAI 兼容的 <code>/v1/embeddings</code> 接口，尽量减少客户端改动；</li>
+<li>能用统一口径评估 QPS、吞吐和延迟分位数。</li>
+</ol>
+<p>本文记录 vLLM 0.26.0 的部署过程、两个实测踩坑，以及 RTX 4090 上的 512 token 压测结果。</p>
+<h2 id="部署环境">部署环境</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>配置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作系统</td>
+<td>Ubuntu 22.04</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>NVIDIA RTX 4090 24GB</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.10.12</td>
+</tr>
+<tr>
+<td>包管理</td>
+<td>uv 0.11.21</td>
+</tr>
+<tr>
+<td>vLLM</td>
+<td>0.26.0</td>
+</tr>
+<tr>
+<td>模型</td>
+<td>BAAI/bge-m3，通过 ModelScope 下载</td>
+</tr>
+</tbody>
+</table>
+<p>由于这台机器访问 Hugging Face 不稳定，模型先下载到本地，启动时直接使用本地路径。模型与运行目录分开管理：模型是体积大、更新频率低的只读资产，日志、虚拟环境和脚本则需要经常清理或重建。这样也能降低误删权重的风险。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p ~/models/bge-m3 ~/deploy/bge-m3/&#123;venv,logs,scripts&#125;<br><br>uv venv ~/deploy/bge-m3/venv --python 3.10<br><span class="hljs-built_in">source</span> ~/deploy/bge-m3/venv/bin/activate<br>uv pip install vllm<br><br>modelscope download --model BAAI/bge-m3 --local_dir ~/models/bge-m3<br></code></pre></td></tr></table></figure>
+<p>我使用 uv 创建独立环境，避免 vLLM 较长的依赖链影响机器上的其他 Python 服务。启动命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">vllm serve ~/models/bge-m3 \<br>  --runner pooling \<br>  --convert embed \<br>  --host 0.0.0.0 \<br>  --port 8001 \<br>  --max-model-len 8192 \<br>  --gpu-memory-utilization 0.2 \<br>  --served-model-name bge-m3<br></code></pre></td></tr></table></figure>
+<p><code>--max-model-len 8192</code> 保留了处理长文本的余量；当前业务 chunk 虽然只有 512 token，但以后调整切分策略时不必立即改服务配置。<code>--gpu-memory-utilization 0.2</code> 用于限制 vLLM 的显存预算，因为这张 GPU 还要与其他服务共用。</p>
+<h2 id="两个启动坑">两个启动坑</h2>
+<h3 id="1-task-embed-无法使用">1. <code>--task embed</code> 无法使用</h3>
+<p>不少旧教程使用以下参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">vllm serve ... --task embed<br></code></pre></td></tr></table></figure>
+<p>但在我使用的 vLLM 0.26.0 环境中，这条命令会报 <code>unrecognized arguments</code>。本次验证可用的写法是：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">--runner pooling --convert embed<br></code></pre></td></tr></table></figure>
+<h3 id="2-hf-overrides-让-embeddings-接口返回-501">2. <code>hf-overrides</code> 让 embeddings 接口返回 501</h3>
+<p>搜索 BGE-M3 与 vLLM 的部署资料时，我还尝试过：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">--hf-overrides <span class="hljs-string">&#x27;&#123;&quot;architectures&quot;:[&quot;BgeM3EmbeddingModel&quot;]&#125;&#x27;</span><br></code></pre></td></tr></table></figure>
+<p>服务可以启动，日志中也没有明显报错，但请求 <code>/v1/embeddings</code> 会返回 <code>501 Not Implemented</code>。移除该参数、仅保留 <code>--runner pooling --convert embed</code> 后，接口恢复正常。</p>
+<p>这里记录的是本次 vLLM 0.26.0 环境中的实测现象，不延伸推断其内部原因。更重要的经验是：HTTP 服务开始监听端口，只能证明进程已启动，不能证明 embeddings 端点可用。</p>
+<h2 id="冒烟测试与后台运行">冒烟测试与后台运行</h2>
+<p>先检查服务端注册的模型名：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -s http://127.0.0.1:8001/v1/models<br></code></pre></td></tr></table></figure>
+<p>返回结果中应包含 <code>bge-m3</code>。不过 <code>/v1/models</code> 只是元信息接口，不能替代实际推理测试，还需要调用 <code>/v1/embeddings</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -s http://127.0.0.1:8001/v1/embeddings \<br>  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \<br>  -d <span class="hljs-string">&#x27;&#123;&quot;model&quot;:&quot;bge-m3&quot;,&quot;input&quot;:[&quot;今天天气不错&quot;,&quot;BGE-M3 embedding 冒烟测试&quot;]&#125;&#x27;</span><br></code></pre></td></tr></table></figure>
+<p>本次返回两条 1024 维向量。上线前要确认模型名和向量维度都与客户端、向量库配置一致。</p>
+<p>验证通过后，可以暂时用 <code>nohup</code> 放到后台：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> ~/deploy/bge-m3<br><span class="hljs-built_in">nohup</span> vllm serve ~/models/bge-m3 \<br>  --runner pooling --convert embed \<br>  --host 0.0.0.0 --port 8001 \<br>  --max-model-len 8192 \<br>  --gpu-memory-utilization 0.2 \<br>  --served-model-name bge-m3 \<br>  &gt; logs/bge-m3-vllm.log 2&gt;&amp;1 &amp;<br><br><span class="hljs-built_in">echo</span> $! &gt; logs/bge-m3-vllm.pid<br></code></pre></td></tr></table></figure>
+<p>vLLM 0.26.0 默认采用多进程架构：pid 文件记录的是 APIServer 主进程，<code>nvidia-smi</code> 中占用显存的通常是 <code>VLLM::EngineCore</code>，两者 PID 不同属于正常现象。正式生产环境更建议使用 systemd 管理进程、重启策略和日志，不要依赖手工维护 PID。</p>
+<p>本次 <code>nvidia-smi</code> 观察到 EngineCore 约占 1.86 GiB。该数值包括模型权重及运行时缓冲等开销；embedding 模型没有自回归解码阶段持续增长的 KV cache，实际占用低于显存预算并不异常。<code>gpu-memory-utilization=0.2</code> 是预算参数，也不意味着服务一定会占满约 4.8 GiB。</p>
+<h2 id="压测方法">压测方法</h2>
+<p>压测脚本使用异步 Python 客户端，请求 OpenAI 兼容的 <code>/v1/embeddings</code> 接口。统计指标包括 QPS、texts/s、tokens/s、平均延迟、P95、P99、最大延迟和错误率。</p>
+<p>本次口径如下：</p>
+<ul>
+<li>正式统计前进行 warmup，预热请求不计入结果；</li>
+<li>延迟为完整 HTTP 往返延迟，不是纯 GPU 推理耗时；</li>
+<li>输入按约 512 token 构造，贴近实际 chunk 长度；</li>
+<li>压测时 GPU 由该服务独占，所有请求由一个异步客户端进程发出；</li>
+</ul>
+<h2 id="512-Token-压测结果">512 Token 压测结果</h2>
+<p>三组测试均在 RTX 4090 上完成，错误率为 0%。生产环境若与其他服务共享 GPU，仍需在同机条件下复测。</p>
+<h3 id="batch-size-阶梯（并发-8）">batch_size 阶梯（并发 = 8）</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">batch_size</th>
+<th style="text-align:right">QPS</th>
+<th style="text-align:right">texts/s</th>
+<th style="text-align:right">tokens/s</th>
+<th style="text-align:right">avg</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">max</th>
+<th style="text-align:right">错误率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">317.60</td>
+<td style="text-align:right">317.60</td>
+<td style="text-align:right">163,502.44</td>
+<td style="text-align:right">24.50 ms</td>
+<td style="text-align:right">33.77 ms</td>
+<td style="text-align:right">43.65 ms</td>
+<td style="text-align:right">51.92 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">165.76</td>
+<td style="text-align:right">331.52</td>
+<td style="text-align:right">170,949.34</td>
+<td style="text-align:right">46.86 ms</td>
+<td style="text-align:right">65.60 ms</td>
+<td style="text-align:right">85.49 ms</td>
+<td style="text-align:right">94.07 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">89.83</td>
+<td style="text-align:right">359.30</td>
+<td style="text-align:right">184,673.58</td>
+<td style="text-align:right">86.79 ms</td>
+<td style="text-align:right">119.40 ms</td>
+<td style="text-align:right">127.65 ms</td>
+<td style="text-align:right">160.87 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">8</td>
+<td style="text-align:right">44.41</td>
+<td style="text-align:right">355.26</td>
+<td style="text-align:right">183,130.79</td>
+<td style="text-align:right">175.25 ms</td>
+<td style="text-align:right">212.41 ms</td>
+<td style="text-align:right">218.56 ms</td>
+<td style="text-align:right">238.86 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">16</td>
+<td style="text-align:right">22.78</td>
+<td style="text-align:right">364.50</td>
+<td style="text-align:right">187,612.64</td>
+<td style="text-align:right">341.92 ms</td>
+<td style="text-align:right">381.83 ms</td>
+<td style="text-align:right">389.11 ms</td>
+<td style="text-align:right">435.96 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">32</td>
+<td style="text-align:right">10.99</td>
+<td style="text-align:right">351.83</td>
+<td style="text-align:right">181,239.49</td>
+<td style="text-align:right">710.74 ms</td>
+<td style="text-align:right">758.73 ms</td>
+<td style="text-align:right">773.68 ms</td>
+<td style="text-align:right">790.17 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">64</td>
+<td style="text-align:right">5.36</td>
+<td style="text-align:right">343.15</td>
+<td style="text-align:right">176,724.75</td>
+<td style="text-align:right">1,461.68 ms</td>
+<td style="text-align:right">1,528.78 ms</td>
+<td style="text-align:right">1,554.13 ms</td>
+<td style="text-align:right">1,576.10 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="并发阶梯（batch-size-16）">并发阶梯（batch_size = 16）</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">并发</th>
+<th style="text-align:right">QPS</th>
+<th style="text-align:right">texts/s</th>
+<th style="text-align:right">tokens/s</th>
+<th style="text-align:right">avg</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">max</th>
+<th style="text-align:right">错误率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">12.60</td>
+<td style="text-align:right">201.59</td>
+<td style="text-align:right">103,762.47</td>
+<td style="text-align:right">70.04 ms</td>
+<td style="text-align:right">79.96 ms</td>
+<td style="text-align:right">84.85 ms</td>
+<td style="text-align:right">94.51 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">19.42</td>
+<td style="text-align:right">310.71</td>
+<td style="text-align:right">159,941.40</td>
+<td style="text-align:right">94.42 ms</td>
+<td style="text-align:right">145.91 ms</td>
+<td style="text-align:right">154.53 ms</td>
+<td style="text-align:right">158.14 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">22.40</td>
+<td style="text-align:right">358.42</td>
+<td style="text-align:right">184,588.02</td>
+<td style="text-align:right">170.45 ms</td>
+<td style="text-align:right">212.30 ms</td>
+<td style="text-align:right">217.68 ms</td>
+<td style="text-align:right">231.32 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">8</td>
+<td style="text-align:right">22.29</td>
+<td style="text-align:right">356.67</td>
+<td style="text-align:right">183,630.46</td>
+<td style="text-align:right">349.36 ms</td>
+<td style="text-align:right">387.67 ms</td>
+<td style="text-align:right">393.97 ms</td>
+<td style="text-align:right">405.90 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">16</td>
+<td style="text-align:right">22.35</td>
+<td style="text-align:right">357.63</td>
+<td style="text-align:right">184,066.54</td>
+<td style="text-align:right">702.27 ms</td>
+<td style="text-align:right">738.40 ms</td>
+<td style="text-align:right">749.56 ms</td>
+<td style="text-align:right">758.24 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">32</td>
+<td style="text-align:right">22.44</td>
+<td style="text-align:right">358.96</td>
+<td style="text-align:right">184,945.87</td>
+<td style="text-align:right">1,395.34 ms</td>
+<td style="text-align:right">1,482.10 ms</td>
+<td style="text-align:right">1,520.84 ms</td>
+<td style="text-align:right">1,543.33 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="单请求饱和度（并发-1）">单请求饱和度（并发 = 1）</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">batch_size</th>
+<th style="text-align:right">QPS</th>
+<th style="text-align:right">texts/s</th>
+<th style="text-align:right">tokens/s</th>
+<th style="text-align:right">avg</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">max</th>
+<th style="text-align:right">错误率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">135.25</td>
+<td style="text-align:right">135.25</td>
+<td style="text-align:right">69,652.72</td>
+<td style="text-align:right">6.81 ms</td>
+<td style="text-align:right">11.24 ms</td>
+<td style="text-align:right">13.97 ms</td>
+<td style="text-align:right">15.03 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">77.86</td>
+<td style="text-align:right">155.71</td>
+<td style="text-align:right">80,174.20</td>
+<td style="text-align:right">11.77 ms</td>
+<td style="text-align:right">14.33 ms</td>
+<td style="text-align:right">16.36 ms</td>
+<td style="text-align:right">17.49 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">47.89</td>
+<td style="text-align:right">191.55</td>
+<td style="text-align:right">98,488.51</td>
+<td style="text-align:right">18.67 ms</td>
+<td style="text-align:right">22.11 ms</td>
+<td style="text-align:right">26.00 ms</td>
+<td style="text-align:right">28.52 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">8</td>
+<td style="text-align:right">24.00</td>
+<td style="text-align:right">192.03</td>
+<td style="text-align:right">99,041.40</td>
+<td style="text-align:right">35.91 ms</td>
+<td style="text-align:right">49.54 ms</td>
+<td style="text-align:right">55.64 ms</td>
+<td style="text-align:right">60.85 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">16</td>
+<td style="text-align:right">12.79</td>
+<td style="text-align:right">204.59</td>
+<td style="text-align:right">105,275.20</td>
+<td style="text-align:right">69.23 ms</td>
+<td style="text-align:right">79.57 ms</td>
+<td style="text-align:right">84.45 ms</td>
+<td style="text-align:right">87.51 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+<tr>
+<td style="text-align:right">32</td>
+<td style="text-align:right">7.25</td>
+<td style="text-align:right">231.85</td>
+<td style="text-align:right">119,466.62</td>
+<td style="text-align:right">124.51 ms</td>
+<td style="text-align:right">137.39 ms</td>
+<td style="text-align:right">141.99 ms</td>
+<td style="text-align:right">147.47 ms</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="数据怎么读">数据怎么读</h2>
+<p>一个请求可以包含多条文本，因此 <code>texts/s = QPS × batch_size</code>。随着 batch 增大，单个请求变重，QPS 下降并不等于服务吞吐下降；评估 embedding 容量时，更应关注 texts/s 和 tokens/s。</p>
+<p>三组结果显示，当前服务在 512 token 场景下的吞吐上限约为 <strong>350～365 texts/s</strong>，即 <strong>180k～188k tokens/s</strong>：</p>
+<ul>
+<li>batch 从 1 增至 16 时，固定开销被摊薄，吞吐从 317.60 提升到 364.50 texts/s；继续增至 32 或 64，吞吐反而略降，P99 升至 774 ms 和 1.55 s。</li>
+<li>batch 固定为 16 时，并发从 1 增至 4，吞吐从 201.59 提升到 358.42 texts/s；并发继续增加，吞吐基本不变，排队延迟持续上升。</li>
+<li>单并发即使把 batch 提到 32，也只有 231.85 texts/s，说明原来的单并发客户端无法喂满服务。</li>
+</ul>
+<p>因此，本次数据支持的生产起始配置是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">chunk_token_size=512<br>embedding_batch_size=16<br>embedding_concurrency=4<br>sleep_interval=0<br></code></pre></td></tr></table></figure>
+<p>该组合实测吞吐为 358.42 texts/s，P99 为 217.68 ms，错误率为 0%。<code>batch_size=8</code> 可以作为更保守的候选值，但本次没有测试 batch 8、并发 4 的组合，使用前应补测。</p>
+<h2 id="上线建议">上线建议</h2>
+<ol>
+<li><strong>先测真实 embeddings 接口。</strong> <code>/v1/models</code> 只能确认模型名，必须再用真实业务文本调用 <code>/v1/embeddings</code>，检查响应、维度和错误码。</li>
+<li><strong>验证向量兼容性。</strong> 如果 Ollama 与 vLLM 使用同一模型权重，先抽样比较两端输出的维度、归一化方式和数值一致性；存在差异时再整体重建向量索引，避免在同一索引中混用不同分布的向量。</li>
+<li><strong>用 systemd 管理服务。</strong> 配置启动、停止、自动重启和日志轮转，并同时观察 APIServer、EngineCore 与 GPU 状态。</li>
+<li><strong>在生产共存环境复测。</strong> 本文数据来自独占 GPU、单压测客户端场景，不能直接代表多客户端或多服务争抢时的表现。</li>
+<li><strong>补做端到端压测。</strong> 用一批真实文档走完整 LightRAG 流程，分别记录 embedding、LLM、数据库与总耗时，再评估迁移对业务的最终收益。</li>
+</ol>
+<h2 id="总结">总结</h2>
+<p>这次迁移的价值，不只是把 Ollama 换成 vLLM，而是让 embedding 服务从“依赖 sleep 保持稳定”变成“可以量化容量并据此调参”。在 RTX 4090、512 token 输入下，BGE-M3 的服务吞吐上限约为 350～365 texts/s；当前推荐从 <code>batch_size=16、concurrency=4</code> 起步，再根据生产环境的延迟目标和 GPU 共存情况复测调整。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/AI-Infra/" class="category-chain-item">AI Infra</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/my-blog/tags/%E5%B7%A5%E7%A8%8B%E7%BB%8F%E9%AA%8C/" class="print-no-link">#工程经验</a>
+      
+        <a href="/my-blog/tags/vLLM/" class="print-no-link">#vLLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>从 Ollama 迁移到 vLLM：Embedding 部署与压测</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Ariasu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年7月31日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/my-blog/2026/07/20/01%20llm-%E8%AE%AD%E7%BB%83%E8%B6%85%E5%8F%82%E6%95%B0%E8%B0%83%E4%BC%98%E6%8C%87%E5%8D%97/" title="训练超参数调优指南">
+                        <span class="hidden-mobile">训练超参数调优指南</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/my-blog/js/events.js" ></script>
+<script  src="/my-blog/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/my-blog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    function isExpandAllEnabled() {
+      return CONFIG.toc && CONFIG.toc.expand_all === true;
+    }
+    function expandAllToc() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .tocbot-is-collapsed').removeClass('tocbot-is-collapsed');
+    }
+    function updateTocToggle($li, $childList) {
+      var $toggle = $li.children('.toc-toggle');
+      if ($toggle.length === 0) { return; }
+      var collapsed = $childList.hasClass('tocbot-is-collapsed');
+      $toggle
+        .toggleClass('toc-toggle-collapsed', collapsed)
+        .toggleClass('toc-toggle-expanded', !collapsed);
+    }
+    function bindTocToggle() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .toc-list-item').each(function() {
+        var $li = jQuery(this);
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) {
+          if ($li.children('.toc-toggle').length === 0) {
+            $li.prepend('<span class="toc-toggle toc-toggle-placeholder" aria-hidden="true">›</span>');
+          }
+          return;
+        }
+
+        if ($li.children('.toc-toggle').length === 0) {
+          $li.prepend('<span class="toc-toggle toc-toggle-expanded" aria-hidden="true">›</span>');
+        }
+        updateTocToggle($li, $childList);
+      });
+      jQuery('#toc-body').off('click.tocToggle').on('click.tocToggle', '.toc-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $li = jQuery(this).parent('.toc-list-item');
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) { return; }
+        $childList.toggleClass('tocbot-is-collapsed');
+        updateTocToggle($li, $childList);
+      });
+      if (!window.__tocToggleObserver) {
+        window.__tocToggleObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') { return; }
+            var $list = jQuery(mutation.target);
+            var $li = $list.parent('.toc-list-item');
+            if ($li.length === 0) { return; }
+            updateTocToggle($li, $list);
+          });
+        });
+        jQuery('#toc-body ol').each(function() {
+          window.__tocToggleObserver.observe(this, { attributes: true });
+        });
+      }
+    }
+    var tocConfig = Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc);
+    if (isExpandAllEnabled()) {
+      tocConfig.collapseDepth = 6;
+    }
+    window.tocbot.init(tocConfig);
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+    expandAllToc();
+    bindTocToggle();
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+        expandAllToc();
+        bindTocToggle();
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/my-blog/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/my-blog/assets/js/portfolio.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/my-blog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
