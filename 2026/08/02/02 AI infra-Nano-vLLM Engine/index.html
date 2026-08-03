@@ -1,0 +1,1319 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/my-blog/img/fluid.png">
+  <link rel="icon" href="/my-blog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#ffffffd9">
+  <meta name="author" content="Ariasu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、模型之外，推理引擎究竟解决什么问题 阅读大模型源码时，人们很容易把注意力全部放在 Transformer 上：Embedding 如何得到隐状态，Attention 如何计算 Q、K、V，RoPE 如何注入位置信息，MLP 又如何变换特征。但真正把模型部署为一个高吞吐推理服务时，模型前向只是问题的一部分。 推理引擎还必须回答另外一组问题：  多条长度不同的请求，应该如何组成 GPU 批次？ P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="拆解 Nano-vLLM Engine：一条请求如何被调度、缓存并送上 GPU">
+<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/08/02/02%20AI%20infra-Nano-vLLM%20Engine/index.html">
+<meta property="og:site_name" content="my-blog">
+<meta property="og:description" content="一、模型之外，推理引擎究竟解决什么问题 阅读大模型源码时，人们很容易把注意力全部放在 Transformer 上：Embedding 如何得到隐状态，Attention 如何计算 Q、K、V，RoPE 如何注入位置信息，MLP 又如何变换特征。但真正把模型部署为一个高吞吐推理服务时，模型前向只是问题的一部分。 推理引擎还必须回答另外一组问题：  多条长度不同的请求，应该如何组成 GPU 批次？ P">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/covers/nanovllm-engine-cover.png">
+<meta property="article:published_time" content="2026-08-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-03T14:03:22.636Z">
+<meta property="article:author" content="Ariasu">
+<meta property="article:tag" content="vLLM">
+<meta property="article:tag" content="架构解析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ariasu123.github.io/my-blog/assets/covers/nanovllm-engine-cover.png">
+  
+  
+  
+  <title>拆解 Nano-vLLM Engine：一条请求如何被调度、缓存并送上 GPU - my-blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/my-blog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/my-blog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/my-blog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/my-blog/assets/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ariasu123.github.io","root":"/my-blog/","version":"1.9.9","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"expand_all":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"openkounter":{"server_url":"https://open-kounter.mintimate.cn","path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/my-blog/search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/my-blog/js/utils.js" ></script>
+  <script  src="/my-blog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 42vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/my-blog/">
+      <strong>Ariasu Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content (desktop) -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/projects/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile grid menu overlay -->
+<div id="mobile-grid-menu" class="d-lg-none">
+  <div class="mobile-grid-menu-inner">
+    <div class="container">
+      <div class="row">
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-home-fill"></i>
+                  <span>首页</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/archives/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-archive-fill"></i>
+                  <span>归档</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/categories/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-category-fill"></i>
+                  <span>分类</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/tags/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-tags-fill"></i>
+                  <span>标签</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/projects/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-link-fill"></i>
+                  <span>项目</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/about/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-user-fill"></i>
+                  <span>关于</span>
+                </div>
+              </a>
+            </div>
+          
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-search-btn">
+            <a href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-search"></i>
+                <span>搜索</span>
+              </div>
+            </a>
+          </div>
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-color-toggle-btn"
+               data-label-light="开灯"
+               data-label-dark="关灯">
+            <a href="javascript:;" aria-label="Color Toggle">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-dark" id="mobile-color-toggle-icon"></i>
+                <span id="mobile-color-toggle-label">关灯</span>
+              </div>
+            </a>
+          </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+
+  <!-- 内页:紧凑科技感 Banner(渐变 + 细网格由 CSS 提供) -->
+  <div id="banner" class="banner pf-banner">
+    <div class="pf-banner-bg" aria-hidden="true"></div>
+    <div class="mask flex-center">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          <span id="subtitle">拆解 Nano-vLLM Engine：一条请求如何被调度、缓存并送上 GPU</span>
+        </div>
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-03 00:00" pubdate>
+          2026-08-03
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          16k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          137 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">拆解 Nano-vLLM Engine：一条请求如何被调度、缓存并送上 GPU</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="一、模型之外，推理引擎究竟解决什么问题">一、模型之外，推理引擎究竟解决什么问题</h2>
+<p>阅读大模型源码时，人们很容易把注意力全部放在 Transformer 上：Embedding 如何得到隐状态，Attention 如何计算 Q、K、V，RoPE 如何注入位置信息，MLP 又如何变换特征。但真正把模型部署为一个高吞吐推理服务时，模型前向只是问题的一部分。</p>
+<p>推理引擎还必须回答另外一组问题：</p>
+<ul>
+<li>多条长度不同的请求，应该如何组成 GPU 批次？</li>
+<li>Prompt 很长，单轮 token 预算放不下时怎么办？</li>
+<li>每条请求跨越很多次 Decode，状态保存在哪里？</li>
+<li>KV Cache 如何分配、复用和回收，才能减少显存碎片？</li>
+<li>显存不足时，应该暂停哪条请求？</li>
+<li>Prefill 与 Decode 的输入形态完全不同，如何分别准备张量？</li>
+<li>Decode 每轮计算量很小，如何降低 CPU 提交 CUDA Kernel 的开销？</li>
+<li>多张 GPU 运行同一个模型时，各进程如何保持步调一致？</li>
+</ul>
+<p>这些问题共同构成了推理引擎。Nano-vLLM 的价值也正在这里：它用很少的代码保留了现代 LLM 推理系统的核心骨架，让请求调度、Paged KV Cache、Prefix Cache、Chunked Prefill、CUDA Graph 和 Tensor Parallel 等机制能够被完整串起来。</p>
+<p><code>nanovllm/engine</code> 中有五个核心文件：</p>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>核心职责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>llm_engine.py</code></td>
+<td>对接用户 API，驱动“调度—执行—回写”主循环</td>
+</tr>
+<tr>
+<td><code>sequence.py</code></td>
+<td>保存单条请求跨轮次存在的全部状态</td>
+</tr>
+<tr>
+<td><code>scheduler.py</code></td>
+<td>决定本轮运行哪些 Sequence，以及运行多少 token</td>
+</tr>
+<tr>
+<td><code>block_manager.py</code></td>
+<td>管理 KV Cache 的物理块、块表、引用计数和前缀缓存</td>
+</tr>
+<tr>
+<td><code>model_runner.py</code></td>
+<td>准备 GPU 输入、执行模型、采样，并协调 CUDA Graph 与多 GPU</td>
+</tr>
+</tbody>
+</table>
+<p>整体关系如下：</p>
+<pre><code class=" mermaid">flowchart TD
+    User[&quot;用户调用 LLM.generate&quot;] --&gt; Engine[&quot;LLMEngine：请求入口与主循环&quot;]
+    Engine --&gt; Seq[&quot;Sequence：请求状态&quot;]
+    Engine --&gt; Scheduler[&quot;Scheduler：批次与状态调度&quot;]
+    Scheduler --&gt; BM[&quot;BlockManager：KV Cache 块管理&quot;]
+    Engine --&gt; Runner[&quot;ModelRunner：GPU 执行器&quot;]
+    Runner --&gt; Context[&quot;Context：批次元数据&quot;]
+    Runner --&gt; Model[&quot;Model：模型计算黑盒&quot;]
+    Model --&gt; Runner
+    Runner --&gt; Engine
+    Engine --&gt; Scheduler
+    Engine --&gt; User
+</code></pre>
+<p>这套架构最重要的分工可以概括为四句话：状态由 <code>Sequence</code> 承载，策略由 <code>Scheduler</code> 决定，KV 资源由 <code>BlockManager</code> 管理，GPU 执行细节由 <code>ModelRunner</code> 封装。<code>LLMEngine</code> 则是把四者组织起来的总指挥。</p>
+<h2 id="二、初始化：一次-LLM-背后发生了什么">二、初始化：一次 <code>LLM(...)</code> 背后发生了什么</h2>
+<p>用户侧的 <code>LLM</code> 只是继承了 <code>LLMEngine</code>，真正的初始化工作都发生在 <code>LLMEngine.__init__</code> 中。它并非简单地加载模型，而是在正式接收请求前建立整套运行环境。</p>
+<h3 id="2-1-构造配置并统一块大小">2.1 构造配置并统一块大小</h3>
+<p><code>LLMEngine</code> 首先从关键字参数中筛选 <code>Config</code> 支持的字段，随后构造配置对象。配置会读取 Hugging Face 模型目录中的 <code>config.json</code>，得到层数、隐藏维度、注意力头数、数据类型与最大位置长度等信息。</p>
+<p>紧接着有一行很关键的赋值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-type">Sequence</span>.block_size = config.kvcache_block_size<br></code></pre></td></tr></table></figure>
+<p><code>Sequence</code> 在 CPU 侧按照 <code>block_size</code> 切分逻辑 token 块，<code>BlockManager</code> 在 GPU KV Cache 中按照相同大小管理物理块。两者必须严格一致，否则 <code>Sequence.block(i)</code>、<code>block_table</code> 和真实 KV 槽位会产生错位。</p>
+<h3 id="2-2-为-Tensor-Parallel-创建进程">2.2 为 Tensor Parallel 创建进程</h3>
+<p>当 <code>tensor_parallel_size &gt; 1</code> 时，引擎使用 <code>spawn</code> 启动 rank 1、rank 2 等子进程，主进程自身承担 rank 0。选择 <code>spawn</code> 的意义在于每个子进程会从干净的 Python 解释器启动，避免直接复制已经初始化的 CUDA 上下文。</p>
+<p>每个 rank 都会构造一个 <code>ModelRunner</code>，并加入 NCCL 通信组。非零 rank 完成初始化后进入常驻命令循环；rank 0 留在主进程中，既参与本地模型计算，也负责把命令广播给其他 rank。</p>
+<h3 id="2-3-ModelRunner-的初始化顺序">2.3 ModelRunner 的初始化顺序</h3>
+<p>每个 <code>ModelRunner</code> 依次执行：</p>
+<ol>
+<li>选择当前 rank 对应的 GPU；</li>
+<li>创建模型结构并加载本 rank 所需权重；</li>
+<li>创建采样器；</li>
+<li>使用接近配置上限的虚拟输入预热模型；</li>
+<li>根据显存峰值计算可分配的 KV Cache 块数；</li>
+<li>一次性分配整块 KV Cache 大张量；</li>
+<li>如果没有强制 eager，捕获常用 Decode batch size 的 CUDA Graph。</li>
+</ol>
+<p>这里的顺序不能随意交换。模型前向除了常驻参数，还会产生临时张量、编译缓存和工作区。若在预热前就把所有“剩余显存”交给 KV Cache，正式前向到达峰值时就可能 OOM。因此代码先运行一次接近上限的 Prefill，记录峰值，再从显存预算中扣掉这部分临时开销。</p>
+<p>设单张 GPU 上一个物理 KV 块的字节数为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">block_bytes = 2<br>            × num_hidden_layers<br>            × block_size<br>            × local_num_kv_heads<br>            × head_dim<br>            × dtype_size<br></code></pre></td></tr></table></figure>
+<p>其中最前面的 <code>2</code> 分别代表 Key 和 Value，<code>local_num_kv_heads</code> 是 KV 头按 Tensor Parallel world size 切分后的本地数量。可分配块数近似为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">num_blocks = (<br>    total_memory × gpu_memory_utilization<br>    - already_used_memory<br>    - warmup_peak_memory<br>    + current_memory<br>) // block_bytes<br></code></pre></td></tr></table></figure>
+<p>最终 KV Cache 是一个大张量：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">[2, num_layers, num_blocks, block_size, local_num_kv_heads, head_dim]<br></code></pre></td></tr></table></figure>
+<p>各 Attention 层持有的 <code>k_cache</code> 和 <code>v_cache</code> 只是这个大张量对应层的视图。CPU 侧的 <code>BlockManager</code> 不保存真实 K/V，只管理物理块编号及其元数据。</p>
+<h3 id="2-4-Tokenizer-与-Scheduler">2.4 Tokenizer 与 Scheduler</h3>
+<p>GPU 运行环境就绪后，<code>LLMEngine</code> 加载 Tokenizer，把 EOS token id 写入配置，再创建 <code>Scheduler</code>。Scheduler 构造时会读取 rank 0 计算出的 <code>num_kvcache_blocks</code>，建立与 GPU 物理块一一对应的 CPU 管理对象。</p>
+<p>至此，引擎才真正具备接收请求的能力。也就是说，<code>LLM(...)</code> 是重初始化操作，而 <code>generate(...)</code> 是在已经建立好的模型、KV Cache 和 CUDA Graph 上运行请求。</p>
+<h2 id="三、Sequence：贯穿整个引擎的请求状态">三、Sequence：贯穿整个引擎的请求状态</h2>
+<p><code>Sequence</code> 可以理解为一张会跨越很多轮 GPU 执行的“请求进度表”。Scheduler 每轮只选择部分请求，ModelRunner 每轮只执行一次前向，因此所有需要跨轮保存的信息都必须放在 Sequence 中。</p>
+<h3 id="3-1-三类状态">3.1 三类状态</h3>
+<p>Sequence 有三种状态：</p>
+<ul>
+<li><code>WAITING</code>：等待 Prefill，或被抢占后等待重新 Prefill；</li>
+<li><code>RUNNING</code>：Prompt 已完成 Prefill，正在逐 token Decode；</li>
+<li><code>FINISHED</code>：遇到 EOS 或达到 <code>max_tokens</code>。</li>
+</ul>
+<p>典型状态路径是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">WAITING → RUNNING → FINISHED<br></code></pre></td></tr></table></figure>
+<p>显存不足发生抢占时，则会出现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">RUNNING → WAITING → RUNNING<br></code></pre></td></tr></table></figure>
+<p>抢占不会删除已经生成的 token，只会释放 GPU KV Cache。之后请求回到 waiting 队首，利用保留在 <code>token_ids</code> 中的完整上下文重新 Prefill。</p>
+<h3 id="3-2-三个容易混淆的-token-计数">3.2 三个容易混淆的 token 计数</h3>
+<p>理解 engine 的关键，是分清下面三个字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>num_tokens</code></td>
+<td>Sequence 当前拥有的 token 总数，包括 prompt 和已生成 token</td>
+</tr>
+<tr>
+<td><code>num_cached_tokens</code></td>
+<td>已经执行过模型前向、拥有有效 KV Cache 的 token 数</td>
+</tr>
+<tr>
+<td><code>num_scheduled_tokens</code></td>
+<td>Scheduler 为当前这一轮安排、但尚未回写完成的 token 数</td>
+</tr>
+</tbody>
+</table>
+<p>在 Prefill 调度完成后，通常满足：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">num_cached_tokens + num_scheduled_tokens &lt;= num_tokens<br></code></pre></td></tr></table></figure>
+<p>如果等号不成立，说明当前只是 Chunked Prefill 的一个片段。ModelRunner 执行结束后，<code>postprocess</code> 会把 <code>num_scheduled_tokens</code> 加到 <code>num_cached_tokens</code>，再把本轮调度数清零。</p>
+<p>完整 Prefill 会直接产生第一个 completion token。这个 token 已经被采样并追加到 Sequence，但它自己的 K/V 尚未写入缓存。因此进入下一轮 Decode 前，常见状态是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">num_tokens = num_cached_tokens + 1<br></code></pre></td></tr></table></figure>
+<p>下一轮把这个 <code>last_token</code> 送入模型后，它才成为新的 cached token，同时模型再预测下一个 token。这个“一步错位”正是自回归生成的基本节奏。</p>
+<h3 id="3-3-block-table">3.3 block_table</h3>
+<p><code>block_table</code> 表示逻辑块到物理块的映射。假设为了讲解把 <code>block_size</code> 设为 4，一条 Sequence 当前有六个 token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">逻辑块 0 = [A, B, C, D]<br>逻辑块 1 = [E, F]<br></code></pre></td></tr></table></figure>
+<p>若它被分配到 GPU 物理块 7 和 3，则：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">seq.block_table == [<span class="hljs-number">7</span>, <span class="hljs-number">3</span>]<br></code></pre></td></tr></table></figure>
+<p>逻辑顺序仍然是 0、1，但物理内存无需连续。Attention 通过 <code>block_table</code> 找到历史 K/V，这就是分页式 KV Cache 的核心思想。</p>
+<p>把这个字母示例展开到一条真实短句后，逻辑块、块表与物理块之间的关系会更加直观。下图中的 Request A 先被切成多个逻辑 KV 块；Block Table 不保存 K/V 本身，只记录每个逻辑块实际落在哪个 GPU 物理块，以及该块已有多少个有效 token。
+<img src="/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/vllm-block-table.png" srcset="/my-blog/img/loading.gif" lazyload alt=""></p>
+<p align="center"><em>逻辑 KV 块经由 Block Table 映射到离散的 GPU 物理块</em></p>
+<p>图中三个逻辑块依次映射到物理块 7、1 和 3，虽然物理位置彼此分散，请求看到的 token 顺序却没有变化。<code># filled</code> 还记录了块内有效槽位数：当新生成的 <code>fathers</code> 追加到逻辑块 1 时，只需把该块的有效数量从 3 更新为 4，不必移动前面的 KV。它与上面的 <code>[7, 3]</code> 示例表达的是同一件事：<strong>连续的是请求的逻辑上下文，不必连续的是 GPU 上的物理存储。</strong></p>
+<h3 id="3-4-多进程序列化为什么区分-Prefill-与-Decode">3.4 多进程序列化为什么区分 Prefill 与 Decode</h3>
+<p>rank 0 需要把本轮 Sequence 元数据发送给其他 TP rank。Prefill 会读取一段 prompt token，所以序列化状态中包含完整 <code>token_ids</code>；Decode 只输入最新的 <code>last_token</code>，历史信息已经存在各 GPU 的 KV Cache 中，因此只发送一个整数即可。</p>
+<p>这不会减少 GPU 间模型内部的集合通信，但会减少主进程通过共享内存广播 Python 请求元数据的体积。</p>
+<h2 id="四、一条请求从-generate-到完成的生命周期">四、一条请求从 generate 到完成的生命周期</h2>
+<p><code>LLMEngine.generate</code> 的主循环可以压缩成下面的伪代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> prompt <span class="hljs-keyword">in</span> prompts:<br>    add_request(prompt)<br><br><span class="hljs-keyword">while</span> scheduler 仍有请求:<br>    seqs, is_prefill = scheduler.schedule()<br>    token_ids = model_runner.run(seqs, is_prefill)<br>    scheduler.postprocess(seqs, token_ids, is_prefill)<br><br>按 seq_id 恢复提交顺序并解码<br></code></pre></td></tr></table></figure>
+<h3 id="4-1-add-request：从输入到-Sequence">4.1 add_request：从输入到 Sequence</h3>
+<p>字符串 prompt 先通过 Tokenizer 转换成 token id；如果用户已经传入 <code>list[int]</code>，则直接使用。随后构造 Sequence，并追加到 Scheduler 的 <code>waiting</code> 队列尾部。</p>
+<p>每条 Sequence 通过全局计数器获得单调递增的 <code>seq_id</code>。请求完成顺序可能不同于提交顺序，例如短请求可能先结束，因此结果先保存在以 <code>seq_id</code> 为键的字典中，最后排序恢复原始顺序。</p>
+<h3 id="4-2-step：引擎的最小推进单位">4.2 step：引擎的最小推进单位</h3>
+<p><code>step()</code> 只推进一轮，而不是完成一条请求。它依次完成：</p>
+<ol>
+<li>Scheduler 选择本轮 Sequence；</li>
+<li>ModelRunner 准备输入并运行 GPU；</li>
+<li>Scheduler 将新 token 和缓存进度写回 Sequence；</li>
+<li>收集本轮刚刚完成的请求。</li>
+</ol>
+<p>一条长请求会经历一次或多次 Prefill，再经历许多次 Decode。正因为每轮都重新调度，等待请求与运行请求才能动态组成新的批次。</p>
+<h3 id="4-3-Prefill-为什么也会返回-token">4.3 Prefill 为什么也会返回 token</h3>
+<p>完整 Prompt 的最后一个位置会产生下一 token 的 logits。因此当最后一段 Prefill 完成时，ModelRunner 会采样出第一个 completion token，<code>postprocess</code> 将其追加到 Sequence。若只是中间的 Chunked Prefill，虽然模型前向也会得到 logits，但这些 logits 不代表完整上下文下的下一 token，调度器不会将采样结果写入 Sequence。</p>
+<h3 id="4-4-Decode-为什么只输入-last-token">4.4 Decode 为什么只输入 last_token</h3>
+<p>更早 token 的 K/V 已经写入 KV Cache。Decode 只需输入上轮采样出的 <code>last_token</code>，通过块表读取历史 K/V，再预测新的 token。于是每条活跃请求每轮只贡献一个 Query token，这也是 Decode 能够把大量请求合并到一个 batch 中的基础。</p>
+<p>完整时序如下：</p>
+<pre><code class=" mermaid">sequenceDiagram
+    participant U as User
+    participant E as LLMEngine
+    participant S as Scheduler
+    participant B as BlockManager
+    participant R as ModelRunner
+
+    U-&gt;&gt;E: generate prompt
+    E-&gt;&gt;S: add Sequence to waiting
+    loop Until all requests finish
+        E-&gt;&gt;S: schedule
+        alt Prefill
+            S-&gt;&gt;B: check and allocate blocks
+            S--&gt;&gt;E: sequences and is_prefill=true
+            E-&gt;&gt;R: run prefill chunk
+            R--&gt;&gt;E: sampled token ids
+            E-&gt;&gt;S: postprocess
+            S-&gt;&gt;B: hash newly completed blocks
+        else Decode
+            S-&gt;&gt;B: check or append one block
+            S--&gt;&gt;E: sequences and is_prefill=false
+            E-&gt;&gt;R: run last tokens
+            R--&gt;&gt;E: sampled token ids
+            E-&gt;&gt;S: postprocess
+        end
+    end
+    E--&gt;&gt;U: outputs sorted by seq_id
+</code></pre>
+<h2 id="五、Scheduler：如何持续组织-GPU-批次">五、Scheduler：如何持续组织 GPU 批次</h2>
+<p>Scheduler 不执行神经网络。它只管理请求队列、token 预算和 KV Cache 资源，然后回答两个问题：本轮运行谁，以及本轮属于 Prefill 还是 Decode。</p>
+<h3 id="5-1-waiting-与-running">5.1 waiting 与 running</h3>
+<p><code>waiting</code> 和 <code>running</code> 都是双端队列：</p>
+<ul>
+<li>新请求从 waiting 右侧进入；</li>
+<li>Prefill 通常从 waiting 左侧取，保持 FIFO；</li>
+<li>完成 Prompt 的请求进入 running；</li>
+<li>Decode 从 running 左侧选择请求；</li>
+<li>抢占时优先取 running 右端，再把被抢占请求放到 waiting 左端。</li>
+</ul>
+<p>最后一点体现了一个简单策略：尽量保留更靠前、已经准备执行的请求，牺牲队尾请求释放 KV 块；被抢占者又会排到 waiting 前方，避免永久饥饿。</p>
+<h3 id="5-2-两类批次预算">5.2 两类批次预算</h3>
+<p>调度同时受两个配置约束：</p>
+<ul>
+<li><code>max_num_seqs</code>：一轮最多包含多少条 Sequence；</li>
+<li><code>max_num_batched_tokens</code>：一轮 Prefill 最多处理多少 token。</li>
+</ul>
+<p>前者约束 batch 中请求数量，后者约束 Prefill 总计算规模。Decode 中每条请求固定调度一个 token，因此主要受 <code>max_num_seqs</code> 约束。</p>
+<h3 id="5-3-Prefill-优先，而且不与-Decode-混批">5.3 Prefill 优先，而且不与 Decode 混批</h3>
+<p>当前实现每次 <code>schedule()</code> 都先尝试 waiting 队列。只要成功安排了任何 Prefill Sequence，就立即返回 Prefill 批次，不再构造 Decode 批次。只有本轮完全没有可运行的 Prefill，才进入 Decode 分支。</p>
+<p>因此这里的 continuous batching 应理解为：引擎在每一步重新组织活跃请求，而不是把一批请求从头到尾锁死在同一批次。它并不意味着 Prefill 和 Decode 一定混在同一次模型前向中；Nano-vLLM 当前实现明确将两者分开。</p>
+<p>下面的时间轴对比展示了 continuous batching 最核心的收益。上半部分采用静态批处理：某条 Sequence 提前结束后，对应槽位会一直空闲，直到整个批次结束；下半部分则在槽位释放后立即补入 S6、S7 等新请求，让后续时间步继续保持较高的有效计算占比。图中的黄色可理解为请求的 Prompt/Prefill 阶段，蓝色表示逐 token 生成阶段，红色 <code>END</code> 表示请求完成。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/continuous-batching.png" srcset="/my-blog/img/loading.gif" lazyload alt=""></p>
+<p align="center"><em>静态批处理会留下空闲槽位，continuous batching 则用新请求动态补位</em></p>
+<p>这张图表达的是“请求完成后动态补位”的通用思想，并不表示所有引擎都必须把 Prefill 和 Decode 放进同一次前向。落实到本文分析的 Nano-vLLM，Scheduler 的确会在每个 step 重新选择 Sequence，但一次 <code>schedule()</code> 返回的仍然是纯 Prefill 或纯 Decode 批次。</p>
+<p>这一策略让输入准备和 Attention 元数据更简单，代价是 waiting 请求持续到来时可能推迟 running 请求的 Decode。</p>
+<h3 id="5-4-Chunked-Prefill-的实际策略">5.4 Chunked Prefill 的实际策略</h3>
+<p>假设本轮 token 上限为 8，队首 prompt 有 12 个尚未计算的 token。若当前批次还是空的，Scheduler 会允许这条请求本轮只处理前 8 个，剩余 4 个留到下一轮。这就是 Chunked Prefill。</p>
+<p>但若本轮已经安排了其他请求，剩余预算又装不下下一条完整的待处理部分，Scheduler 会停止添加，而不是继续切分第二条请求。因此当前策略是：<strong>只有 Prefill 批次中的第一条 Sequence 可以被切块</strong>。</p>
+<p>还要注意一个容易忽略的事实：这里切分的是“本轮计算 token 数”，不是物理块分配规模。首次调度 Sequence 时，<code>BlockManager.allocate</code> 仍会为整条当前序列建立完整块表。换言之，Chunked Prefill 降低了单轮计算峰值，却不会让一个本来无法完整获得 prompt 所需 KV 块的请求进入执行。</p>
+<p>若一条 12-token prompt 在 <code>block_size=4</code> 下需要三个物理块，那么即使每轮只 Prefill 8 个 token，初次进入时仍要能获得三个块。后两块可以暂时没有有效 K/V，但映射已经建立。</p>
+<h3 id="5-5-Decode-与抢占">5.5 Decode 与抢占</h3>
+<p>Decode 调度时，每条 running Sequence 本轮只处理一个 token。这个 token 可能仍落在现有最后一个块中，也可能正好进入新的逻辑块。</p>
+<p>以 <code>block_size=4</code> 为例：</p>
+<ul>
+<li>长度为 6 时，last token 位于第二块，无需新增物理块；</li>
+<li>上轮从长度 8 生成到长度 9 后，新 token 是第三块的第一个 token，下一轮必须先分配新物理块。</li>
+</ul>
+<p>若没有空闲块，Scheduler 会从 running 队尾抢占其他请求：释放其块表，将状态改为 <code>WAITING</code>，并放回 waiting 队首。若仍不足则继续抢占，直到当前请求可以追加块。</p>
+<p>源码最后用 <code>assert scheduled_seqs</code> 表达一个运行时前提：Decode 分支结束时至少应有一条请求被成功调度。正常多请求场景通过抢占其他 Sequence 腾出空间；如果连唯一候选本身都必须被抢占而无法在本轮继续，便会触发这一内部断言。理解这一点有助于区分“调度策略的设计意图”和“代码假设成立的运行条件”。</p>
+<p>完整决策过程可以画成：</p>
+<pre><code class=" mermaid">flowchart TD
+    Start[&quot;schedule 开始&quot;] --&gt; HasWaiting&#123;&quot;waiting 非空？&quot;&#125;
+    HasWaiting -- 是 --&gt; Budget&#123;&quot;仍有序列与 token 预算？&quot;&#125;
+    Budget -- 是 --&gt; Alloc&#123;&quot;队首可获得完整块表？&quot;&#125;
+    Alloc -- 否 --&gt; PrefillDone&#123;&quot;已安排 Prefill？&quot;&#125;
+    Alloc -- 是 --&gt; Chunk[&quot;计算本轮 num_scheduled_tokens&quot;]
+    Chunk --&gt; Move&#123;&quot;本轮后 Prompt 是否完整？&quot;&#125;
+    Move -- 是 --&gt; Running[&quot;移入 running&quot;]
+    Move -- 否 --&gt; Keep[&quot;保留在 waiting 队首&quot;]
+    Running --&gt; PrefillDone
+    Keep --&gt; PrefillDone
+    Budget -- 否 --&gt; PrefillDone
+    PrefillDone -- 是 --&gt; ReturnP[&quot;返回纯 Prefill 批次&quot;]
+    PrefillDone -- 否 --&gt; Decode[&quot;进入 Decode 调度&quot;]
+    HasWaiting -- 否 --&gt; Decode
+    Decode --&gt; Append&#123;&quot;当前 Sequence 可追加 KV？&quot;&#125;
+    Append -- 否 --&gt; Preempt[&quot;抢占 running 队尾并释放块&quot;]
+    Preempt --&gt; Append
+    Append -- 是 --&gt; One[&quot;调度一个 last_token&quot;]
+    One --&gt; ReturnD[&quot;返回纯 Decode 批次&quot;]
+</code></pre>
+<h3 id="5-6-postprocess：把执行结果变回状态">5.6 postprocess：把执行结果变回状态</h3>
+<p>GPU 执行完成后，<code>postprocess</code> 对每条 Sequence 执行四步：</p>
+<ol>
+<li>将本轮新填满的 KV 块登记到 Prefix Cache；</li>
+<li><code>num_cached_tokens += num_scheduled_tokens</code>；</li>
+<li>清空 <code>num_scheduled_tokens</code>；</li>
+<li>若 Prefill 尚未完成则等待下一片，否则追加采样 token。</li>
+</ol>
+<p>追加 token 后，如果 token 等于 EOS 且没有设置 <code>ignore_eos</code>，或者 completion 长度达到 <code>max_tokens</code>，Sequence 被标记为 <code>FINISHED</code>，块表随即释放，并从 running 中移除。</p>
+<p>请求结束后马上释放 KV 引用非常重要：完成请求如果继续占用缓存，会直接压缩后续请求的可调度空间。</p>
+<h2 id="六、BlockManager：把-KV-Cache-变成可调度资源">六、BlockManager：把 KV Cache 变成可调度资源</h2>
+<p>GPU 上的 KV Cache 是连续大张量，但 Scheduler 不能用“每条请求一段连续显存”的方式管理它。请求长度不断增长、完成顺序不同，连续分配容易产生碎片，也不利于共享前缀。</p>
+<p>BlockManager 因而在 CPU 侧把大张量划分成等长物理块。每个 <code>Block</code> 记录：</p>
+<ul>
+<li><code>block_id</code>：在 KV Cache 大张量中的物理下标；</li>
+<li><code>ref_count</code>：当前有多少 Sequence 引用它；</li>
+<li><code>hash</code>：该块对应的累计前缀哈希；</li>
+<li><code>token_ids</code>：完整块的 token 内容，用于核对哈希命中。</li>
+</ul>
+<p>BlockManager 还维护：</p>
+<ul>
+<li><code>free_block_ids</code>：当前引用数为零、可以重新分配的物理块队列；</li>
+<li><code>used_block_ids</code>：至少被一条 Sequence 使用的块集合；</li>
+<li><code>hash_to_block_id</code>：累计前缀哈希到物理块的索引。</li>
+</ul>
+<h3 id="6-1-分配并不要求物理连续">6.1 分配并不要求物理连续</h3>
+<p>继续使用 <code>block_size=4</code> 的例子。请求 S1 有六个 token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">S1 = [A, B, C, D, E, F]<br></code></pre></td></tr></table></figure>
+<p>BlockManager 可能从空闲队列中取出物理块 7 和 3：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">S1.block_table = [7, 3]<br></code></pre></td></tr></table></figure>
+<p>模型层看到逻辑块 0 时访问物理块 7，看到逻辑块 1 时访问物理块 3。这样，Sequence 的逻辑 token 仍然连续，底层物理页却可以任意分散。</p>
+<h3 id="6-2-引用计数控制生命周期">6.2 引用计数控制生命周期</h3>
+<p>新块被分配时 <code>ref_count=1</code>。若另一条请求命中相同 Prefix Cache，直接复用这个物理块并把引用数加一。Sequence 完成或被抢占时，BlockManager 逆序遍历块表并递减引用数；只有引用数降到零，块才重新进入 free 队列。</p>
+<p>逆序释放不是正确性的必要条件，但与“后面的块通常更专属于当前请求、前面的块更可能共享”的结构相符。</p>
+<h3 id="6-3-释放不等于立刻清除缓存">6.3 释放不等于立刻清除缓存</h3>
+<p><code>_deallocate_block</code> 只把物理块移回 free 队列，不清空其中的 <code>hash</code> 与 <code>token_ids</code>，GPU 上的旧 K/V 也不会主动擦除。只要这个块尚未被新内容覆盖，它仍可以作为 Prefix Cache 被重新激活。</p>
+<p>当 <code>_allocate_block</code> 真正准备覆盖一个空闲块时，才删除仍指向它的旧哈希索引并重置元数据。这是一种惰性失效策略：缓存不需要单独占据“永不分配”的空间，而是使用暂时空闲的 KV 块保留机会性的复用价值。</p>
+<h2 id="七、Prefix-Cache：相同前缀为什么能够共享-KV">七、Prefix Cache：相同前缀为什么能够共享 KV</h2>
+<p>相同模型、相同 token 前缀在确定性前向下会产生相同的 Key/Value，因此后来的请求可以跳过这部分 Prefill。Nano-vLLM 以完整 token 块为缓存粒度。</p>
+<h3 id="7-1-为什么不能只哈希当前块">7.1 为什么不能只哈希当前块</h3>
+<p>假设两条序列的第二块 token 都是 <code>[E,F,G,H]</code>，但第一块不同：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">S1 = [A,B,C,D] + [E,F,G,H]<br>S2 = [W,X,Y,Z] + [E,F,G,H]<br></code></pre></td></tr></table></figure>
+<p>第二块 token 虽然相同，其 K/V 却依赖之前的上下文，不能互换。因此 <code>compute_hash</code> 使用链式累计哈希：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">h0 = hash(block0)<br>h1 = hash(h0, block1)<br>h2 = hash(h1, block2)<br></code></pre></td></tr></table></figure>
+<p>一个块的身份不仅包含自身 token，也包含之前的完整前缀。</p>
+<h3 id="7-2-命中过程">7.2 命中过程</h3>
+<p><code>can_allocate</code> 从逻辑块 0 开始依次计算累计哈希，并在 <code>hash_to_block_id</code> 中查询。命中后还会比较物理块保存的 <code>token_ids</code>，避免单纯依赖哈希导致极小概率的错误复用。</p>
+<p>一旦中间某块未命中，检查立刻停止。Prefix Cache 必须从序列开头连续命中，不能跳过第一块差异而复用后面的“孤立相同块”。</p>
+<p>当前实现查询时遍历 <code>range(seq.num_blocks - 1)</code>，保守地排除 Sequence 的最后一个逻辑块。最后一块通常未填满，未来仍需追加 token，不适合作为稳定共享前缀；即使 prompt 长度刚好是块大小的整数倍，这段实现也仍然不查询最后一个逻辑块。</p>
+<h3 id="7-3-正在使用与已经释放的命中块">7.3 正在使用与已经释放的命中块</h3>
+<p>命中的物理块可能处于两种状态：</p>
+<ol>
+<li><strong>正在使用</strong>：块已经在 <code>used_block_ids</code> 中，新请求只增加 <code>ref_count</code>，不消耗 free 队列；</li>
+<li><strong>已经释放但未覆盖</strong>：块位于 free 队列，旧 KV 仍有效；重新激活时要把它从 free 队列移出，并设置 <code>ref_count=1</code>。</li>
+</ol>
+<p>因此 <code>can_allocate</code> 计算所需空闲块数量时，只有第一种命中能真正减少 free 块需求。第二种虽然省去了 Prefill 计算，但它仍要重新占用一个空闲物理块名额。</p>
+<h3 id="7-4-新完整块何时进入缓存索引">7.4 新完整块何时进入缓存索引</h3>
+<p><code>hash_blocks</code> 在每轮执行结束后、更新 <code>num_cached_tokens</code> 之前调用。它根据本轮前后的完整块边界，找出刚刚被填满的逻辑块，为其计算累计哈希，并登记到 <code>hash_to_block_id</code>。</p>
+<p>若本轮只在一个未填满块中写入少量 token，没有产生新的完整块，就无需更新索引。这样既保证 Prefix Cache 只暴露稳定完整块，也避免每个 Decode step 都重新计算哈希。</p>
+<p>两条请求共享前缀时，映射关系如下：</p>
+<pre><code class=" mermaid">flowchart LR
+    subgraph S1[&quot;Sequence S1&quot;]
+        S1L0[&quot;逻辑块 0：A B C D&quot;]
+        S1L1[&quot;逻辑块 1：E F&quot;]
+    end
+    subgraph S2[&quot;Sequence S2&quot;]
+        S2L0[&quot;逻辑块 0：A B C D&quot;]
+        S2L1[&quot;逻辑块 1：X Y&quot;]
+    end
+    P7[&quot;物理块 7：共享前缀，ref_count=2&quot;]
+    P3[&quot;物理块 3：S1 私有&quot;]
+    P9[&quot;物理块 9：S2 私有&quot;]
+    S1L0 --&gt; P7
+    S2L0 --&gt; P7
+    S1L1 --&gt; P3
+    S2L1 --&gt; P9
+</code></pre>
+<p>这套设计没有复制共享块。分叉之后的 token 写入各自新分配的物理块，因此两个请求可以共享只读前缀，又保持后续生成互不干扰。</p>
+<h2 id="八、ModelRunner：把调度结果变成-GPU-输入">八、ModelRunner：把调度结果变成 GPU 输入</h2>
+<p>Scheduler 返回的仍是 Python <code>Sequence</code> 列表。ModelRunner 必须把它们转换成模型能够消费的紧凑 Tensor，并设置 Attention 所需的批次元数据。</p>
+<h3 id="8-1-Prefill：拼接变长序列而不是-padding">8.1 Prefill：拼接变长序列而不是 padding</h3>
+<p>Prefill 中每条请求本轮可能调度不同数量的 token。ModelRunner 不把它们 padding 到相同长度，而是首尾拼接为一维 <code>input_ids</code>。</p>
+<p>假设两条请求本轮 Query 长度分别是 3 和 2：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">input_ids    = [a, b, c, d, e]<br>cu_seqlens_q = [0, 3, 5]<br></code></pre></td></tr></table></figure>
+<p><code>cu_seqlens_q</code> 是 Query 的累计边界：第一条取 <code>[0:3]</code>，第二条取 <code>[3:5]</code>。<code>positions</code> 则保留每个 token 在原始 Sequence 中的绝对位置，供位置编码使用。</p>
+<h3 id="8-2-Chunked-Prefill-与-Prefix-Cache-下-Q、K-长度不同">8.2 Chunked Prefill 与 Prefix Cache 下 Q、K 长度不同</h3>
+<p>对于一条 Sequence：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">start = seq.num_cached_tokens<br>seqlen_q = seq.num_scheduled_tokens<br>end = start + seqlen_q<br>seqlen_k = end<br></code></pre></td></tr></table></figure>
+<p>假设 <code>[A,B,C,D]</code> 已经通过 Prefix Cache 命中，本轮计算 <code>[E,F]</code>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">start = 4<br>seqlen_q = 2<br>seqlen_k = 6<br></code></pre></td></tr></table></figure>
+<p>Query 只有两个新 token，但它们能够关注前四个缓存 token，所以 Key/Value 的逻辑上下文长度是六。此时 <code>cu_seqlens_k</code> 与 <code>cu_seqlens_q</code> 不同，ModelRunner 还会准备 <code>block_tables</code>，让 Attention 根据物理块表读取旧 K/V。</p>
+<p>Chunked Prefill 也是相同原理：前一片已经写入缓存，下一片只作为新 Query，同时把更长的历史视为 Key/Value 上下文。</p>
+<h3 id="8-3-slot-mapping：新-K-V-应写到哪里">8.3 slot_mapping：新 K/V 应写到哪里</h3>
+<p><code>slot_mapping</code> 把每个新 token 映射到扁平 KV 槽位。公式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">slot = physical_block_id × block_size + offset_in_block<br></code></pre></td></tr></table></figure>
+<p>如果逻辑块映射到物理块 7，<code>block_size=4</code>，那么它的四个槽位是 28、29、30、31。Prefill 会为本轮所有新 token 生成连续的 slot 映射；已经缓存的前缀不会重复写入。</p>
+<p>预热时使用的虚拟 Sequence 没有真实块表，因此不会生成有效 KV 写入槽位。预热的目标只是触发模型计算并测量峰值显存。</p>
+<h3 id="8-4-Decode-的输入更紧凑">8.4 Decode 的输入更紧凑</h3>
+<p>Decode 对每条请求只准备：</p>
+<ul>
+<li><code>last_token</code>；</li>
+<li>它在原序列中的 position；</li>
+<li>包含历史在内的 <code>context_len</code>；</li>
+<li>last token 对应的写入 slot；</li>
+<li>整条 Sequence 的 <code>block_table</code>。</li>
+</ul>
+<p>假设 Sequence 长度为 6，第二个逻辑块映射到物理块 3，则 last token 是该块内第 2 个 token，写入位置为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">3 × 4 + (2 - 1) = 13<br></code></pre></td></tr></table></figure>
+<p>模型输入中不再携带 A 到 E，但 Attention 仍可通过 <code>block_tables</code> 与 <code>context_lens</code> 找到完整历史。</p>
+<h3 id="8-5-Context-是-engine-与模型之间的元数据通道">8.5 Context 是 engine 与模型之间的元数据通道</h3>
+<p>Prefill/Decode 的 <code>cu_seqlens</code>、<code>slot_mapping</code>、<code>context_lens</code> 和 <code>block_tables</code> 被写入进程内全局 <code>Context</code>。模型的多个 Attention 层读取同一份 Context，不必让这些参数层层穿过所有模型函数签名。</p>
+<p>每个 TP 进程拥有独立的 Python 全局变量，因此各 rank 都会在自己的 <code>ModelRunner.run</code> 中设置 Context。一次前向和采样结束后调用 <code>reset_context()</code>，防止下一批误用上一批的块表或长度信息。</p>
+<p>这里把模型层视为黑盒即可：engine 的职责是建立正确的输入张量与元数据契约；模型内部如何消费它们，不属于本文范围。</p>
+<h3 id="8-6-前向、采样与回写的边界">8.6 前向、采样与回写的边界</h3>
+<p><code>ModelRunner.run</code> 完成三步：</p>
+<ol>
+<li>根据 <code>is_prefill</code> 选择输入准备逻辑；</li>
+<li>运行模型并得到 logits；</li>
+<li>rank 0 按每条 Sequence 的 temperature 采样 token id。</li>
+</ol>
+<p>ModelRunner 不修改 Sequence 的完成状态，也不释放 KV 块。它只返回采样结果。状态回写统一由 Scheduler 的 <code>postprocess</code> 完成，这避免 GPU 执行器同时承担调度策略。</p>
+<h2 id="九、CUDA-Graph：为什么主要优化-Decode">九、CUDA Graph：为什么主要优化 Decode</h2>
+<p>Decode 每轮每条请求只有一个 token，单次 GPU 计算相对较小，CPU 逐个提交 Kernel 的开销更容易成为瓶颈。CUDA Graph 可以预先记录一串 GPU 操作，之后直接回放，降低 Python 与 CUDA launch 开销。</p>
+<h3 id="9-1-为什么-Prefill-不使用这里的-CUDA-Graph">9.1 为什么 Prefill 不使用这里的 CUDA Graph</h3>
+<p>Prefill 的总 token 数和每条序列长度变化很大，输入形状高度动态。当前实现因此在以下任一条件成立时使用普通 eager：</p>
+<ul>
+<li>当前是 Prefill；</li>
+<li><code>enforce_eager=True</code>；</li>
+<li>Decode batch size 大于 512。</li>
+</ul>
+<p>其余 Decode 尝试回放预先捕获的图。</p>
+<h3 id="9-2-捕获哪些-batch-size">9.2 捕获哪些 batch size</h3>
+<p>初始化阶段会捕获：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">1, 2, 4, 8, 16, 32, 48, ...<br></code></pre></td></tr></table></figure>
+<p>上限取 <code>min(max_num_seqs, 512)</code>。小 batch 使用更细粒度的 1、2、4、8，大 batch 每 16 条捕获一次，避免为所有可能大小各存一张图。</p>
+<p>真实 batch size 为 10 时，选择第一张不小于它的图，也就是 batch size 16。多出的六行作为无效填充：<code>slot_mapping</code> 设为 -1，<code>context_lens</code> 设为 0，最终只截取前十行输出。</p>
+<h3 id="9-3-固定地址与固定形状">9.3 固定地址与固定形状</h3>
+<p>CUDA Graph 要求回放时 Tensor 地址和形状稳定。因此捕获阶段创建最大尺寸的固定缓冲区，保存 <code>input_ids</code>、<code>positions</code>、<code>slot_mapping</code>、<code>context_lens</code>、<code>block_tables</code> 和 <code>outputs</code>。</p>
+<p>正式运行时不是创建一套新 Tensor 给图，而是把本轮数据复制到这些固定缓冲区，再调用 <code>graph.replay()</code>。多张图共享 graph memory pool，以减少重复显存占用。</p>
+<p>这项优化的代价也很明确：初始化更慢、需要额外固定缓冲区，并且动态 batch 要向上填充到某个已捕获尺寸。但对高频、短计算的 Decode 来说，减少提交开销通常更有价值。</p>
+<h2 id="十、Tensor-Parallel：engine-侧如何让多-GPU-同步执行">十、Tensor Parallel：engine 侧如何让多 GPU 同步执行</h2>
+<p>Nano-vLLM 为每张 GPU 创建一个独立进程和 <code>ModelRunner</code>。模型层内部如何切分权重不在本文范围，这里只观察 engine 如何让各 rank 接收相同命令。</p>
+<h3 id="10-1-rank-0-是命令入口">10.1 rank 0 是命令入口</h3>
+<p>主进程中的 rank 0 持有用户请求、Scheduler 和完整 Sequence 状态。当它调用：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">model_runner.call(<span class="hljs-string">&quot;run&quot;</span>, seqs, is_prefill)<br></code></pre></td></tr></table></figure>
+<p><code>call</code> 会先把方法名与参数 pickle 到一块共享内存，再设置各子进程对应的 Event。非零 rank 的常驻循环被唤醒后，从共享内存读取同一命令，执行本地 <code>run</code>。</p>
+<p>这种共享内存只传递方法名和轻量 Sequence 元数据，不传模型权重，也不传 GPU KV Cache。每个 rank 在初始化时已经拥有自己的模型分片和本地 KV Cache。</p>
+<h3 id="10-2-为什么只有-rank-0-采样">10.2 为什么只有 rank 0 采样</h3>
+<p>各 rank 共同完成模型前向，但只有 rank 0 准备 temperature 并执行 sampler，最终 token id 也只返回主引擎。下一轮开始时，rank 0 再把更新后的 Sequence 元数据广播出去，从而让所有 rank 保持相同生成进度。</p>
+<h3 id="10-3-退出也必须同步">10.3 退出也必须同步</h3>
+<p>引擎退出时，rank 0 同样通过 <code>call(&quot;exit&quot;)</code> 通知所有进程。各 rank 关闭共享内存句柄，在 barrier 汇合，等待 CUDA 工作完成，再销毁 NCCL 进程组。主进程最后 <code>join</code> 子进程，避免残留通信组或共享内存。</p>
+<h2 id="十一、总结：Nano-vLLM-Engine-的设计主线">十一、总结：Nano-vLLM Engine 的设计主线</h2>
+<p>回到最初的问题，一条请求之所以能高效完成生成，并不是因为某个单独优化，而是因为几组机制相互配合：</p>
+<ol>
+<li><code>LLMEngine</code> 将生成拆成可以反复推进的 step；</li>
+<li><code>Sequence</code> 保存跨 step 的 token、状态和缓存进度；</li>
+<li><code>Scheduler</code> 每轮重组批次，并在计算预算与 KV 资源之间做选择；</li>
+<li><code>BlockManager</code> 用逻辑块与物理块解耦请求顺序和显存布局；</li>
+<li><code>ModelRunner</code> 把动态 Python 状态整理成紧凑 GPU Tensor；</li>
+<li>Prefix Cache 减少重复 Prefill，Chunked Prefill 限制单轮计算规模；</li>
+<li>CUDA Graph 降低 Decode 的提交开销；</li>
+<li>Tensor Parallel 让多个 GPU 进程以同一步骤执行模型分片。</li>
+</ol>
+<p>各项机制可以归纳为：</p>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>解决的问题</th>
+<th>主要实现位置</th>
+<th>代价或约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Step 式主循环</td>
+<td>请求需要跨多轮生成</td>
+<td><code>LLMEngine.step</code></td>
+<td>需要显式保存跨轮状态</td>
+</tr>
+<tr>
+<td>Continuous batching</td>
+<td>请求长度与结束时间不同</td>
+<td><code>Scheduler.schedule</code></td>
+<td>当前策略 Prefill 优先且不混批</td>
+</tr>
+<tr>
+<td>Chunked Prefill</td>
+<td>长 Prompt 单轮计算过大</td>
+<td>Prefill 调度分支</td>
+<td>只切计算量，仍需完整块表</td>
+</tr>
+<tr>
+<td>Paged KV Cache</td>
+<td>连续分配导致碎片、难增长</td>
+<td><code>BlockManager</code>、<code>block_table</code></td>
+<td>需要额外块表和槽位映射</td>
+</tr>
+<tr>
+<td>Prefix Cache</td>
+<td>相同前缀重复计算</td>
+<td><code>can_allocate</code>、<code>hash_blocks</code></td>
+<td>仅复用连续完整块，需维护哈希与引用计数</td>
+</tr>
+<tr>
+<td>Preemption</td>
+<td>Decode 增长时 KV 块不足</td>
+<td><code>Scheduler.preempt</code></td>
+<td>被抢占请求需要重新 Prefill</td>
+</tr>
+<tr>
+<td>Packed Prefill</td>
+<td>变长序列 padding 浪费</td>
+<td><code>prepare_prefill</code></td>
+<td>需要 <code>cu_seqlens</code> 描述边界</td>
+</tr>
+<tr>
+<td>CUDA Graph</td>
+<td>Decode Kernel launch 开销高</td>
+<td><code>capture_cudagraph</code>、<code>run_model</code></td>
+<td>固定缓冲区、尺寸向上取整、初始化变慢</td>
+</tr>
+<tr>
+<td>Tensor Parallel 调度</td>
+<td>多 GPU 必须执行相同步骤</td>
+<td><code>ModelRunner.call/loop</code></td>
+<td>多进程同步与通信生命周期更复杂</td>
+</tr>
+</tbody>
+</table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/AI-Infra/" class="category-chain-item">AI Infra</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/my-blog/tags/%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="print-no-link">#架构解析</a>
+      
+        <a href="/my-blog/tags/vLLM/" class="print-no-link">#vLLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>拆解 Nano-vLLM Engine：一条请求如何被调度、缓存并送上 GPU</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Ariasu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/my-blog/2026/07/30/02%20AI%20infra-vLLM_BGE_embedding/" title="从 Ollama 迁移到 vLLM：Embedding 部署与压测">
+                        <span class="hidden-mobile">从 Ollama 迁移到 vLLM：Embedding 部署与压测</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/my-blog/js/events.js" ></script>
+<script  src="/my-blog/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/my-blog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    function isExpandAllEnabled() {
+      return CONFIG.toc && CONFIG.toc.expand_all === true;
+    }
+    function expandAllToc() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .tocbot-is-collapsed').removeClass('tocbot-is-collapsed');
+    }
+    function updateTocToggle($li, $childList) {
+      var $toggle = $li.children('.toc-toggle');
+      if ($toggle.length === 0) { return; }
+      var collapsed = $childList.hasClass('tocbot-is-collapsed');
+      $toggle
+        .toggleClass('toc-toggle-collapsed', collapsed)
+        .toggleClass('toc-toggle-expanded', !collapsed);
+    }
+    function bindTocToggle() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .toc-list-item').each(function() {
+        var $li = jQuery(this);
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) {
+          if ($li.children('.toc-toggle').length === 0) {
+            $li.prepend('<span class="toc-toggle toc-toggle-placeholder" aria-hidden="true">›</span>');
+          }
+          return;
+        }
+
+        if ($li.children('.toc-toggle').length === 0) {
+          $li.prepend('<span class="toc-toggle toc-toggle-expanded" aria-hidden="true">›</span>');
+        }
+        updateTocToggle($li, $childList);
+      });
+      jQuery('#toc-body').off('click.tocToggle').on('click.tocToggle', '.toc-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $li = jQuery(this).parent('.toc-list-item');
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) { return; }
+        $childList.toggleClass('tocbot-is-collapsed');
+        updateTocToggle($li, $childList);
+      });
+      if (!window.__tocToggleObserver) {
+        window.__tocToggleObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') { return; }
+            var $list = jQuery(mutation.target);
+            var $li = $list.parent('.toc-list-item');
+            if ($li.length === 0) { return; }
+            updateTocToggle($li, $list);
+          });
+        });
+        jQuery('#toc-body ol').each(function() {
+          window.__tocToggleObserver.observe(this, { attributes: true });
+        });
+      }
+    }
+    var tocConfig = Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc);
+    if (isExpandAllEnabled()) {
+      tocConfig.collapseDepth = 6;
+    }
+    window.tocbot.init(tocConfig);
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+    expandAllToc();
+    bindTocToggle();
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+        expandAllToc();
+        bindTocToggle();
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/my-blog/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/my-blog/assets/js/portfolio.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/my-blog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
