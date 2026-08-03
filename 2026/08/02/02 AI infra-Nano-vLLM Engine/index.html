@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/covers/nanovllm-engine-cover.png">
 <meta property="article:published_time" content="2026-08-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-08-03T14:05:59.081Z">
+<meta property="article:modified_time" content="2026-08-03T14:20:09.868Z">
 <meta property="article:author" content="Ariasu">
 <meta property="article:tag" content="vLLM">
 <meta property="article:tag" content="架构解析">
@@ -456,7 +456,7 @@
 </tbody>
 </table>
 <p>整体关系如下：</p>
-<pre><code class=" mermaid">flowchart TD
+<div class="mermaid mermaid-pending" role="img" aria-label="流程图" aria-busy="true">flowchart TD
     User[&quot;用户调用 LLM.generate&quot;] --&gt; Engine[&quot;LLMEngine：请求入口与主循环&quot;]
     Engine --&gt; Seq[&quot;Sequence：请求状态&quot;]
     Engine --&gt; Scheduler[&quot;Scheduler：批次与状态调度&quot;]
@@ -467,8 +467,7 @@
     Model --&gt; Runner
     Runner --&gt; Engine
     Engine --&gt; Scheduler
-    Engine --&gt; User
-</code></pre>
+    Engine --&gt; User</div>
 <p>这套架构最重要的分工可以概括为四句话：状态由 <code>Sequence</code> 承载，策略由 <code>Scheduler</code> 决定，KV 资源由 <code>BlockManager</code> 管理，GPU 执行细节由 <code>ModelRunner</code> 封装。<code>LLMEngine</code> 则是把四者组织起来的总指挥。</p>
 <h2 id="二、初始化：一次-LLM-背后发生了什么">二、初始化：一次 <code>LLM(...)</code> 背后发生了什么</h2>
 <p>用户侧的 <code>LLM</code> 只是继承了 <code>LLMEngine</code>，真正的初始化工作都发生在 <code>LLMEngine.__init__</code> 中。它并非简单地加载模型，而是在正式接收请求前建立整套运行环境。</p>
@@ -579,7 +578,7 @@
 <h3 id="4-4-Decode-为什么只输入-last-token">4.4 Decode 为什么只输入 last_token</h3>
 <p>更早 token 的 K/V 已经写入 KV Cache。Decode 只需输入上轮采样出的 <code>last_token</code>，通过块表读取历史 K/V，再预测新的 token。于是每条活跃请求每轮只贡献一个 Query token，这也是 Decode 能够把大量请求合并到一个 batch 中的基础。</p>
 <p>完整时序如下：</p>
-<pre><code class=" mermaid">sequenceDiagram
+<div class="mermaid mermaid-pending" role="img" aria-label="流程图" aria-busy="true">sequenceDiagram
     participant U as User
     participant E as LLMEngine
     participant S as Scheduler
@@ -605,8 +604,7 @@
             E-&gt;&gt;S: postprocess
         end
     end
-    E--&gt;&gt;U: outputs sorted by seq_id
-</code></pre>
+    E--&gt;&gt;U: outputs sorted by seq_id</div>
 <h2 id="五、Scheduler：如何持续组织-GPU-批次">五、Scheduler：如何持续组织 GPU 批次</h2>
 <p>Scheduler 不执行神经网络。它只管理请求队列、token 预算和 KV Cache 资源，然后回答两个问题：本轮运行谁，以及本轮属于 Prefill 还是 Decode。</p>
 <h3 id="5-1-waiting-与-running">5.1 waiting 与 running</h3>
@@ -649,7 +647,7 @@
 <p>若没有空闲块，Scheduler 会从 running 队尾抢占其他请求：释放其块表，将状态改为 <code>WAITING</code>，并放回 waiting 队首。若仍不足则继续抢占，直到当前请求可以追加块。</p>
 <p>源码最后用 <code>assert scheduled_seqs</code> 表达一个运行时前提：Decode 分支结束时至少应有一条请求被成功调度。正常多请求场景通过抢占其他 Sequence 腾出空间；如果连唯一候选本身都必须被抢占而无法在本轮继续，便会触发这一内部断言。理解这一点有助于区分“调度策略的设计意图”和“代码假设成立的运行条件”。</p>
 <p>完整决策过程可以画成：</p>
-<pre><code class=" mermaid">flowchart TD
+<div class="mermaid mermaid-pending" role="img" aria-label="流程图" aria-busy="true">flowchart TD
     Start[&quot;schedule 开始&quot;] --&gt; HasWaiting&#123;&quot;waiting 非空？&quot;&#125;
     HasWaiting -- 是 --&gt; Budget&#123;&quot;仍有序列与 token 预算？&quot;&#125;
     Budget -- 是 --&gt; Alloc&#123;&quot;队首可获得完整块表？&quot;&#125;
@@ -668,8 +666,7 @@
     Append -- 否 --&gt; Preempt[&quot;抢占 running 队尾并释放块&quot;]
     Preempt --&gt; Append
     Append -- 是 --&gt; One[&quot;调度一个 last_token&quot;]
-    One --&gt; ReturnD[&quot;返回纯 Decode 批次&quot;]
-</code></pre>
+    One --&gt; ReturnD[&quot;返回纯 Decode 批次&quot;]</div>
 <h3 id="5-6-postprocess：把执行结果变回状态">5.6 postprocess：把执行结果变回状态</h3>
 <p>GPU 执行完成后，<code>postprocess</code> 对每条 Sequence 执行四步：</p>
 <ol>
@@ -730,7 +727,7 @@
 <p><code>hash_blocks</code> 在每轮执行结束后、更新 <code>num_cached_tokens</code> 之前调用。它根据本轮前后的完整块边界，找出刚刚被填满的逻辑块，为其计算累计哈希，并登记到 <code>hash_to_block_id</code>。</p>
 <p>若本轮只在一个未填满块中写入少量 token，没有产生新的完整块，就无需更新索引。这样既保证 Prefix Cache 只暴露稳定完整块，也避免每个 Decode step 都重新计算哈希。</p>
 <p>两条请求共享前缀时，映射关系如下：</p>
-<pre><code class=" mermaid">flowchart LR
+<div class="mermaid mermaid-pending" role="img" aria-label="流程图" aria-busy="true">flowchart LR
     subgraph S1[&quot;Sequence S1&quot;]
         S1L0[&quot;逻辑块 0：A B C D&quot;]
         S1L1[&quot;逻辑块 1：E F&quot;]
@@ -745,8 +742,7 @@
     S1L0 --&gt; P7
     S2L0 --&gt; P7
     S1L1 --&gt; P3
-    S2L1 --&gt; P9
-</code></pre>
+    S2L1 --&gt; P9</div>
 <p>这套设计没有复制共享块。分叉之后的 token 写入各自新分配的物理块，因此两个请求可以共享只读前缀，又保持后续生成互不干扰。</p>
 <h2 id="八、ModelRunner：把调度结果变成-GPU-输入">八、ModelRunner：把调度结果变成 GPU 输入</h2>
 <p>Scheduler 返回的仍是 Python <code>Sequence</code> 列表。ModelRunner 必须把它们转换成模型能够消费的紧凑 Tensor，并设置 Attention 所需的批次元数据。</p>
@@ -1315,5 +1311,6 @@
   <noscript>
     <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
   </noscript>
+<script src="/my-blog/assets/js/mermaid-init.js" defer data-mermaid-loader></script>
 </body>
 </html>

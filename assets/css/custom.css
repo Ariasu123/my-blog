@@ -747,6 +747,53 @@ input:focus-visible {
   color: var(--pf-heading);
 }
 
+/* Mermaid 流程图:与文章卡片和深浅主题保持一致 */
+.post-content .mermaid {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-md);
+  background: var(--pf-surface-2);
+  color: var(--pf-text);
+  text-align: center;
+}
+
+.post-content .mermaid svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.post-content .mermaid-pending {
+  color: transparent;
+}
+
+.post-content .mermaid-pending::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: var(--pf-muted);
+  content: '流程图渲染中…';
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  font-size: 0.9rem;
+  transform: translate(-50%, -50%);
+}
+
+.post-content .mermaid-fallback {
+  color: var(--pf-text);
+  font-family: 'MapleMonoCN', 'Consolas', monospace;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
 #seo-header {
   color: var(--pf-heading);
 }
