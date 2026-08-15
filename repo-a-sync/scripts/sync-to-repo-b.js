@@ -452,14 +452,23 @@ function cloneRepoBToTemp(config) {
   return { repoPath, branch, tmpRoot };
 }
 
-function commitAndPushRepoB(repoPath, branch) {
-  // 提交
+function hasStagedChanges(repoPath) {
   try {
-    runGit(['add', '.'], { cwd: repoPath });
-    runGit(['commit', '-m', 'chore: sync posts from Repo A'], { cwd: repoPath });
-  } catch (err) {
-    // 可能是“nothing to commit”，在 hasChanges 判断的前提下不太会出现，但这里容错处理
+    runGit(['diff', '--cached', '--quiet'], { cwd: repoPath });
+    return false; // 退出码 0：无暂存变更
+  } catch {
+    return true; // 退出码 1：有暂存变更
   }
+}
+
+function commitAndPushRepoB(repoPath, branch) {
+  runGit(['add', '.'], { cwd: repoPath });
+  if (!hasStagedChanges(repoPath)) {
+    // 资产覆盖复制可能不产生实际差异（如图片内容未变），此时没有可提交的内容。
+    console.log('[git] 暂存区无实际变更，跳过 commit 与 push。');
+    return;
+  }
+  runGit(['commit', '-m', 'chore: sync posts from Repo A'], { cwd: repoPath });
 
   // 先 rebase 再 push，防止远端已更新导致冲突
   runGit(['pull', '--rebase', 'origin', branch], { cwd: repoPath });
@@ -468,8 +477,13 @@ function commitAndPushRepoB(repoPath, branch) {
 
 function commitAndPushSyncBranch(repoPath, syncBranch) {
   runGit(['add', '.'], { cwd: repoPath });
+  if (!hasStagedChanges(repoPath)) {
+    console.log('[git] 暂存区无实际变更，跳过 commit 与 push。');
+    return false;
+  }
   runGit(['commit', '-m', 'chore: sync posts from Repo A'], { cwd: repoPath });
   runGit(['push', 'origin', syncBranch], { cwd: repoPath });
+  return true;
 }
 
 function getRepoBCredentials() {
@@ -581,7 +595,10 @@ async function main() {
     return;
   }
 
-  commitAndPushSyncBranch(repoPath, targetBranch);
+  const pushed = commitAndPushSyncBranch(repoPath, targetBranch);
+  if (!pushed) {
+    return;
+  }
   console.log(`[git] 已推送同步分支: ${targetBranch}`);
 
   const { owner, name, token } = getRepoBCredentials();
