@@ -5,6 +5,7 @@
   "description": "Obsidian Repo A → Hexo Repo B sync template.",
   "scripts": {
     "sync": "node scripts/sync-to-repo-b.js",
+    "sync:pr": "node scripts/sync-to-repo-b.js --pr",
     "sync:dry-run": "node scripts/sync-to-repo-b.js --dry-run"
   },
   "dependencies": {

@@ -440,14 +440,8 @@ function runGit(args, options) {
 }
 
 function cloneRepoBToTemp(config) {
-  const owner = process.env.REPO_B_OWNER;
-  const name = process.env.REPO_B_NAME;
+  const { owner, name, token } = getRepoBCredentials();
   const branch = process.env.REPO_B_BRANCH || config.repoB.branch || 'main';
-  const token = process.env.REPO_B_SYNC_TOKEN;
-
-  if (!owner || !name || !token) {
-    throw new Error('[env] 需要 REPO_B_OWNER / REPO_B_NAME / REPO_B_SYNC_TOKEN 环境变量。');
-  }
 
   const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${name}.git`;
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'repo-b-sync-'));
@@ -472,10 +466,76 @@ function commitAndPushRepoB(repoPath, branch) {
   runGit(['push', 'origin', branch], { cwd: repoPath });
 }
 
-function main() {
+function commitAndPushSyncBranch(repoPath, syncBranch) {
+  runGit(['add', '.'], { cwd: repoPath });
+  runGit(['commit', '-m', 'chore: sync posts from Repo A'], { cwd: repoPath });
+  runGit(['push', 'origin', syncBranch], { cwd: repoPath });
+}
+
+function getRepoBCredentials() {
+  const owner = process.env.REPO_B_OWNER;
+  const name = process.env.REPO_B_NAME;
+  const token = process.env.REPO_B_SYNC_TOKEN;
+  if (!owner || !name || !token) {
+    throw new Error('[env] 需要 REPO_B_OWNER / REPO_B_NAME / REPO_B_SYNC_TOKEN 环境变量。');
+  }
+  return { owner, name, token };
+}
+
+function makeSyncBranchName() {
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:T]/g, '')
+    .slice(0, 14); // YYYYMMDDHHMMSS
+  return `sync/${stamp}`;
+}
+
+async function createPullRequest({ owner, name, token, head, base, body }) {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${name}/pulls`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: 'chore: sync posts from Repo A',
+      head,
+      base,
+      body
+    })
+  });
+
+  const payload = await response.json();
+  if (response.status === 201) {
+    return payload.html_url;
+  }
+  // 422: 同一 head 分支已存在未合并的 PR，复用已有 PR 而不是报错。
+  if (response.status === 422) {
+    const listResp = await fetch(
+      `https://api.github.com/repos/${owner}/${name}/pulls?state=open&head=${owner}:${head}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      }
+    );
+    const pulls = await listResp.json();
+    if (Array.isArray(pulls) && pulls.length > 0) {
+      return pulls[0].html_url;
+    }
+  }
+  throw new Error(`[api] 创建 PR 失败 (${response.status}): ${JSON.stringify(payload)}`);
+}
+
+async function main() {
   const rootDir = process.cwd();
   const argv = minimist(process.argv.slice(2));
   const dryRun = !!(argv['dry-run'] || argv.dryRun);
+  const prMode = !!argv.pr;
   const repoBPathArg = argv['repo-b-path'] || argv.repoBPath;
 
   const config = loadConfig(rootDir);
@@ -491,9 +551,17 @@ function main() {
     return;
   }
 
-  console.log('[mode] CI 模式，准备克隆 Repo B 并执行同步…');
+  console.log(`[mode] CI 模式（${prMode ? 'PR' : '直推'}），准备克隆 Repo B 并执行同步…`);
   const { repoPath, branch } = cloneRepoBToTemp(config);
   console.log(`[git] 已克隆 Repo B 到临时目录: ${repoPath}`);
+
+  // PR 模式：从 main 切出临时同步分支，main 本身不被直接推送。
+  let targetBranch = branch;
+  if (prMode) {
+    targetBranch = makeSyncBranchName();
+    runGit(['checkout', '-b', targetBranch], { cwd: repoPath });
+    console.log(`[git] 已创建同步分支: ${targetBranch}`);
+  }
 
   const result = syncIntoRepoB(rootDir, repoPath, config, { dryRun: false });
 
@@ -502,14 +570,35 @@ function main() {
     return;
   }
 
-  console.log(
-    `[sync] 检测到变更：新建 ${result.created}，更新 ${result.updated}，删除 ${result.deleted}，复制资源 ${result.assetsCopied}，删除资源目录 ${result.assetsDeleted}`
-  );
+  const summary =
+    `新建 ${result.created}，更新 ${result.updated}，删除 ${result.deleted}，` +
+    `复制资源 ${result.assetsCopied}，删除资源目录 ${result.assetsDeleted}`;
+  console.log(`[sync] 检测到变更：${summary}`);
 
-  commitAndPushRepoB(repoPath, branch);
-  console.log('[git] 已完成 commit、pull --rebase 与 push。');
+  if (!prMode) {
+    commitAndPushRepoB(repoPath, branch);
+    console.log('[git] 已完成 commit、pull --rebase 与 push。');
+    return;
+  }
+
+  commitAndPushSyncBranch(repoPath, targetBranch);
+  console.log(`[git] 已推送同步分支: ${targetBranch}`);
+
+  const { owner, name, token } = getRepoBCredentials();
+  const prUrl = await createPullRequest({
+    owner,
+    name,
+    token,
+    head: targetBranch,
+    base: branch,
+    body: `自动同步 Obsidian Repo A 的最新内容。\n\n变更摘要：${summary}\n\n确认无误后 merge 即可发布。`
+  });
+  console.log(`[api] PR 已就绪: ${prUrl}`);
 }
 
 if (require.main === module) {
-  main();
+  main().catch((err) => {
+    console.error(err.message || err);
+    process.exit(1);
+  });
 }
