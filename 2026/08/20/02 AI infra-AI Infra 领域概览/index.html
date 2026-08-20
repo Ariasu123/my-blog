@@ -1,0 +1,1145 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/my-blog/img/fluid.png">
+  <link rel="icon" href="/my-blog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#ffffffd9">
+  <meta name="author" content="Ariasu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从大模型撞上的显存墙讲起，自顶向下地过一遍 AI Infra 的全景：领域版图、硬件拓扑、通信原语与 NCCL、并行算法与训推工程难点，以及这个领域正在走向哪里。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI Infra 领域概览">
+<meta property="og:url" content="https://ariasu123.github.io/my-blog/2026/08/20/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/index.html">
+<meta property="og:site_name" content="my-blog">
+<meta property="og:description" content="从大模型撞上的显存墙讲起，自顶向下地过一遍 AI Infra 的全景：领域版图、硬件拓扑、通信原语与 NCCL、并行算法与训推工程难点，以及这个领域正在走向哪里。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/gpu-server-structure.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/numa-dual-socket-8gpu.png">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/a100-pcie-nvlink-topology.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/dgx-a100-nvswitch.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/two-tier-clos-leaf-spine.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/p2p-vs-collective.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/data-parallel-dp.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/collective-ops-overview.webp">
+<meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/01-kv-cache-fragmentation.png">
+<meta property="article:published_time" content="2026-08-20T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-20T12:41:51.458Z">
+<meta property="article:author" content="Ariasu">
+<meta property="article:tag" content="GPU集群">
+<meta property="article:tag" content="NCCL">
+<meta property="article:tag" content="分布式训练">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/gpu-server-structure.webp">
+  
+  
+  
+  <title>AI Infra 领域概览 - my-blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/my-blog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/my-blog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/my-blog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/my-blog/assets/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ariasu123.github.io","root":"/my-blog/","version":"1.9.9","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"expand_all":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"openkounter":{"server_url":"https://open-kounter.mintimate.cn","path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/my-blog/search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/my-blog/js/utils.js" ></script>
+  <script  src="/my-blog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 42vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/my-blog/">
+      <strong>Ariasu Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content (desktop) -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/projects/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/my-blog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile grid menu overlay -->
+<div id="mobile-grid-menu" class="d-lg-none">
+  <div class="mobile-grid-menu-inner">
+    <div class="container">
+      <div class="row">
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-home-fill"></i>
+                  <span>首页</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/archives/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-archive-fill"></i>
+                  <span>归档</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/categories/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-category-fill"></i>
+                  <span>分类</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/tags/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-tags-fill"></i>
+                  <span>标签</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/projects/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-link-fill"></i>
+                  <span>项目</span>
+                </div>
+              </a>
+            </div>
+          
+        
+          
+          
+          
+          
+            <div class="col-4 mobile-grid-cell">
+              <a href="/my-blog/about/" target="_self">
+                <div class="mobile-grid-item">
+                  <i class="iconfont icon-user-fill"></i>
+                  <span>关于</span>
+                </div>
+              </a>
+            </div>
+          
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-search-btn">
+            <a href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-search"></i>
+                <span>搜索</span>
+              </div>
+            </a>
+          </div>
+        
+        
+          <div class="col-4 mobile-grid-cell" id="mobile-color-toggle-btn"
+               data-label-light="开灯"
+               data-label-dark="关灯">
+            <a href="javascript:;" aria-label="Color Toggle">
+              <div class="mobile-grid-item">
+                <i class="iconfont icon-dark" id="mobile-color-toggle-icon"></i>
+                <span id="mobile-color-toggle-label">关灯</span>
+              </div>
+            </a>
+          </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+
+  <!-- 内页:紧凑科技感 Banner(渐变 + 细网格由 CSS 提供) -->
+  <div id="banner" class="banner pf-banner">
+    <div class="pf-banner-bg" aria-hidden="true"></div>
+    <div class="mask flex-center">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          <span id="subtitle">AI Infra 领域概览</span>
+        </div>
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-20 10:00" pubdate>
+          2026-08-20
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          8.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          74 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">AI Infra 领域概览</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>最近系统性地补了一遍 AI Infra 的基础知识，主要参考的是锦恢的《AI Infra 软核教程》系列（<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/2063938554061967779">其一</a>、<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/2066185773435589967">其二</a>、<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/2070850476703273991">其三</a>），再结合一些论文笔记，整理出这篇自顶向下的领域概览。</p>
+<p>这篇文章的定位是&quot;地图&quot;而不是&quot;教程&quot;：不推导公式、不贴命令，目标是回答三个问题——<strong>AI Infra 是什么、为什么突然变得重要、它的技术栈大致长什么样</strong>。希望能帮到和我一样想入门这个方向的朋友。</p>
+<h2 id="一、为什么需要-AI-Infra：显存墙与领域版图">一、为什么需要 AI Infra：显存墙与领域版图</h2>
+<h3 id="显存墙：一切故事的起点">显存墙：一切故事的起点</h3>
+<p>大模型和传统深度神经网络在数学上没有差别——都是矩阵乘法加非线性激活。那为什么十年前没人谈&quot;Infra&quot;，今天它却成了最抢手的方向之一？根本原因不在算法，而在硬件。</p>
+<p>传统的视觉模型参数量约 100MB，一张消费级显卡甚至一块树莓派就能跑起来。而主流大模型的参数量已经到了 2T 级别，FP16 精度下仅权重文件就有约 <strong>4TB</strong>——比前者高出四个数量级。做个简单的算术：NVIDIA B200 单卡显存约 180GB，一台 8 卡 DGX 服务器的总装载量是：</p>
+
+    <span id="mjx-edfe07f">
+      <style>
+      #mjx-edfe07f{
+        display:contents;
+        mjx-assistive-mml {
+          user-select: text !important;
+          clip: auto !important;
+          color: rgba(0,0,0,0);
+        }
+        
+mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+  min-height: 1px;
+  min-width: 1px;
+}
+
+mjx-container[jax="SVG"] > svg a {
+  fill: blue;
+  stroke: blue;
+}
+
+mjx-assistive-mml {
+  position: absolute !important;
+  top: 0px;
+  left: 0px;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 1px 0px 0px 0px !important;
+  border: 0px !important;
+  display: block !important;
+  width: auto !important;
+  overflow: hidden !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+mjx-assistive-mml[display="block"] {
+  width: 100% !important;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][display="true"][width="full"] {
+  display: flex;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line], svg[data-table] > g > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame], svg[data-table] > g > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed, svg[data-table] > g > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted, svg[data-table] > g > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > g > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] {
+  stroke-width: 3;
+}
+
+g[data-mml-node="xypic"] path {
+  stroke-width: inherit;
+}
+
+.MathJax g[data-mml-node="xypic"] path {
+  stroke-width: inherit;
+}
+
+      }
+      </style>
+      <mjx-container class="MathJax" jax="SVG" display="true" style="position: relative;"><svg style="vertical-align: -0.186ex;" xmlns="http://www.w3.org/2000/svg" width="29.461ex" height="1.781ex" role="img" focusable="false" viewBox="0 -705 13021.6 787" aria-hidden="true"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mn"><path data-c="38" d="M70 417T70 494T124 618T248 666Q319 666 374 624T429 515Q429 485 418 459T392 417T361 389T335 371T324 363L338 354Q352 344 366 334T382 323Q457 264 457 174Q457 95 399 37T249 -22Q159 -22 101 29T43 155Q43 263 172 335L154 348Q133 361 127 368Q70 417 70 494ZM286 386L292 390Q298 394 301 396T311 403T323 413T334 425T345 438T355 454T364 471T369 491T371 513Q371 556 342 586T275 624Q268 625 242 625Q201 625 165 599T128 534Q128 511 141 492T167 463T217 431Q224 426 228 424L286 386ZM250 21Q308 21 350 55T392 137Q392 154 387 169T375 194T353 216T330 234T301 253T274 270Q260 279 244 289T218 306L210 311Q204 311 181 294T133 239T107 157Q107 98 150 60T250 21Z"></path></g><g data-mml-node="mo" transform="translate(722.2,0)"><path data-c="D7" d="M630 29Q630 9 609 9Q604 9 587 25T493 118L389 222L284 117Q178 13 175 11Q171 9 168 9Q160 9 154 15T147 29Q147 36 161 51T255 146L359 250L255 354Q174 435 161 449T147 471Q147 480 153 485T168 490Q173 490 175 489Q178 487 284 383L389 278L493 382Q570 459 587 475T609 491Q630 491 630 471Q630 464 620 453T522 355L418 250L522 145Q606 61 618 48T630 29Z"></path></g><g data-mml-node="mn" transform="translate(1722.4,0)"><path data-c="31" d="M213 578L200 573Q186 568 160 563T102 556H83V602H102Q149 604 189 617T245 641T273 663Q275 666 285 666Q294 666 302 660V361L303 61Q310 54 315 52T339 48T401 46H427V0H416Q395 3 257 3Q121 3 100 0H88V46H114Q136 46 152 46T177 47T193 50T201 52T207 57T213 61V578Z"></path><path data-c="38" d="M70 417T70 494T124 618T248 666Q319 666 374 624T429 515Q429 485 418 459T392 417T361 389T335 371T324 363L338 354Q352 344 366 334T382 323Q457 264 457 174Q457 95 399 37T249 -22Q159 -22 101 29T43 155Q43 263 172 335L154 348Q133 361 127 368Q70 417 70 494ZM286 386L292 390Q298 394 301 396T311 403T323 413T334 425T345 438T355 454T364 471T369 491T371 513Q371 556 342 586T275 624Q268 625 242 625Q201 625 165 599T128 534Q128 511 141 492T167 463T217 431Q224 426 228 424L286 386ZM250 21Q308 21 350 55T392 137Q392 154 387 169T375 194T353 216T330 234T301 253T274 270Q260 279 244 289T218 306L210 311Q204 311 181 294T133 239T107 157Q107 98 150 60T250 21Z" transform="translate(500,0)"></path><path data-c="30" d="M96 585Q152 666 249 666Q297 666 345 640T423 548Q460 465 460 320Q460 165 417 83Q397 41 362 16T301 -15T250 -22Q224 -22 198 -16T137 16T82 83Q39 165 39 320Q39 494 96 585ZM321 597Q291 629 250 629Q208 629 178 597Q153 571 145 525T137 333Q137 175 145 125T181 46Q209 16 250 16Q290 16 318 46Q347 76 354 130T362 333Q362 478 354 524T321 597Z" transform="translate(1000,0)"></path></g><g data-mml-node="mstyle" transform="translate(3222.4,0)"><g data-mml-node="mspace"></g></g><g data-mml-node="mtext" transform="translate(3389.4,0)"><path data-c="47" d="M56 342Q56 428 89 500T174 615T283 681T391 705Q394 705 400 705T408 704Q499 704 569 636L582 624L612 663Q639 700 643 704Q644 704 647 704T653 705H657Q660 705 666 699V419L660 413H626Q620 419 619 430Q610 512 571 572T476 651Q457 658 426 658Q401 658 376 654T316 633T254 592T205 519T177 411Q173 369 173 335Q173 259 192 201T238 111T302 58T370 31T431 24Q478 24 513 45T559 100Q562 110 562 160V212Q561 213 557 216T551 220T542 223T526 225T502 226T463 227H437V273H449L609 270Q715 270 727 273H735V227H721Q674 227 668 215Q666 211 666 108V6Q660 0 657 0Q653 0 639 10Q617 25 600 42L587 54Q571 27 524 3T406 -22Q317 -22 238 22T108 151T56 342Z"></path><path data-c="42" d="M131 622Q124 629 120 631T104 634T61 637H28V683H229H267H346Q423 683 459 678T531 651Q574 627 599 590T624 512Q624 461 583 419T476 360L466 357Q539 348 595 302T651 187Q651 119 600 67T469 3Q456 1 242 0H28V46H61Q103 47 112 49T131 61V622ZM511 513Q511 560 485 594T416 636Q415 636 403 636T371 636T333 637Q266 637 251 636T232 628Q229 624 229 499V374H312L396 375L406 377Q410 378 417 380T442 393T474 417T499 456T511 513ZM537 188Q537 239 509 282T430 336L329 337H229V200V116Q229 57 234 52Q240 47 334 47H383Q425 47 443 53Q486 67 511 104T537 188Z" transform="translate(785,0)"></path></g><g data-mml-node="mo" transform="translate(5160.2,0)"><path data-c="3D" d="M56 347Q56 360 70 367H707Q722 359 722 347Q722 336 708 328L390 327H72Q56 332 56 347ZM56 153Q56 168 72 173H708Q722 163 722 153Q722 140 707 133H70Q56 140 56 153Z"></path></g><g data-mml-node="mn" transform="translate(6216,0)"><path data-c="31" d="M213 578L200 573Q186 568 160 563T102 556H83V602H102Q149 604 189 617T245 641T273 663Q275 666 285 666Q294 666 302 660V361L303 61Q310 54 315 52T339 48T401 46H427V0H416Q395 3 257 3Q121 3 100 0H88V46H114Q136 46 152 46T177 47T193 50T201 52T207 57T213 61V578Z"></path><path data-c="2E" d="M78 60Q78 84 95 102T138 120Q162 120 180 104T199 61Q199 36 182 18T139 0T96 17T78 60Z" transform="translate(500,0)"></path><path data-c="34" d="M462 0Q444 3 333 3Q217 3 199 0H190V46H221Q241 46 248 46T265 48T279 53T286 61Q287 63 287 115V165H28V211L179 442Q332 674 334 675Q336 677 355 677H373L379 671V211H471V165H379V114Q379 73 379 66T385 54Q393 47 442 46H471V0H462ZM293 211V545L74 212L183 211H293Z" transform="translate(778,0)"></path><path data-c="34" d="M462 0Q444 3 333 3Q217 3 199 0H190V46H221Q241 46 248 46T265 48T279 53T286 61Q287 63 287 115V165H28V211L179 442Q332 674 334 675Q336 677 355 677H373L379 671V211H471V165H379V114Q379 73 379 66T385 54Q393 47 442 46H471V0H462ZM293 211V545L74 212L183 211H293Z" transform="translate(1278,0)"></path></g><g data-mml-node="mstyle" transform="translate(7994,0)"><g data-mml-node="mspace"></g></g><g data-mml-node="mtext" transform="translate(8161,0)"><path data-c="54" d="M36 443Q37 448 46 558T55 671V677H666V671Q667 666 676 556T685 443V437H645V443Q645 445 642 478T631 544T610 593Q593 614 555 625Q534 630 478 630H451H443Q417 630 414 618Q413 616 413 339V63Q420 53 439 50T528 46H558V0H545L361 3Q186 1 177 0H164V46H194Q264 46 283 49T309 63V339V550Q309 620 304 625T271 630H244H224Q154 630 119 601Q101 585 93 554T81 486T76 443V437H36V443Z"></path><path data-c="42" d="M131 622Q124 629 120 631T104 634T61 637H28V683H229H267H346Q423 683 459 678T531 651Q574 627 599 590T624 512Q624 461 583 419T476 360L466 357Q539 348 595 302T651 187Q651 119 600 67T469 3Q456 1 242 0H28V46H61Q103 47 112 49T131 61V622ZM511 513Q511 560 485 594T416 636Q415 636 403 636T371 636T333 637Q266 637 251 636T232 628Q229 624 229 499V374H312L396 375L406 377Q410 378 417 380T442 393T474 417T499 456T511 513ZM537 188Q537 239 509 282T430 336L329 337H229V200V116Q229 57 234 52Q240 47 334 47H383Q425 47 443 53Q486 67 511 104T537 188Z" transform="translate(722,0)"></path></g><g data-mml-node="mo" transform="translate(9868.8,0)"><path data-c="3C" d="M694 -11T694 -19T688 -33T678 -40Q671 -40 524 29T234 166L90 235Q83 240 83 250Q83 261 91 266Q664 540 678 540Q681 540 687 534T694 519T687 505Q686 504 417 376L151 250L417 124Q686 -4 687 -5Q694 -11 694 -19Z"></path></g><g data-mml-node="mn" transform="translate(10924.6,0)"><path data-c="34" d="M462 0Q444 3 333 3Q217 3 199 0H190V46H221Q241 46 248 46T265 48T279 53T286 61Q287 63 287 115V165H28V211L179 442Q332 674 334 675Q336 677 355 677H373L379 671V211H471V165H379V114Q379 73 379 66T385 54Q393 47 442 46H471V0H462ZM293 211V545L74 212L183 211H293Z"></path></g><g data-mml-node="mstyle" transform="translate(11424.6,0)"><g data-mml-node="mspace"></g></g><g data-mml-node="mtext" transform="translate(11591.6,0)"><path data-c="54" d="M36 443Q37 448 46 558T55 671V677H666V671Q667 666 676 556T685 443V437H645V443Q645 445 642 478T631 544T610 593Q593 614 555 625Q534 630 478 630H451H443Q417 630 414 618Q413 616 413 339V63Q420 53 439 50T528 46H558V0H545L361 3Q186 1 177 0H164V46H194Q264 46 283 49T309 63V339V550Q309 620 304 625T271 630H244H224Q154 630 119 601Q101 585 93 554T81 486T76 443V437H36V443Z"></path><path data-c="42" d="M131 622Q124 629 120 631T104 634T61 637H28V683H229H267H346Q423 683 459 678T531 651Q574 627 599 590T624 512Q624 461 583 419T476 360L466 357Q539 348 595 302T651 187Q651 119 600 67T469 3Q456 1 242 0H28V46H61Q103 47 112 49T131 61V622ZM511 513Q511 560 485 594T416 636Q415 636 403 636T371 636T333 637Q266 637 251 636T232 628Q229 624 229 499V374H312L396 375L406 377Q410 378 417 380T442 393T474 417T499 456T511 513ZM537 188Q537 239 509 282T430 336L329 337H229V200V116Q229 57 234 52Q240 47 334 47H383Q425 47 443 53Q486 67 511 104T537 188Z" transform="translate(722,0)"></path></g></g></g></svg><mjx-assistive-mml unselectable="on" display="block"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mn>8</mn><mo>×</mo><mn>180</mn><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><mtext>GB</mtext><mo>=</mo><mn>1.44</mn><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><mtext>TB</mtext><mo>&lt;</mo><mn>4</mn><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><mtext>TB</mtext></math></mjx-assistive-mml></mjx-container>
+    </span>
+  <p>连权重都装不下。这还只是推理的下限——训练时除了权重，还需要保存梯度、优化器状态（比如 Adam 为每个参数额外存动量和二阶矩两份数据）和前向传播的激活值，<strong>训练所需显存大约是模型大小的 8 倍</strong>。模型量化（用更低精度表示参数）可以缓解这个问题，但治不了本。</p>
+<p>单机装不下，就只剩一条路：把模型拆开，用多机多卡来算。大模型训推从此迈入分布式计算，与高性能计算（HPC）高度合流——早期做 AI Infra 的人才，很多就出身于 HPC 实验室。而多机多卡引入的通信、同步、一致性问题，正是 AI Infra 工程师每天要回答的问题。所以这个领域的核心命题可以概括为一句话：<strong>当模型已经无法由单张 GPU 独立完成计算之后，怎样让成百上千张 GPU 像一台机器一样协同工作？</strong> 它的价值不在于拥有多少 GPU——买卡是谁都能做的事——而在于如何高效地调度它们。</p>
+<h3 id="领域版图：五大板块与-训推-工种">领域版图：五大板块与&quot;训推&quot;工种</h3>
+<p>业界通常把 AI Infra 相关工作分成五大板块：</p>
+<table>
+<thead>
+<tr>
+<th>板块</th>
+<th>干什么</th>
+<th>代表技术</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>计算集群</td>
+<td>GPU/TPU 节点、通信协议、底层调度</td>
+<td>NCCL、Slurm、Ray</td>
+</tr>
+<tr>
+<td>数据与存储（data infra）</td>
+<td>向量数据库、数据集与权重管理、Agent 数据回流</td>
+<td>随可训练数据枯竭越来越重要</td>
+</tr>
+<tr>
+<td>训练 infra</td>
+<td>让训练代码在千卡万卡集群上正常、高效、稳定地跑</td>
+<td>Megatron-LM、DeepSpeed、ColossalAI</td>
+</tr>
+<tr>
+<td>推理 infra</td>
+<td>模型部署上线、高可用高并发、降低推理成本</td>
+<td>vLLM、SGLang</td>
+</tr>
+<tr>
+<td>Agent Infra</td>
+<td>高性能 sandbox、Agent 评估平台、内部 MCP 服务</td>
+<td>暂未独立成工种</td>
+</tr>
+</tbody>
+</table>
+<p>两个值得了解的业界共识。其一是<strong>工种界定</strong>：一般只有做训练和推理的工程师会被叫做&quot;AI Infra 工程师&quot;（简称&quot;训推&quot;）——计算集群交给机架工程师和运维团队，data infra 和 agent infra 只在少数前沿公司被划入 infra 范畴。其二是**“训练后端 / 推理后端&quot;的说法**：Agentic RL（智能体强化学习）兴起后，Megatron、DeepSpeed 这类传统训练框架被称为&quot;训练后端”，推理侧则直接复用现成的推理框架做&quot;推理后端&quot;，比如智谱的 slime 框架默认组合就是 Megatron + SGLang。</p>
+<h2 id="二、硬件层：从单机互联到万卡集群">二、硬件层：从单机互联到万卡集群</h2>
+<p>要理解后面所有的软件设计，必须先理解底层硬件，因为<strong>上层并行策略的边界，恰恰是下层硬件的边界</strong>。一个训练集群&quot;好不好用&quot;，一半取决于通信性能，这一层的主线就是通信带宽的升级之路。</p>
+<h3 id="单机之内：为什么是-8-卡，以及-PCIe-的瓶颈">单机之内：为什么是 8 卡，以及 PCIe 的瓶颈</h3>
+<p>一台大模型训练服务器的逻辑组成和普通 PC 没什么不同：CPU、内存、GPU、PCIe 总线、网卡、本地存储。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/gpu-server-structure.webp" srcset="/my-blog/img/loading.gif" lazyload alt="GPU 服务器的基本组成"></p>
+<p>主流形态是<strong>单机 8 卡</strong>，这背后是很实在的工程权衡：8 卡满载功率约 14.5 kW（相当于 10 台吹风机同时开），已逼近单机供电极限；风冷散热的噪音大到进机房要戴隔音耳机；8 是 2 的次幂，方便并行算法切分；卡越多，单卡故障时全机停转排查的损失越大，通信拓扑也越难做对称。单机 16 卡在部分高端云厂商已有库存，是未来的趋势，但目前 8 卡仍是讨论算法时的标准单位。</p>
+<p>另一个重要概念是 <strong>NUMA（非一致内存访问）</strong>。单机八卡服务器通常是双路 CPU：每个 CPU 连同同侧的 4 张卡、内存构成一个 NUMA 节点。节点内部的访问是高速且一致的，但跨节点访问要走 CPU 之间的专用互联协议（Intel 叫 UPI，AMD 叫 Infinity Fabric），<strong>延迟更高、有效带宽更低</strong>。这意味着&quot;哪张卡和哪张卡通信&quot;并不是等价的——物理位置决定通信成本。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/numa-dual-socket-8gpu.png" srcset="/my-blog/img/loading.gif" lazyload alt="NUMA 双路八卡服务器架构"></p>
+<p>在这个结构里，GPU 之间最原始的通信路径是 <strong>PCIe 直连</strong>：数据要走 CPU 的 Root Complex 中转，如果系统不支持 PCIe P2P，甚至还要借内存做二传手。PCIe 5.0 x16 的理论单向带宽约 63 GB/s，实测 GPU 间有效带宽往往只有 <strong>23–29 GB/s</strong>。改进方案是加一颗 <strong>PCIe Switch</strong>，让同一 NUMA 节点下的 GPU 绕开 CPU 直接横向通信，带宽接近翻倍到 48–58 GB/s。但这个数字依然喂不饱训练——有估算表明，在典型的张量并行配置下，仅 PCIe Switch 的通信时间占比就会达到 40%–60%。一半的电费和卡时花在等数据上，这显然不能接受。</p>
+<h3 id="NVLink-与-NVSwitch：NVIDIA-的破局">NVLink 与 NVSwitch：NVIDIA 的破局</h3>
+<p>PCIe 的带宽极限是由标准代际锁死的，不换代就无法突破。于是 NVIDIA 在 2016 年推出了专用高带宽互联 <strong>NVLink</strong>。以 A100 为例，卡上引出 3 个 NVLink 接口，用 <strong>NVLink Bridge</strong>（一个插在两张卡之间的小桥接器）连接相邻的 GPU，单桥单向带宽 100 GB/s，三个合计 600 GB/s——比 PCIe 高了一个数量级。</p>
+<p>但 Bridge 有个看似奇怪的限制：<strong>每张卡只能和唯一一个邻居两两互联</strong>。为什么不能像组网一样随便连？原因是集合通信的高效依赖于<strong>对称拓扑</strong>：如果 GPU0—GPU1、GPU1—GPU2 各用一桥，那么 GPU0 到 GPU2 就要经 GPU1 中转，通信延迟不一致、拓扑不对称，通信算法也没法均匀施行。所以 8 张 A100 用 Bridge 连完之后，其实是 4 对高速&quot;孤岛&quot;，对内的通信走 NVLink，对外的就只能退回 PCIe Switch 甚至跨 NUMA 的长路径。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/a100-pcie-nvlink-topology.webp" srcset="/my-blog/img/loading.gif" lazyload alt="A100 通过 NVLink Bridge 两两互联的拓扑"></p>
+<p>终极方案是 <strong>NVSwitch</strong>——一颗专门转发 NVLink 数据的交换芯片。DGX A100 用 6 颗 NVSwitch 把 8 张卡连成<strong>全互联</strong>：每张卡引出 12 条 NVLink 分摊到 6 颗交换芯片上，任意两卡之间都是满带宽直连，拓扑完全对称。这也是为什么支持全互联的高端训练卡（SXM 封装，没有金手指的专用模组）必须配特制底板——NVLink 走线直接做在底板内部，没法在普通主板上&quot;打补丁&quot;。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/dgx-a100-nvswitch.webp" srcset="/my-blog/img/loading.gif" lazyload alt="DGX A100 的 NVSwitch 全互联结构"></p>
+<h3 id="多机之间：IB、RDMA-与分层组网">多机之间：IB、RDMA 与分层组网</h3>
+<p>NVLink 再快也出不了机箱。跨机器通信时，普通以太网有两个硬伤：一是带宽，传统 100 Gb/s 网口只有约 12.5 GB/s，比 NVLink 慢一个数量级；二是中转开销，网卡在设计上不支持直接读写显存，数据要走&quot;GPU → 内存 → 内核协议栈 → 对端&quot;的长路径，CPU 全程参与搬运，延迟和带宽双输。</p>
+<p>解法是 <strong>InfiniBand（IB）网卡 + RDMA</strong>：RDMA（远程直接内存访问）让两台服务器绕过 CPU 和内核协议栈直接交换内存数据，配合 GPUDirect 甚至可以网卡直读写显存。典型的 DGX A100 每台配 8 张 IB 网卡、对应 8 张 GPU，机间形成 8 条独立高速通道。向上扩展的思路是把网络拆成多个<strong>平面</strong>再分层堆交换机（Clos 网络）：直连服务器的交换机叫 Leaf，负责汇聚上行的叫 Spine，更大规模再加 Core 层，逐层把容量从几百卡推到万卡。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/two-tier-clos-leaf-spine.webp" srcset="/my-blog/img/loading.gif" lazyload alt="Leaf + Spine 的两层 Clos 组网"></p>
+<p>这里有个值得记住的判断：<strong>“拥有一万张卡&quot;不等于&quot;万卡集群”</strong>——把一万张卡连成一片高速互联的网络，组网成本可能接近再买一万张卡。不想自己组网的终极选项是 NVIDIA 的整机柜方案 NVL72：一个柜子 72 张 GPU、机内全互联、整机液冷，2026 年市价大约 6000–7000 万人民币。顺带一提，2019 年 NVIDIA 花约 70 亿美元收购了 IB 技术的核心厂商 Mellanox——NVIDIA 真正的护城河从来不是单卡算力，而是 CUDA + NCCL + 网络软硬件合在一起的超级生态。</p>
+<h2 id="三、软件抽象层：通信原语与-NCCL">三、软件抽象层：通信原语与 NCCL</h2>
+<h3 id="为什么需要一套新的-通信语言">为什么需要一套新的&quot;通信语言&quot;</h3>
+<p>硬件拓扑讲完了，但写训练代码的人显然不想直接面对 PCIe 和 IB 的走线。<strong>通信原语就是硬件之上的第一层软件抽象</strong>：忘掉具体链路，只保留&quot;GPU 之间通信速率不同&quot;这一个事实。</p>
+<p>为什么不用操作系统教科书上那套进程间通信（信号量、消息队列、管道、内存映射）？三个原因：它们操作的是系统内存而不是 GPU 显存；它们没有考虑多机多进程的情形；它们不是为分布式计算设计的，通信模式描述起来复杂，不利于调度规划。于是业界沉淀出一套泛用的通信原语——就像编程语言里的 <code>if</code>/<code>for</code> 一样基础，却能组合表达全部并行通信需求，而且与硬件无关：纯 CPU 超算、GPU 集群、国产 NPU，顶层都是近乎同一套接口。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/p2p-vs-collective.webp" srcset="/my-blog/img/loading.gif" lazyload alt="P2P 通信 vs 集合通信"></p>
+<h3 id="P2P-通信与集合通信">P2P 通信与集合通信</h3>
+<p><strong>P2P（点对点）通信</strong>最简单：数据从一个 rank 流向另一个 rank（rank 就是&quot;进程/GPU 的全局编号&quot;，world_size 是总卡数——分布式编程里每个 GPU 对应一个独立进程，靠这些编号互相识别）。基本操作有 Send / Recv 及其非阻塞版本 iSend / iRecv 四种。要点是<strong>阻塞语义</strong>：Send 和 Recv 必须成对出现，如果 rank0 先到了 Send 而对端还没到 Recv，rank0 就卡在原地；如果对端干脆崩溃或跳过了 Recv，rank0 就<strong>永远卡住</strong>——这是分布式训练里最高频的 bug（hang）的典型成因。</p>
+<p>**集合通信（Collective）**解决的是另一类问题：N 张卡要按规律同时执行对称的集体操作，用 P2P 来写既繁琐又负载不均。最经典的例子是数据并行的梯度同步：4 张卡各存一份完整模型副本，一个 batch 平摊到 4 张卡上算，反向传播后各卡的梯度不一样，必须汇总求平均再更新——否则四张卡训练的就不再是同一个模型。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/data-parallel-dp.webp" srcset="/my-blog/img/loading.gif" lazyload alt="数据并行：各卡梯度需要汇总同步"></p>
+<p>如果用 P2P 实现：全部发给 rank0 → 算均值 → 再发回去。rank0 承担所有通信和计算，其余卡干等，一个逻辑上完全对称的操作被写成了极不对称的代码。集合通信把这类需求抽象成一行调用：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">dist.all_reduce(x, op=dist.ReduceOp.SUM)  <span class="hljs-comment"># 各卡梯度求和，结果人人有份</span><br></code></pre></td></tr></table></figure>
+<p>优雅、对称、高效。常用操作就这么几种：<strong>Broadcast</strong>（一个 rank 广播给所有人）、<strong>Reduce / AllReduce</strong>（归约——把一组数据用满足结合律的运算符合并，加法、乘法、取 max 都是归约；AllReduce 让结果每个 rank 都有一份）、<strong>Scatter / Gather / AllGather</strong>（分片分发与收集）。</p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/collective-ops-overview.webp" srcset="/my-blog/img/loading.gif" lazyload alt="集合通信操作总览"></p>
+<p>两个容易忽略的重点。第一，集合通信只从数学层面规定&quot;一次通信达成什么效果&quot;（输入输出），<strong>不指定怎么传</strong>——具体走什么拓扑、分几步传，是后端的事，这正是它能跨硬件通用的原因。第二，AllReduce 带有 <strong>barrier 语义</strong>：组内所有 rank 都等归约完成才能继续，一个 rank 挂掉，全队卡住。这是它同步正确的保证，也是 hang 问题的另一面。</p>
+<h3 id="NCCL：原语之下的实现">NCCL：原语之下的实现</h3>
+<p>现代 AI 软件很少直接操作硬件 SDK，而是套一层与硬件无关的<strong>通信前端</strong>——PyTorch 的 <code>torch.distributed</code> 是事实标准（Megatron-LM、DeepSpeed 都选它），HPC 领域则是经典的 MPI。前端之下，真正干活的<strong>后端</strong>在 NVIDIA GPU 上就是 <strong>NCCL</strong>（NVIDIA Collective Communications Library，开源 C++ 库，对应华为的叫 HCCL）。</p>
+<p>NCCL 的工作方式值得了解，因为它解释了很多&quot;玄学&quot;现象。初始化通信组时，NCCL 先做<strong>拓扑发现</strong>：摸清所有 GPU 的连接关系——哪些卡之间有 NVLink、哪些同机、哪些跨机、走哪张网卡，相当于自动构建一张多机版的连接地图。之后每次通信调用并不会立刻发数据，而是先登记进调度队列，再根据三个要素自动选择通信算法：<strong>拓扑信息 + 通信原语类型 + 单卡数据量</strong>。相同规格的选择结果会被缓存，不会每次重算。</p>
+<p>算法选型的直觉一句话就够：<strong>大消息走 Ring</strong>——所有卡首尾相连成环，数据切片沿环流动，充分利用每条链路的带宽；<strong>小消息走 Tree</strong>——把 rank 组织成二叉树逐层归约，轮数从与卡数成正比降到对数级，压低延迟；如果集群有 NVSwitch / SHARP 这类支持<strong>在网计算</strong>的硬件，NCCL 还会把部分归约直接 offload 给交换芯片，让交换机顺手把加法做了。平时完全不用手动干预，只有排查性能问题时才需要通过环境变量强制指定算法，配合 <code>NCCL_DEBUG=INFO</code> 日志看它实际选了什么、走的是 IB 还是以太网。</p>
+<h2 id="四、上层应用：并行算法与训推工程难点">四、上层应用：并行算法与训推工程难点</h2>
+<h3 id="并行算法：被硬件塑造的切分艺术">并行算法：被硬件塑造的切分艺术</h3>
+<p>原语和 NCCL 再往上，就是并行算法——回答&quot;模型和数据怎么切&quot;的问题。三大经典范式：</p>
+<table>
+<thead>
+<tr>
+<th>范式</th>
+<th>切什么</th>
+<th>通信特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据并行（DP）</td>
+<td>切 batch，每卡一份完整模型副本</td>
+<td>每步一次梯度 AllReduce</td>
+</tr>
+<tr>
+<td>流水线并行（PP）</td>
+<td>按层切分（层间），不同的层放不同的卡</td>
+<td>层间点对点传递激活值，单次量小但频率高</td>
+</tr>
+<tr>
+<td>张量并行（TP）</td>
+<td>切层内的矩阵乘（层内），一层拆到多卡</td>
+<td>每层都要 AllReduce，单次量大</td>
+</tr>
+</tbody>
+</table>
+<p>DP 最容易理解，但上限被单卡显存锁死——模型本身必须完整放进一张卡。突破显存墙靠的是后两者。以 Megatron-LM 的张量并行为例，它的切分有个精巧之处：对同一个 MLP 的两个矩阵乘，第一个按列切（各卡独立算完独立过激活函数，零通信），第二个按行切（各卡算部分和，最后做一次 AllReduce 收口），两个矩阵乘融合为一组后，<strong>整层前向只需要一次 AllReduce</strong>。自注意力块同理：Q/K/V 投影按列切、输出投影按行切。框架还用一对共轭的通信算子封装切分点——前向恒等、反向 AllReduce 的算子负责聚合梯度，前向 AllReduce、反向恒等的算子负责聚合激活——一个 transformer 层前向加反向总共只需 4 次 AllReduce，通信开销极小。</p>
+<p>Megatron 还有不少省通信的工程巧思，很能体现这个领域的思维方式：<strong>能复制计算就不通信</strong>——dropout、LayerNorm、残差连接这类轻量操作在各卡各留一份副本重复计算，避免&quot;单卡算完再广播&quot;的通信；<strong>Loss 融合</strong>——输出层并行后不把所有卡的 logits 汇总，而是融合交叉熵计算、只聚合一个标量 loss，通信量从和词表大小成正比降到常数级。</p>
+<p>三种范式彼此正交，可以自由组合（经典的 “TP × PP × DP” 混合并行）。而组合的方式<strong>被硬件拓扑直接塑造</strong>：TP 每层都要通信、频率太高，所以一般只限制在单机内部，吃 NVLink/NVSwitch 的高带宽，实践中 TP 规模一般不超过单机；跨机通信贵，就交给通信频率低的 PP 和 DP。顺带一提，MoE 模型里的专家并行（EP）和 TP 分工不同——TP 切的是单层通用的矩阵运算，EP 切的是 MoE 的专家网络——两者也可以组合。回到第二章的硬件地图：上层算法画的每一条边界，都能在下层硬件里找到原因。</p>
+<p>也要有现实的预期：大规模分布式训练中 GPU 利用率一般到不了 90%，优秀的并行算法让总和平均利用率达到 <strong>40% 以上</strong>就已经很棒了。剩下的时间，都花在等待通信上——这也是为什么前面整整两章都在讲通信。</p>
+<h3 id="训练-infra：让几千个进程像一个人一样训练">训练 infra：让几千个进程像一个人一样训练</h3>
+<p>训练 infra 的基本模型是&quot;<strong>一卡一进程</strong>&quot;：主流框架为每张 GPU 启动一个独立进程，进程间内存彼此隔离——原本单机上一块内存里的数据传递，变成了进程间、GPU 间、服务器间三级的通信。真正执行矩阵运算和通信的也不是 Python，而是底层的 C++、CUDA 和 NCCL。</p>
+<p>随之而来的是<strong>分布式计算图</strong>问题：每个进程只维护本地计算图，跨设备的依赖要靠额外传递激活值、梯度和参数状态来缝合——所以分布式训练的总显存占用会<strong>大于</strong>模型本身的参数，这不是 bug，是分布式的固有开销。</p>
+<p>训练 infra 工程师的日常工作，就是在这样的模型上做三件事：<strong>正确性</strong>（几千个进程的同步语义不出错，梯度不错位）、<strong>效率</strong>（用并行策略和计算-通信重叠把通信开销藏起来，把 GPU 利用率往上拉）、<strong>稳定性</strong>（处理分布式系统的老朋友：hang、慢节点掉队、硬件故障——千卡集群里&quot;每天都有卡坏&quot;不是玩笑）。前面说过，最高频的故障就是 hang，排查时连日志都要带上 <code>[local_rank/rank]</code> 标头，才能定位到底是哪台机器的第几个进程卡住了。</p>
+<h3 id="推理-infra：自回归的诅咒与破局三板斧">推理 infra：自回归的诅咒与破局三板斧</h3>
+<p>推理没有反向传播，看似比训练简单，但它有自己独特的难题，根源是大模型推理的三个特点：<strong>自回归生成</strong>（逐个 token 串行吐出，生成结果要拼回输入再算下一个，单个请求无法并行加速）、<strong>高并发</strong>（模型太大，用户只能用云服务，服务必须扛住并发）、<strong>商业模式约束</strong>（API 按量计费，infra 必须保证不赔本）。</p>
+<p>落到具体系统上，传统的推理方式有三个非常符合直觉的痛点：</p>
+<ol>
+<li><strong>KV Cache 显存碎片化</strong>：生成每个 token 都要缓存它的 Key/Value 向量，传统做法为每个请求分配一块连续显存。请求来来去去，显存里全是用不上的&quot;空洞&quot;——和早期操作系统的内存碎片问题一模一样；</li>
+<li><strong>静态批处理的&quot;陪跑&quot;</strong>：凑齐一批请求一起跑，生成 10 个 token 的请求得陪着生成 500 个的请求跑完才能释放资源，GPU 利用率随请求逐个完成一路下滑；</li>
+<li><strong>预分配浪费</strong>：不知道请求最终会生成多长，只能按最大长度预留显存。vLLM 论文的调查显示，碎片和过度预留浪费掉的显存高达 <strong>60%–80%</strong>——花 80GB 显存的钱，只用上十几 GB。</li>
+</ol>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/01-kv-cache-fragmentation.png" srcset="/my-blog/img/loading.gif" lazyload alt="KV Cache 的显存碎片化问题"></p>
+<p>vLLM 的破局方式漂亮在它几乎是&quot;操作系统思路的平移&quot;：</p>
+<ul>
+<li><strong>PagedAttention</strong>：直接借鉴虚拟内存——程序看到连续地址空间，物理页却可以离散存放。vLLM 把每个序列的 KV Cache 切成固定大小的块，物理块在显存中非连续存放，用 Block Table 维护映射。由于所有块大小相同，任何空闲块都能给任何请求用，碎片问题被彻底消除，浪费只剩下每个序列最后一个没填满的块。</li>
+<li><strong>连续批处理（Continuous Batching）</strong>：打破&quot;等整个 batch 跑完&quot;的模式，每个推理迭代都检查：有没有请求完成（腾出资源）？等待队列里有没有新请求能调度进来？请求随来随走，GPU 始终保持接近满载，&quot;陪跑&quot;不复存在。</li>
+</ul>
+<p>还有一个理解推理性能的钥匙：<strong>Prefill 与 Decode 是两个计算特性截然不同的阶段</strong>。Prefill 阶段要一次性处理整个 prompt，注意力涉及 N×N 的矩阵运算，是<strong>计算密集型</strong>，GPU 的 Tensor Core 能跑满；Decode 阶段每次只处理 1 个新 token，计算量小，却要读完整段 KV Cache——以 A100 为例，算力 312 TFLOPS 而显存带宽只有 2 TB/s，瓶颈瞬间从计算转移到访存，是<strong>访存密集型</strong>。这个差异直接指导优化：Prefill 适合靠大 batch 提吞吐，Decode 单请求打不满 GPU，必须靠连续批处理把多个请求的 decode 步骤&quot;打包&quot;在一起执行。近年来流行的 PD 分离（Prefill 和 Decode 部署到不同机器上分别优化）也是这个思路的延伸。</p>
+<p>在这之上，还有三板斧进一步压榨性能：<strong>KV Cache 本身</strong>（相邻两步生成的前缀完全相同，缓存历史 K/V 避免重复计算——这是一切推理优化的前提）、<strong>投机采样</strong>（用小模型先草拟多个 token、大模型一次校验，打破逐 token 串行）、<strong>量化与算子融合</strong>（压榨单个 transformer 模块的性能）。工业场景还要同时服务成百上千个用户，在榨干算力和满足业务延迟之间做平衡——这一层被称为&quot;推理中台&quot;。</p>
+<h2 id="五、这个领域正在走向哪里">五、这个领域正在走向哪里</h2>
+<p>从 ICML 2026 的 AI Infra 论文能看出三条清晰的主线。<strong>GPU / Training Systems</strong> 方向：通信正在成为编译器的对象（把计算、通信、同步联合编译，而不是算完再交给通信库），训练算法开始直接适配硬件数据格式（围绕新硬件的低精度格式重新设计量化训练），并行策略与模型结构共同设计——MoE、长上下文、稠密 Transformer 的最佳切法各不相同，不再有万能的并行方案。<strong>LLM Serving</strong> 方向：从单纯追求吞吐，转向围绕 KV Cache、长上下文和异构请求做全局资源调度——上一节讲的 PD 分离正是这条主线的代表。<strong>Agent Infra</strong> 方向：随着 Agent 工作负载兴起，开始认真讨论 Agent 的 workflow 管理、并发调节、状态恢复和安全。</p>
+<p>背后的共同信号是：<strong>AI Infra 正在从&quot;把 GPU 跑满&quot;走向系统级的全局执行优化</strong>。单点优化的空间越来越小，跨层协同成为主战场。</p>
+<p>回头看这整张地图——从显存墙逼出分布式，到硬件拓扑的带宽竞赛，到通信原语与 NCCL 的层层抽象，再到并行算法和训推框架——AI Infra 的每一层都在回答同一个问题：<strong>如何让一千张卡像一张卡那样工作</strong>。而最好的优化，永远发生在层与层的交界处。</p>
+<hr>
+<p><em>本文是基于我个人 wiki 笔记整理的学习总结，主要信源为锦恢《AI Infra 软核教程》系列（知乎），以及 Megatron-LM、vLLM 相关论文笔记。如有错漏，欢迎指正。</em></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/my-blog/categories/AI-Infra/" class="category-chain-item">AI Infra</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/my-blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/" class="print-no-link">#分布式训练</a>
+      
+        <a href="/my-blog/tags/NCCL/" class="print-no-link">#NCCL</a>
+      
+        <a href="/my-blog/tags/GPU%E9%9B%86%E7%BE%A4/" class="print-no-link">#GPU集群</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>AI Infra 领域概览</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Ariasu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月20日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/my-blog/2026/08/05/02%20AI%20infra-%E4%BB%8ENano-vLLM%20%E7%9A%84%20TP%20%E5%88%9D%E5%85%A5%20Megatron/" title="从Nano-vLLM 的 TP 初入 Megatron">
+                        <span class="hidden-mobile">从Nano-vLLM 的 TP 初入 Megatron</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/my-blog/js/events.js" ></script>
+<script  src="/my-blog/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/my-blog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    function isExpandAllEnabled() {
+      return CONFIG.toc && CONFIG.toc.expand_all === true;
+    }
+    function expandAllToc() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .tocbot-is-collapsed').removeClass('tocbot-is-collapsed');
+    }
+    function updateTocToggle($li, $childList) {
+      var $toggle = $li.children('.toc-toggle');
+      if ($toggle.length === 0) { return; }
+      var collapsed = $childList.hasClass('tocbot-is-collapsed');
+      $toggle
+        .toggleClass('toc-toggle-collapsed', collapsed)
+        .toggleClass('toc-toggle-expanded', !collapsed);
+    }
+    function bindTocToggle() {
+      if (!isExpandAllEnabled()) { return; }
+      jQuery('#toc-body .toc-list-item').each(function() {
+        var $li = jQuery(this);
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) {
+          if ($li.children('.toc-toggle').length === 0) {
+            $li.prepend('<span class="toc-toggle toc-toggle-placeholder" aria-hidden="true">›</span>');
+          }
+          return;
+        }
+
+        if ($li.children('.toc-toggle').length === 0) {
+          $li.prepend('<span class="toc-toggle toc-toggle-expanded" aria-hidden="true">›</span>');
+        }
+        updateTocToggle($li, $childList);
+      });
+      jQuery('#toc-body').off('click.tocToggle').on('click.tocToggle', '.toc-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $li = jQuery(this).parent('.toc-list-item');
+        var $childList = $li.children('ol');
+        if ($childList.length === 0) { return; }
+        $childList.toggleClass('tocbot-is-collapsed');
+        updateTocToggle($li, $childList);
+      });
+      if (!window.__tocToggleObserver) {
+        window.__tocToggleObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') { return; }
+            var $list = jQuery(mutation.target);
+            var $li = $list.parent('.toc-list-item');
+            if ($li.length === 0) { return; }
+            updateTocToggle($li, $list);
+          });
+        });
+        jQuery('#toc-body ol').each(function() {
+          window.__tocToggleObserver.observe(this, { attributes: true });
+        });
+      }
+    }
+    var tocConfig = Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc);
+    if (isExpandAllEnabled()) {
+      tocConfig.collapseDepth = 6;
+    }
+    window.tocbot.init(tocConfig);
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+    expandAllToc();
+    bindTocToggle();
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+        expandAllToc();
+        bindTocToggle();
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/my-blog/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/my-blog/assets/js/portfolio.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/my-blog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
