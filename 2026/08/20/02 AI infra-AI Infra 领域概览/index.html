@@ -36,7 +36,7 @@
 <meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/collective-ops-overview.webp">
 <meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/obsidian/02%20AI%20infra-AI%20Infra%20%E9%A2%86%E5%9F%9F%E6%A6%82%E8%A7%88/01-kv-cache-fragmentation.png">
 <meta property="article:published_time" content="2026-08-20T02:00:00.000Z">
-<meta property="article:modified_time" content="2026-08-20T12:50:27.077Z">
+<meta property="article:modified_time" content="2026-08-20T13:20:54.541Z">
 <meta property="article:author" content="Ariasu">
 <meta property="article:tag" content="GPU集群">
 <meta property="article:tag" content="NCCL">
@@ -426,9 +426,9 @@
 <p>大模型和传统深度神经网络在数学上没有差别——都是矩阵乘法加非线性激活。那为什么十年前没人谈&quot;Infra&quot;，今天它却成了最抢手的方向之一？根本原因不在算法，而在硬件。</p>
 <p>传统的视觉模型参数量约 100MB，一张消费级显卡甚至一块树莓派就能跑起来。而主流大模型的参数量已经到了 2T 级别，FP16 精度下仅权重文件就有约 <strong>4TB</strong>——比前者高出四个数量级。做个简单的算术：NVIDIA B200 单卡显存约 180GB，一台 8 卡 DGX 服务器的总装载量是：</p>
 
-    <span id="mjx-5ee4cf1">
+    <span id="mjx-5bada23">
       <style>
-      #mjx-5ee4cf1{
+      #mjx-5bada23{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;
