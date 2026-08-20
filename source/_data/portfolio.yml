@@ -18,7 +18,7 @@ profile:
 
 stats:
   # 静态配置的公开仓库数(GitHub 不在构建时实时请求)
-  public_repos: 9
+  public_repos: 10
 
 projects:
   - id: nano-vllm-ext
@@ -76,26 +76,25 @@ projects:
     status: 已完成
     cover: /assets/images/default-cover.svg
 
-  - id: weekly-report-skill
-    title: Weekly-report-skill
-    intro: 科研周报 Codex Skill,可维护已用文献、检索不重复论文,并按模板生成包含图文与文献精读的 DOCX 周报。
-    link: https://github.com/Ariasu123/Weekly-report-skill
+  - id: agent-toolkit
+    title: Agent-Toolkit
+    intro: 可复用的 AI Agent 效率工具集：Skills 与 MCP Servers 集合。
+    link: https://github.com/Ariasu123/Agent-Toolkit
     tech:
       - Python
-      - Codex Skill
-      - DOCX
-    status: 已完成
+      - Skill
+      - MCP
+    status: 持续迭代
     cover: /assets/images/default-cover.svg
 
-  - id: handoff-skill
-    title: handoff-skill
-    intro: Codex 跨会话交接 Skill,通过可追溯摘要与 Git 状态快照保留项目上下文。
-    link: https://github.com/Ariasu123/handoff-skill
+  - id: graphrag-kit
+    title: GraphRAG-Kit
+    intro: 从文档到知识图谱的完整链路：解析、构建、增量更新与多模式检索。
+    link: https://github.com/Ariasu123/GraphRAG-Kit
     tech:
       - Python
-      - Codex
-      - Git
-    status: 已完成
+      - GraphRAG
+    status: 持续迭代
     cover: /assets/images/default-cover.svg
 
   - id: my-blog
@@ -115,6 +114,6 @@ homepage:
     - nano-vllm-ext
     - tinyllm
     - pion
-    - ariasu-wiki
+    - graphrag-kit
   # 首页最新文章数(固定为 6)
   latest_post_count: 6

@@ -590,11 +590,6 @@ input:focus-visible {
   text-decoration: none;
 }
 
-/* 分页页(第二页起)卡片纵向更紧凑 */
-.pf-post-grid-paged {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 /* 项目卡片 */
 .pf-project-grid {
   display: grid;
