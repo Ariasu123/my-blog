@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/covers/MiniMind.png">
 <meta property="article:published_time" content="2026-04-14T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-08-20T12:41:51.458Z">
+<meta property="article:modified_time" content="2026-08-20T12:50:27.077Z">
 <meta property="article:author" content="Ariasu">
 <meta property="article:tag" content="LLM">
 <meta property="article:tag" content="MiniMind">
@@ -411,16 +411,16 @@
             
               <div class="markdown-body">
                 
-                <p><img src="/my-blog/assets/obsidian/01%20llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/Pasted%20image%2020260721101758.png" srcset="/my-blog/img/loading.gif" lazyload alt=""></p>
+                <p><img src="/my-blog/assets/obsidian/01%20llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/minimind-architecture.png" srcset="/my-blog/img/loading.gif" lazyload alt="MiniMind 整体架构图"></p>
 <h3 id="1-整体流程">1. 整体流程</h3>
 <p>这是模型处理信息的全过程：</p>
 <ul>
 <li><strong>Tokenizer Encoder（分词编码）</strong>：把我们人类看的“hello”转换成机器认识的数字编号（Input IDs）。</li>
 <li><strong>Input Embedding（嵌入层）</strong>：把数字编号变成一串高维向量（数值列表），赋予单词语义特征</li>
 <li><strong>Transformer Layer k（核心加工层）</strong>：这是模型的大脑，图中显示它会重复 
-    <span id="mjx-80dab56">
+    <span id="mjx-419d66a">
       <style>
-      #mjx-80dab56{
+      #mjx-419d66a{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;
@@ -606,9 +606,9 @@ g[data-mml-node="xypic"] path {
 <li><strong>三个 Linear 层</strong>：通过矩阵运算进行高维空间的映射。这里是模型存储“知识”的地方。</li>
 </ul>
 <p>在 MiniMind（以及所有类 Llama 架构）中，<strong>Linear 层（线性变换层）</strong> 本质上是矩阵乘法 
-    <span id="mjx-cb631cc">
+    <span id="mjx-4d06f96">
       <style>
-      #mjx-cb631cc{
+      #mjx-4d06f96{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;
@@ -874,9 +874,9 @@ g[data-mml-node="xypic"] path {
 </tr>
 <tr>
 <td><strong>
-    <span id="mjx-4209e6e">
+    <span id="mjx-9de45ec">
       <style>
-      #mjx-4209e6e{
+      #mjx-9de45ec{
         display:contents;
         mjx-assistive-mml {
           user-select: text !important;

@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ariasu123.github.io/my-blog/assets/covers/nanovllm-engine-cover.png">
 <meta property="article:published_time" content="2026-08-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-08-20T12:41:51.458Z">
+<meta property="article:modified_time" content="2026-08-20T12:50:27.077Z">
 <meta property="article:author" content="Ariasu">
 <meta property="article:tag" content="vLLM">
 <meta property="article:tag" content="架构解析">
@@ -552,7 +552,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">seq.block_table == [<span class="hljs-number">7</span>, <span class="hljs-number">3</span>]<br></code></pre></td></tr></table></figure>
 <p>逻辑顺序仍然是 0、1，但物理内存无需连续。Attention 通过 <code>block_table</code> 找到历史 K/V，这就是分页式 KV Cache 的核心思想。</p>
 <p>把这个字母示例展开到一条真实短句后，逻辑块、块表与物理块之间的关系会更加直观。下图中的 Request A 先被切成多个逻辑 KV 块；Block Table 不保存 K/V 本身，只记录每个逻辑块实际落在哪个 GPU 物理块，以及该块已有多少个有效 token。
-<img src="/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/vllm-block-table.png" srcset="/my-blog/img/loading.gif" lazyload alt=""></p>
+<img src="/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/vllm-block-table.png" srcset="/my-blog/img/loading.gif" lazyload alt="vLLM Block Table：逻辑块到物理块的映射"></p>
 <p align="center"><em>逻辑 KV 块经由 Block Table 映射到离散的 GPU 物理块</em></p>
 <p>图中三个逻辑块依次映射到物理块 7、1 和 3，虽然物理位置彼此分散，请求看到的 token 顺序却没有变化。<code># filled</code> 还记录了块内有效槽位数：当新生成的 <code>fathers</code> 追加到逻辑块 1 时，只需把该块的有效数量从 3 更新为 4，不必移动前面的 KV。它与上面的 <code>[7, 3]</code> 示例表达的是同一件事：<strong>连续的是请求的逻辑上下文，不必连续的是 GPU 上的物理存储。</strong></p>
 <h3 id="3-4-多进程序列化为什么区分-Prefill-与-Decode">3.4 多进程序列化为什么区分 Prefill 与 Decode</h3>
@@ -628,7 +628,7 @@
 <p>当前实现每次 <code>schedule()</code> 都先尝试 waiting 队列。只要成功安排了任何 Prefill Sequence，就立即返回 Prefill 批次，不再构造 Decode 批次。只有本轮完全没有可运行的 Prefill，才进入 Decode 分支。</p>
 <p>因此这里的 continuous batching 应理解为：引擎在每一步重新组织活跃请求，而不是把一批请求从头到尾锁死在同一批次。它并不意味着 Prefill 和 Decode 一定混在同一次模型前向中；Nano-vLLM 当前实现明确将两者分开。</p>
 <p>下面的时间轴对比展示了 continuous batching 最核心的收益。上半部分采用静态批处理：某条 Sequence 提前结束后，对应槽位会一直空闲，直到整个批次结束；下半部分则在槽位释放后立即补入 S6、S7 等新请求，让后续时间步继续保持较高的有效计算占比。图中的黄色可理解为请求的 Prompt/Prefill 阶段，蓝色表示逐 token 生成阶段，红色 <code>END</code> 表示请求完成。</p>
-<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/continuous-batching.png" srcset="/my-blog/img/loading.gif" lazyload alt=""></p>
+<p><img src="/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/continuous-batching.png" srcset="/my-blog/img/loading.gif" lazyload alt="静态批处理 vs Continuous Batching 时间轴对比"></p>
 <p align="center"><em>静态批处理会留下空闲槽位，continuous batching 则用新请求动态补位</em></p>
 <p>这张图表达的是“请求完成后动态补位”的通用思想，并不表示所有引擎都必须把 Prefill 和 Decode 放进同一次前向。落实到本文分析的 Nano-vLLM，Scheduler 的确会在每个 step 重新选择 Sequence，但一次 <code>schedule()</code> 返回的仍然是纯 Prefill 或纯 Decode 批次。</p>
 <p>这一策略让输入准备和 Attention 元数据更简单，代价是 waiting 请求持续到来时可能推迟 running 请求的 Decode。</p>
