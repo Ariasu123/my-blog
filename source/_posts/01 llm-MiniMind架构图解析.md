@@ -12,7 +12,7 @@ index_img: /assets/covers/MiniMind.png
 _sync_managed: repo-a
 _sync_source_path: 01 llm/MiniMind架构图解析.md
 ---
-![](/my-blog/assets/obsidian/01%20llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/Pasted%20image%2020260721101758.png)
+![MiniMind 整体架构图](/my-blog/assets/obsidian/01%20llm-MiniMind%E6%9E%B6%E6%9E%84%E5%9B%BE%E8%A7%A3%E6%9E%90/minimind-architecture.png)
 ### 1. 整体流程
 
 这是模型处理信息的全过程：

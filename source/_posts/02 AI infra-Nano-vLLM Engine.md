@@ -199,7 +199,7 @@ seq.block_table == [7, 3]
 逻辑顺序仍然是 0、1，但物理内存无需连续。Attention 通过 `block_table` 找到历史 K/V，这就是分页式 KV Cache 的核心思想。
 
 把这个字母示例展开到一条真实短句后，逻辑块、块表与物理块之间的关系会更加直观。下图中的 Request A 先被切成多个逻辑 KV 块；Block Table 不保存 K/V 本身，只记录每个逻辑块实际落在哪个 GPU 物理块，以及该块已有多少个有效 token。
-![](/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/vllm-block-table.png)
+![vLLM Block Table：逻辑块到物理块的映射](/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/vllm-block-table.png)
 
 <p align="center"><em>逻辑 KV 块经由 Block Table 映射到离散的 GPU 物理块</em></p>
 
@@ -317,7 +317,7 @@ Scheduler 不执行神经网络。它只管理请求队列、token 预算和 KV 
 
 下面的时间轴对比展示了 continuous batching 最核心的收益。上半部分采用静态批处理：某条 Sequence 提前结束后，对应槽位会一直空闲，直到整个批次结束；下半部分则在槽位释放后立即补入 S6、S7 等新请求，让后续时间步继续保持较高的有效计算占比。图中的黄色可理解为请求的 Prompt/Prefill 阶段，蓝色表示逐 token 生成阶段，红色 `END` 表示请求完成。
 
-![](/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/continuous-batching.png)
+![静态批处理 vs Continuous Batching 时间轴对比](/my-blog/assets/obsidian/02%20AI%20infra-Nano-vLLM%20Engine/continuous-batching.png)
 <p align="center"><em>静态批处理会留下空闲槽位，continuous batching 则用新请求动态补位</em></p>
 
 这张图表达的是“请求完成后动态补位”的通用思想，并不表示所有引擎都必须把 Prefill 和 Decode 放进同一次前向。落实到本文分析的 Nano-vLLM，Scheduler 的确会在每个 step 重新选择 Sequence，但一次 `schedule()` 返回的仍然是纯 Prefill 或纯 Decode 批次。
